@@ -1,0 +1,27 @@
+{
+	"name": "nychcom",
+	"version": "0.1.0",
+	"description": "NYCHCom - NYC Housing Compliance. Real-time violation tracking, compliance alerts, and legal resource navigator.",
+	"license": "ISC",
+	"author": "CS546 Group 24",
+	"type": "module",
+	"main": "app.js",
+	"scripts": {
+		"start": "node app.js",
+		"seed": "node tasks/seed.js",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"dependencies": {
+		"bcrypt": "^6.0.0",
+		"express": "^5.2.1",
+		"express-handlebars": "^9.0.1",
+		"express-session": "^1.19.0",
+		"mongodb": "^7.1.1",
+		"uuid": "^13.0.0"
+	},
+	"devDependencies": {
+		"prettier": "^3.8.3"
+	}
+}

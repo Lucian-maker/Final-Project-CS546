@@ -1,0 +1,21 @@
+<main class="page">
+	<h1>Dashboard</h1>
+	<p>Welcome, {{user.firstName}} {{user.lastName}} ({{user.userRole}}).</p>
+	<p>TODO: Render role-appropriate dashboard widgets, violation countdowns, and
+		saved properties.</p>
+
+	<nav class="home-nav">
+		<a href="/properties">Properties</a>
+		<a href="/violations">Violations</a>
+		<a href="/evidence">Evidence Vault</a>
+		<a href="/reviews">Reviews</a>
+		<a href="/comments">Comments</a>
+		<a href="/notifications">Notifications</a>
+		<a href="/disputes">Disputes</a>
+		<a href="/attorneys">Attorneys</a>
+		{{#if isAdmin}}
+			<a href="/admin">Admin Console</a>
+		{{/if}}
+		<a href="/signout">Sign Out</a>
+	</nav>
+</main>

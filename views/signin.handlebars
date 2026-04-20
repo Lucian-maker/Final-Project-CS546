@@ -1,0 +1,32 @@
+<main class="page">
+	<h1>Sign In</h1>
+
+	{{#if error}}
+		<p class="error" id="serverError">{{error}}</p>
+	{{/if}}
+
+	<div id="clientError" class="error" hidden></div>
+
+	<form
+		id="signin-form"
+		name="signin-form"
+		method="POST"
+		action="/signin"
+		novalidate
+	>
+		<div class="field">
+			<label for="email">Email</label>
+			<input type="email" id="email" name="email" value="{{email}}" required />
+		</div>
+
+		<div class="field">
+			<label for="password">Password</label>
+			<input type="password" id="password" name="password" required />
+		</div>
+
+		<button type="submit" id="submit_button" name="submit_button">Sign In</button>
+	</form>
+
+	<p><a href="/register">Click here to register</a></p>
+	<p><a href="/">Back to Home</a></p>
+</main>
