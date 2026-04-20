@@ -1,0 +1,24 @@
+<main class="page">
+	<h1 id="appTitle">NYCHCom</h1>
+	<p id="siteDescription">
+		NYC Housing Compliance: real-time violation tracking, compliance alerts, and
+		legal resource navigator for tenants, landlords, and admins.
+	</p>
+
+	<nav class="home-nav">
+		{{#if loggedIn}}
+			<a id="dashboardlink" href="/dashboard">Dashboard</a>
+			{{#if isAdmin}}
+				<a id="adminlink" href="/admin">Admin Console</a>
+			{{/if}}
+			<a id="signoutlink" href="/signout">Sign Out</a>
+		{{else}}
+			<a id="registerlink" href="/register">Register</a>
+			<a id="signinlink" href="/signin">Sign In</a>
+		{{/if}}
+	</nav>
+
+	<footer class="site-footer">
+		<p>CS546 Group 24 &mdash; NYCHCom</p>
+	</footer>
+</main>

@@ -1,0 +1,99 @@
+:root {
+	--nychcom-accent: #1f5e8c;
+	--nychcom-bg: #f8f9fb;
+	--nychcom-fg: #111827;
+	--nychcom-error: #b00020;
+}
+
+body {
+	font-family:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	margin: 0;
+	padding: 2rem;
+	line-height: 1.5;
+	background-color: var(--nychcom-bg);
+	color: var(--nychcom-fg);
+}
+
+.page {
+	max-width: 720px;
+	margin: 0 auto;
+}
+
+h1 {
+	font-size: 1.75rem;
+	margin-bottom: 1rem;
+	border-bottom: 2px solid var(--nychcom-accent);
+	padding-bottom: 0.5rem;
+	color: var(--nychcom-accent);
+}
+
+.field {
+	display: flex;
+	flex-direction: column;
+	margin-bottom: 1rem;
+}
+
+.field label {
+	font-weight: 600;
+	margin-bottom: 0.25rem;
+}
+
+.field input,
+.field select {
+	padding: 0.5rem;
+	border: 1px solid #cbd5e1;
+	border-radius: 4px;
+	font-size: 1rem;
+	background-color: #fff;
+	color: inherit;
+}
+
+button[type="submit"] {
+	padding: 0.6rem 1.25rem;
+	border: 1px solid var(--nychcom-accent);
+	border-radius: 4px;
+	background-color: var(--nychcom-accent);
+	color: #fff;
+	font-size: 1rem;
+	cursor: pointer;
+}
+
+button[type="submit"]:hover {
+	opacity: 0.9;
+}
+
+.error {
+	color: var(--nychcom-error);
+	font-weight: 600;
+	padding: 0.5rem;
+	border: 1px solid var(--nychcom-error);
+	border-radius: 4px;
+	background-color: rgba(176, 0, 32, 0.08);
+	margin-bottom: 1rem;
+}
+
+.error ul {
+	margin: 0;
+	padding-left: 1.25rem;
+}
+
+.error li {
+	margin: 0.125rem 0;
+}
+
+nav.home-nav a {
+	display: inline-block;
+	margin-right: 1rem;
+	margin-top: 0.5rem;
+	color: var(--nychcom-accent);
+	text-decoration: underline;
+}
+
+.site-footer {
+	margin-top: 2rem;
+	padding-top: 1rem;
+	border-top: 1px solid #cbd5e1;
+	font-size: 0.9rem;
+	opacity: 0.85;
+}
