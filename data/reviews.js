@@ -138,3 +138,46 @@ export const updateReview = async (
 
 	return { reviewUpdated: true, _id: cleanReviewId };
 };
+
+export const softDeleteReview = async (reviewId, userId) => {
+	const cleanReviewId = checkId(reviewId, "reviewId");
+	const cleanUserId = checkId(userId, "userId");
+
+	const collection = await reviews();
+	const existing = await collection.findOne({
+		_id: cleanReviewId,
+		isDeleted: false,
+	});
+	if (!existing) {
+		throw `No review found with id "${cleanReviewId}"`;
+	}
+	if (existing.reviewerId !== cleanUserId) {
+		throw `You may only delete your own reviews`;
+	}
+
+	const updateResult = await collection.updateOne(
+		{ _id: cleanReviewId },
+		{ $set: { isDeleted: true, updatedAt: new Date() } },
+	);
+	if (!updateResult.acknowledged) {
+		throw `Could not delete review`;
+	}
+
+	return { reviewDeleted: true, _id: cleanReviewId };
+};
+
+export const computeLandlordTrustScore = async (landlordId) => {
+	const cleanLandlordId = checkId(landlordId, "landlordId");
+	const collection = await reviews();
+	const live = await collection
+		.find({ landlordId: cleanLandlordId, isDeleted: false })
+		.toArray();
+
+	if (live.length === 0) {
+		return { score: null, count: 0 };
+	}
+
+	const sum = live.reduce((acc, r) => acc + r.overallScore, 0);
+	const score = Math.round((sum / live.length) * 10) / 10;
+	return { score, count: live.length };
+};
