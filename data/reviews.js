@@ -59,3 +59,30 @@ export const createReview = async (
 
 	return { reviewCreated: true, _id: newReview._id };
 };
+
+export const getReviewsByProperty = async (propertyId) => {
+	const cleanPropertyId = checkId(propertyId, "propertyId");
+	const collection = await reviews();
+	return await collection
+		.find({ propertyId: cleanPropertyId, isDeleted: false })
+		.sort({ createdAt: -1 })
+		.toArray();
+};
+
+export const getReviewById = async (reviewId) => {
+	const cleanId = checkId(reviewId, "reviewId");
+	const collection = await reviews();
+	const review = await collection.findOne({ _id: cleanId, isDeleted: false });
+	if (!review) {
+		throw `No review found with id "${cleanId}"`;
+	}
+	return review;
+};
+
+export const getReviewsByLandlord = async (landlordId) => {
+	const cleanLandlordId = checkId(landlordId, "landlordId");
+	const collection = await reviews();
+	return await collection
+		.find({ landlordId: cleanLandlordId, isDeleted: false })
+		.toArray();
+};
