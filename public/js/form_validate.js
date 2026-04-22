@@ -106,6 +106,33 @@
 		}
 	};
 
+	const pushScore = (errors, rawVal, label) => {
+		if (rawVal === undefined || rawVal === null || rawVal === "") {
+			errors.push(`${label} must be supplied`);
+			return;
+		}
+		const num = Number(rawVal);
+		if (!Number.isInteger(num)) {
+			errors.push(`${label} must be an integer`);
+			return;
+		}
+		if (num < 1 || num > 5) {
+			errors.push(`${label} must be between 1 and 5`);
+		}
+	};
+
+	const pushShortText = (errors, rawVal, label, maxLen) => {
+		if (typeof rawVal !== "string" || rawVal.trim().length === 0) {
+			errors.push(`${label} must be supplied`);
+			return;
+		}
+		if (rawVal.trim().length > maxLen) {
+			errors.push(`${label} must be ${maxLen} characters or fewer`);
+		}
+	};
+
+	window.NYCHComValidators = { pushScore, pushShortText, showErrors };
+
 	const signup = document.getElementById("signup-form");
 	if (signup) {
 		signup.addEventListener("submit", (event) => {
