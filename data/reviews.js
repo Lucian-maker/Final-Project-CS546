@@ -86,3 +86,55 @@ export const getReviewsByLandlord = async (landlordId) => {
 		.find({ landlordId: cleanLandlordId, isDeleted: false })
 		.toArray();
 };
+
+export const updateReview = async (
+	reviewId,
+	userId,
+	responsiveness,
+	value,
+	resolution,
+	reviewText,
+) => {
+	const cleanReviewId = checkId(reviewId, "reviewId");
+	const cleanUserId = checkId(userId, "userId");
+	const cleanResponsiveness = checkScore(responsiveness, "responsiveness");
+	const cleanValue = checkScore(value, "value");
+	const cleanResolution = checkScore(resolution, "resolution");
+	const cleanText = checkShortText(reviewText, "reviewText", 500);
+
+	const collection = await reviews();
+	const existing = await collection.findOne({
+		_id: cleanReviewId,
+		isDeleted: false,
+	});
+	if (!existing) {
+		throw `No review found with id "${cleanReviewId}"`;
+	}
+	if (existing.reviewerId !== cleanUserId) {
+		throw `You may only edit your own reviews`;
+	}
+
+	const overallScore =
+		Math.round(
+			((cleanResponsiveness + cleanValue + cleanResolution) / 3) * 10,
+		) / 10;
+
+	const updateResult = await collection.updateOne(
+		{ _id: cleanReviewId },
+		{
+			$set: {
+				responsiveness: cleanResponsiveness,
+				value: cleanValue,
+				resolution: cleanResolution,
+				overallScore,
+				reviewText: cleanText,
+				updatedAt: new Date(),
+			},
+		},
+	);
+	if (!updateResult.acknowledged) {
+		throw `Could not update review`;
+	}
+
+	return { reviewUpdated: true, _id: cleanReviewId };
+};
