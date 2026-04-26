@@ -1,5 +1,57 @@
-<main class="page">
+<main class="page reviews-page">
 	<h1>Reviews</h1>
-	<p>TODO: Render reviews list and new-review form.</p>
-	<a href="/dashboard">Back to Dashboard</a>
+	<p><a href="/dashboard">Back to Dashboard</a></p>
+
+	{{#if error}}
+		<div class="error" id="serverError">{{error}}</div>
+	{{/if}}
+	<div id="clientError" class="error" hidden></div>
+
+	{{#if canReview}}
+		<section class="review-form-section">
+			<h2>Leave a Review</h2>
+			<form id="review-form" method="POST" action="/reviews/{{propertyId}}" novalidate>
+				<input type="hidden" name="landlordId" value="{{landlordId}}" />
+
+				<label for="responsiveness">Responsiveness (1-5)</label>
+				<input type="number" id="responsiveness" name="responsiveness" min="1" max="5" value="{{form.responsiveness}}" required />
+
+				<label for="value">Value (1-5)</label>
+				<input type="number" id="value" name="value" min="1" max="5" value="{{form.value}}" required />
+
+				<label for="resolution">Resolution (1-5)</label>
+				<input type="number" id="resolution" name="resolution" min="1" max="5" value="{{form.resolution}}" required />
+
+				<label for="reviewText">Review</label>
+				<textarea id="reviewText" name="reviewText" rows="4" maxlength="500" required>{{form.reviewText}}</textarea>
+
+				<button type="submit">Submit Review</button>
+			</form>
+		</section>
+	{{/if}}
+
+	<section class="review-list">
+		<h2>All Reviews ({{reviews.length}})</h2>
+		{{#if reviews.length}}
+			{{#each reviews}}
+				<article class="review-card">
+					<header class="review-card__header">
+						<span class="score-badge">{{overallScore}} / 5</span>
+						<span class="review-card__meta">R:{{responsiveness}} V:{{value}} Res:{{resolution}}</span>
+					</header>
+					<p class="review-card__text">{{reviewText}}</p>
+					<footer class="review-card__footer">
+						<time>{{createdAt}}</time>
+						{{#if isOwnReview}}
+							<form class="inline-form" method="POST" action="/reviews/{{_id}}/delete">
+								<button type="submit" class="btn-danger">Delete</button>
+							</form>
+						{{/if}}
+					</footer>
+				</article>
+			{{/each}}
+		{{else}}
+			<p>No reviews yet.</p>
+		{{/if}}
+	</section>
 </main>
