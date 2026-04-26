@@ -114,3 +114,28 @@ export const formatDateTime = (date) => {
 	}
 	return `${pad2(d.getMonth() + 1)}/${pad2(d.getDate())}/${d.getFullYear()} ${pad2(hours12)}:${pad2(d.getMinutes())}${suffix}`;
 };
+
+//Properties
+export const checkAddress = (addr) => {
+	if (!addr || typeof addr !== "object") {
+		throw "Address must be an object";
+	}
+
+	const number = checkString(addr.number, "address number");
+	const street = checkString(addr.street, "street");
+	const city = checkString(addr.city, "city");
+	const state = checkString(addr.state, "state");
+	const zipCode = checkString(addr.zipCode, "zipCode");
+
+	if (!/^\d{5}$/.test(zipCode)) {
+		throw "zipCode must be a valid 5-digit code";
+	}
+
+	return {
+		number,
+		street,
+		city,
+		state,
+		zipCode
+	};
+};
