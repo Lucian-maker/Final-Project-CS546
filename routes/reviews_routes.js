@@ -5,6 +5,7 @@ import {
 	getReviewById,
 	updateReview,
 	softDeleteReview,
+	getLandlordIdForProperty,
 } from "../data/reviews.js";
 import { checkId, checkScore, checkShortText } from "../helpers.js";
 import { requireAuth, requireRole } from "../middleware.js";
@@ -13,6 +14,7 @@ const router = Router();
 
 const renderList = async (res, propertyId, user, extras = {}) => {
 	const list = await getReviewsByProperty(propertyId);
+	const landlordId = await getLandlordIdForProperty(propertyId);
 	const decorated = list.map((r) => ({
 		...r,
 		isOwnReview: user && r.reviewerId === user._id,
@@ -24,9 +26,12 @@ const renderList = async (res, propertyId, user, extras = {}) => {
 		title: "Reviews",
 		user,
 		propertyId,
+		landlordId,
 		reviews: decorated,
 		canReview:
-			Boolean(user && user.userRole === "tenant") && !alreadyReviewed,
+			Boolean(user && user.userRole === "tenant") &&
+			!alreadyReviewed &&
+			Boolean(landlordId),
 		...extras,
 	});
 };
