@@ -1,6 +1,17 @@
 <main class="page">
 	<h1>Property Detail</h1>
-	<p>Property ID: {{propertyId}}</p>
-	<p>TODO: Render property details, violations, and reviews.</p>
+
+	<p>
+		<strong>Address:</strong>
+		{{property.address.number}} {{property.address.street}},
+		{{property.address.city}},
+		{{property.address.state}} {{property.address.zipCode}}
+	</p>
+
+	<p><strong>Property ID:</strong> {{property._id}}</p>
+
+	<p><strong># of Violations:</strong> {{property.violations.length}}</p>
+	<p><strong># of Reviews:</strong> {{property.reviews.length}}</p>
+
 	<a href="/properties">Back to Properties</a>
 </main>
