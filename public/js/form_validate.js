@@ -183,4 +183,28 @@
 			}
 		});
 	}
+
+	const reviewForm = document.getElementById("review-form");
+	if (reviewForm) {
+		reviewForm.addEventListener("submit", (event) => {
+			const errors = [];
+			const responsiveness =
+				document.getElementById("responsiveness").value;
+			const value = document.getElementById("value").value;
+			const resolution = document.getElementById("resolution").value;
+			const reviewText = document.getElementById("reviewText").value;
+
+			pushScore(errors, responsiveness, "responsiveness");
+			pushScore(errors, value, "value");
+			pushScore(errors, resolution, "resolution");
+			pushShortText(errors, reviewText, "reviewText", 500);
+
+			if (errors.length > 0) {
+				event.preventDefault();
+				showErrors(reviewForm, errors);
+			} else {
+				showErrors(reviewForm, []);
+			}
+		});
+	}
 })();
