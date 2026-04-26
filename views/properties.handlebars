@@ -1,5 +1,31 @@
 <main class="page">
 	<h1>Properties</h1>
-	<p>TODO: Render property search and results.</p>
+
+	<form method="GET" action="/properties">
+		<input
+			type="text"
+			name="search"
+			placeholder="Search by address..."
+			value="{{search}}"
+		/>
+		<button type="submit">Search</button>
+	</form>
+
+	{{#if properties.length}}
+		<ul>
+			{{#each properties}}
+				<li>
+					<a href="/properties/{{this._id}}">
+						{{this.address.number}} {{this.address.street}},
+						{{this.address.city}},
+						{{this.address.state}} {{this.address.zipCode}}
+					</a>
+				</li>
+			{{/each}}
+		</ul>
+	{{else}}
+		<p>No properties found.</p>
+	{{/if}}
+
 	<a href="/dashboard">Back to Dashboard</a>
 </main>
