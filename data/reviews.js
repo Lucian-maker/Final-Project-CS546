@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { reviews } from "../config/mongoCollections.js";
+import { reviews, users } from "../config/mongoCollections.js";
 import { checkId, checkScore, checkShortText } from "../helpers.js";
 
 const roundOne = (n) => Math.round(n * 10) / 10;
@@ -180,4 +180,14 @@ export const computeLandlordTrustScore = async (landlordId) => {
 	const sum = live.reduce((acc, r) => acc + r.overallScore, 0);
 	const score = Math.round((sum / live.length) * 10) / 10;
 	return { score, count: live.length };
+};
+
+export const getLandlordIdForProperty = async (propertyId) => {
+	const cleanPropertyId = checkId(propertyId, "propertyId");
+	const usersCollection = await users();
+	const owner = await usersCollection.findOne({
+		userRole: "landlord",
+		ownedProperties: cleanPropertyId,
+	});
+	return owner ? owner._id : null;
 };
