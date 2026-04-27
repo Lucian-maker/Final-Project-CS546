@@ -207,4 +207,23 @@
 			}
 		});
 	}
+
+	const editForms = document.querySelectorAll(".review-edit-form");
+	editForms.forEach((form) => {
+		form.addEventListener("submit", (event) => {
+			const errors = [];
+			const fields = form.elements;
+			pushScore(errors, fields.responsiveness.value, "responsiveness");
+			pushScore(errors, fields.value.value, "value");
+			pushScore(errors, fields.resolution.value, "resolution");
+			pushShortText(errors, fields.reviewText.value, "reviewText", 500);
+
+			if (errors.length > 0) {
+				event.preventDefault();
+				showErrors(form, errors);
+			} else {
+				showErrors(form, []);
+			}
+		});
+	});
 })();

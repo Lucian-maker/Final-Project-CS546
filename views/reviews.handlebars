@@ -43,9 +43,33 @@
 					<footer class="review-card__footer">
 						<time>{{createdAt}}</time>
 						{{#if isOwnReview}}
-							<form class="inline-form" method="POST" action="/reviews/{{_id}}/delete">
-								<button type="submit" class="btn-danger">Delete</button>
-							</form>
+							<div class="review-card__own-actions">
+								<details class="review-edit-toggle">
+									<summary class="review-edit-toggle__summary">Edit</summary>
+									<form class="review-edit-form" method="POST" action="/reviews/{{_id}}/edit" novalidate>
+										<label>
+											Responsiveness (1-5)
+											<input type="number" name="responsiveness" min="1" max="5" value="{{responsiveness}}" required />
+										</label>
+										<label>
+											Value (1-5)
+											<input type="number" name="value" min="1" max="5" value="{{value}}" required />
+										</label>
+										<label>
+											Resolution (1-5)
+											<input type="number" name="resolution" min="1" max="5" value="{{resolution}}" required />
+										</label>
+										<label>
+											Review
+											<textarea name="reviewText" rows="3" maxlength="500" required>{{reviewText}}</textarea>
+										</label>
+										<button type="submit">Save</button>
+									</form>
+								</details>
+								<form class="inline-form" method="POST" action="/reviews/{{_id}}/delete">
+									<button type="submit" class="btn-danger">Delete</button>
+								</form>
+							</div>
 						{{/if}}
 					</footer>
 				</article>
