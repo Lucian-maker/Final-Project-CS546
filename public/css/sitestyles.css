@@ -178,8 +178,12 @@ nav.home-nav a {
 	padding: 0.3rem 0.75rem;
 	border-radius: 4px;
 	cursor: pointer;
+	font-family: inherit;
 	font-size: 0.85rem;
 	font-weight: 600;
+	line-height: 1.5;
+	min-width: 5rem;
+	text-align: center;
 }
 .btn-danger:hover {
 	background: #b91c1c;
@@ -200,8 +204,12 @@ nav.home-nav a {
 	color: #fff;
 	padding: 0.3rem 0.75rem;
 	border-radius: 4px;
+	font-family: inherit;
 	font-size: 0.85rem;
 	font-weight: 600;
+	line-height: 1.5;
+	min-width: 5rem;
+	text-align: center;
 	user-select: none;
 	display: inline-block;
 	list-style: none;
