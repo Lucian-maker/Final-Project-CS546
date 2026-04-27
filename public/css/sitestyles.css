@@ -175,15 +175,17 @@ nav.home-nav a {
 	background: #d62828;
 	color: #fff;
 	border: 0;
-	padding: 0.3rem 0.75rem;
 	border-radius: 4px;
 	cursor: pointer;
 	font-family: inherit;
 	font-size: 0.85rem;
 	font-weight: 600;
-	line-height: 1.5;
-	min-width: 5rem;
-	text-align: center;
+	box-sizing: border-box;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 5rem;
+	height: 2rem;
 }
 .btn-danger:hover {
 	background: #b91c1c;
@@ -202,17 +204,18 @@ nav.home-nav a {
 	cursor: pointer;
 	background: var(--nychcom-accent);
 	color: #fff;
-	padding: 0.3rem 0.75rem;
 	border-radius: 4px;
 	font-family: inherit;
 	font-size: 0.85rem;
 	font-weight: 600;
-	line-height: 1.5;
-	min-width: 5rem;
-	text-align: center;
 	user-select: none;
-	display: inline-block;
 	list-style: none;
+	box-sizing: border-box;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 5rem;
+	height: 2rem;
 }
 .review-edit-toggle__summary::-webkit-details-marker {
 	display: none;
