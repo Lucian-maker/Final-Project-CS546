@@ -178,6 +178,11 @@ nav.home-nav a {
 	padding: 0.3rem 0.75rem;
 	border-radius: 4px;
 	cursor: pointer;
+	font-size: 0.85rem;
+	font-weight: 600;
+}
+.btn-danger:hover {
+	background: #b91c1c;
 }
 .inline-form {
 	display: inline;
@@ -185,24 +190,27 @@ nav.home-nav a {
 
 .review-card__own-actions {
 	display: flex;
-	flex-direction: column;
 	gap: 0.5rem;
 	align-items: flex-start;
-	width: 100%;
-}
-.review-edit-toggle {
-	width: 100%;
+	margin-left: auto;
 }
 .review-edit-toggle__summary {
 	cursor: pointer;
-	color: var(--nychcom-accent);
+	background: var(--nychcom-accent);
+	color: #fff;
+	padding: 0.3rem 0.75rem;
+	border-radius: 4px;
 	font-size: 0.85rem;
 	font-weight: 600;
 	user-select: none;
 	display: inline-block;
+	list-style: none;
+}
+.review-edit-toggle__summary::-webkit-details-marker {
+	display: none;
 }
 .review-edit-toggle__summary:hover {
-	text-decoration: underline;
+	opacity: 0.9;
 }
 .review-edit-form {
 	margin-top: 0.5rem;
