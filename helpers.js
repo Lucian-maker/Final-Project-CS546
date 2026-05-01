@@ -153,6 +153,26 @@ export const formatDateTime = (date) => {
 	return `${pad2(d.getMonth() + 1)}/${pad2(d.getDate())}/${d.getFullYear()} ${pad2(hours12)}:${pad2(d.getMinutes())}${suffix}`;
 };
 
+export const checkScore = (val, name) => {
+	if (val === undefined || val === null || val === "") {
+		throw `${name} must be supplied`;
+	}
+	const num = typeof val === "number" ? val : Number(val);
+	if (!Number.isInteger(num)) {
+		throw `${name} must be an integer`;
+	}
+	if (num < 1 || num > 5) {
+		throw `${name} must be between 1 and 5`;
+	}
+	return num;
+};
+
+export const checkShortText = (val, name, maxLen = 500) => {
+	const trimmed = checkString(val, name);
+	if (trimmed.length > maxLen) {
+		throw `${name} must be ${maxLen} characters or fewer`;
+	}
+	return trimmed;
 //Properties
 export const checkAddress = (addr) => {
 	if (!addr || typeof addr !== "object") {
