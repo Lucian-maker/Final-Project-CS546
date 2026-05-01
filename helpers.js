@@ -97,6 +97,44 @@ export const checkId = (val, name = "id") => {
 	return trimmed;
 };
 
+export const checkDate = (val, name = "date") => {
+	if (val === undefined || val === null) {
+		throw `${name} must be supplied`;
+	}
+	const date = val instanceof Date ? val : new Date(val);
+	if (Number.isNaN(date.getTime())) {
+		throw `${name} must be a valid date`;
+	}
+	return date;
+};
+
+export const checkChannel = (val) => {
+	const cleaned = checkString(val, "channel").toLowerCase();
+	const allowed = ["sms", "email", "certified letter"];
+	if (!allowed.includes(cleaned)) {
+		throw `channel must be one of: ${allowed.join(", ")}`;
+	}
+	return cleaned;
+};
+
+export const checkNotificationStatus = (val) => {
+	const cleaned = checkString(val, "status").toLowerCase();
+	const allowed = ["queued", "sent", "delivered", "canceled", "failed"];
+	if (!allowed.includes(cleaned)) {
+		throw `status must be one of: ${allowed.join(", ")}`;
+	}
+	return cleaned;
+};
+
+export const checkDisputeEventType = (val) => {
+	const cleaned = checkString(val, "eventType").toLowerCase();
+	const allowed = ["status_change"];
+	if (!allowed.includes(cleaned)) {
+		throw `eventType must be one of: ${allowed.join(", ")}`;
+	}
+	return cleaned;
+};
+
 const pad2 = (n) => String(n).padStart(2, "0");
 
 export const formatDate = (date) => {
