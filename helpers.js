@@ -173,6 +173,8 @@ export const checkShortText = (val, name, maxLen = 500) => {
 		throw `${name} must be ${maxLen} characters or fewer`;
 	}
 	return trimmed;
+};
+
 //Properties
 export const checkAddress = (addr) => {
 	if (!addr || typeof addr !== "object") {
@@ -194,6 +196,6 @@ export const checkAddress = (addr) => {
 		street,
 		city,
 		state,
-		zipCode
+		zipCode,
 	};
 };
