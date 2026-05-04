@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
 	getAllProperties,
 	searchProperties,
-	getPropertyById
+	getPropertyById,
 } from "../data/properties.js";
 
 const router = Router();
@@ -21,11 +21,11 @@ router.route("/").get(async (req, res) => {
 			title: "Properties",
 			properties,
 			search: req.query.search || "",
-			user: req.session?.user
+			user: req.session?.user,
 		});
 	} catch (e) {
 		return res.status(500).render("error", {
-			error: e
+			error: e,
 		});
 	}
 });
@@ -37,11 +37,11 @@ router.route("/:id").get(async (req, res) => {
 		return res.render("property", {
 			title: "Property Detail",
 			property,
-			user: req.session?.user
+			user: req.session?.user,
 		});
 	} catch (e) {
 		return res.status(404).render("error", {
-			error: "Property not found"
+			error: "Property not found",
 		});
 	}
 });

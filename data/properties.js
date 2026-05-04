@@ -31,7 +31,7 @@ export const createProperty = async (addressObj) => {
 		violations: [],
 		reviews: [],
 		createdOn: new Date(),
-		updatedOn: new Date()
+		updatedOn: new Date(),
 	};
 
 	const propCollection = await properties();
@@ -47,15 +47,17 @@ export const searchProperties = async (query) => {
 
 	const propCollection = await properties();
 
-	const results = await propCollection.find({
-		$or: [
-			{ "address.number": { $regex: query, $options: "i" } },
-			{ "address.street": { $regex: query, $options: "i" } },
-			{ "address.city": { $regex: query, $options: "i" } },
-			{ "address.state": { $regex: query, $options: "i" } },
-			{ "address.zipCode": { $regex: query, $options: "i" } }
-		]
-	}).toArray();
+	const results = await propCollection
+		.find({
+			$or: [
+				{ "address.number": { $regex: query, $options: "i" } },
+				{ "address.street": { $regex: query, $options: "i" } },
+				{ "address.city": { $regex: query, $options: "i" } },
+				{ "address.state": { $regex: query, $options: "i" } },
+				{ "address.zipCode": { $regex: query, $options: "i" } },
+			],
+		})
+		.toArray();
 
 	return results;
 };
