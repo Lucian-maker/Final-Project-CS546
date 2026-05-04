@@ -106,6 +106,33 @@
 		}
 	};
 
+	const pushScore = (errors, rawVal, label) => {
+		if (rawVal === undefined || rawVal === null || rawVal === "") {
+			errors.push(`${label} must be supplied`);
+			return;
+		}
+		const num = Number(rawVal);
+		if (!Number.isInteger(num)) {
+			errors.push(`${label} must be an integer`);
+			return;
+		}
+		if (num < 1 || num > 5) {
+			errors.push(`${label} must be between 1 and 5`);
+		}
+	};
+
+	const pushShortText = (errors, rawVal, label, maxLen) => {
+		if (typeof rawVal !== "string" || rawVal.trim().length === 0) {
+			errors.push(`${label} must be supplied`);
+			return;
+		}
+		if (rawVal.trim().length > maxLen) {
+			errors.push(`${label} must be ${maxLen} characters or fewer`);
+		}
+	};
+
+	window.NYCHComValidators = { pushScore, pushShortText, showErrors };
+
 	const signup = document.getElementById("signup-form");
 	if (signup) {
 		signup.addEventListener("submit", (event) => {
@@ -156,4 +183,47 @@
 			}
 		});
 	}
+
+	const reviewForm = document.getElementById("review-form");
+	if (reviewForm) {
+		reviewForm.addEventListener("submit", (event) => {
+			const errors = [];
+			const responsiveness =
+				document.getElementById("responsiveness").value;
+			const value = document.getElementById("value").value;
+			const resolution = document.getElementById("resolution").value;
+			const reviewText = document.getElementById("reviewText").value;
+
+			pushScore(errors, responsiveness, "responsiveness");
+			pushScore(errors, value, "value");
+			pushScore(errors, resolution, "resolution");
+			pushShortText(errors, reviewText, "reviewText", 500);
+
+			if (errors.length > 0) {
+				event.preventDefault();
+				showErrors(reviewForm, errors);
+			} else {
+				showErrors(reviewForm, []);
+			}
+		});
+	}
+
+	const editForms = document.querySelectorAll(".review-edit-form");
+	editForms.forEach((form) => {
+		form.addEventListener("submit", (event) => {
+			const errors = [];
+			const fields = form.elements;
+			pushScore(errors, fields.responsiveness.value, "responsiveness");
+			pushScore(errors, fields.value.value, "value");
+			pushScore(errors, fields.resolution.value, "resolution");
+			pushShortText(errors, fields.reviewText.value, "reviewText", 500);
+
+			if (errors.length > 0) {
+				event.preventDefault();
+				showErrors(form, errors);
+			} else {
+				showErrors(form, []);
+			}
+		});
+	});
 })();
