@@ -57,10 +57,33 @@ button[type="submit"] {
 	color: #fff;
 	font-size: 1rem;
 	cursor: pointer;
+	align-self: flex-start;
 }
 
 button[type="submit"]:hover {
 	opacity: 0.9;
+}
+
+table {
+	border: 1px solid #cbd5e1;
+	border-collapse: collapse; 
+	margin-top: 1rem;
+	background: #fff;
+	color: var(--nychcom-fg)
+}
+
+th {
+	text-align: left;
+	font-weight: 600;
+	padding: 0.5rem;
+	border-bottom: 2px solid #cbd5e1;
+	color: var (--nychcom-accent);	
+}
+
+td {
+	padding: 0.5rem;
+	border-bottom: 1px solid #cbd5e1;
+	color: var(--nychcom-fg);
 }
 
 .error {
