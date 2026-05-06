@@ -1,21 +1,71 @@
 <main class="page">
-	<h1>Dashboard</h1>
-	<p>Welcome, {{user.firstName}} {{user.lastName}} ({{user.userRole}}).</p>
-	<p>TODO: Render role-appropriate dashboard widgets, violation countdowns, and
-		saved properties.</p>
+	<div class="dashboard-header">
+		<h1>Dashboard</h1>
+		<p class="welcome-text">Welcome, <strong>{{user.firstName}} {{user.lastName}}</strong> ({{user.userRole}}).</p>
+	</div>
 
-	<nav class="home-nav">
-		<a href="/properties">Properties</a>
-		<a href="/violations">Violations</a>
-		<a href="/evidence">Evidence Vault</a>
-		<a href="/reviews">Reviews</a>
-		<a href="/comments">Comments</a>
-		<a href="/notifications">Notifications</a>
-		<a href="/disputes">Disputes</a>
-		<a href="/attorneys">Attorneys</a>
+	<div class="dashboard-search">
+		<form action="/violations" method="GET" class="search-form">
+			<input type="text" name="search" placeholder="Search violations by address, type, status..." required>
+			<button type="submit" class="btn-search">Search</button>
+		</form>
+	</div>
+
+	<div class="analytics-container">
+		<a href="/violations?days=30" class="metric-card">
+			<span class="metric-value">{{violations30Days}}</span>
+			<span class="metric-label">Due in ≤ 30 Days</span>
+		</a>
+		<a href="/violations?days=15" class="metric-card">
+			<span class="metric-value metric-warning">{{violations15Days}}</span>
+			<span class="metric-label">Due in ≤ 15 Days</span>
+		</a>
+		<a href="/violations?days=7" class="metric-card">
+			<span class="metric-value metric-danger">{{violations7Days}}</span>
+			<span class="metric-label">Due in ≤ 7 Days</span>
+		</a>
+	</div>
+	
+	<p class="dashboard-subtitle">Manage your account and explore tools below.</p>
+
+	<div class="dashboard-grid">
+		<a href="/properties" class="dashboard-tile">
+			<span class="tile-icon">🏢</span>
+			<span class="tile-text">Properties</span>
+		</a>
+		<a href="/violations" class="dashboard-tile">
+			<span class="tile-icon">⚠️</span>
+			<span class="tile-text">Violations</span>
+		</a>
+		<a href="/evidence" class="dashboard-tile">
+			<span class="tile-icon">📁</span>
+			<span class="tile-text">Evidence Vault</span>
+		</a>
+		<a href="/reviews" class="dashboard-tile">
+			<span class="tile-icon">⭐</span>
+			<span class="tile-text">Reviews</span>
+		</a>
+		<a href="/comments" class="dashboard-tile">
+			<span class="tile-icon">💬</span>
+			<span class="tile-text">Comments</span>
+		</a>
+		<a href="/notifications" class="dashboard-tile">
+			<span class="tile-icon">🔔</span>
+			<span class="tile-text">Notifications</span>
+		</a>
+		<a href="/disputes" class="dashboard-tile">
+			<span class="tile-icon">⚖️</span>
+			<span class="tile-text">Disputes</span>
+		</a>
+		<a href="/attorneys" class="dashboard-tile">
+			<span class="tile-icon">👔</span>
+			<span class="tile-text">Attorneys</span>
+		</a>
 		{{#if isAdmin}}
-			<a href="/admin">Admin Console</a>
+			<a href="/admin" class="dashboard-tile admin-tile">
+				<span class="tile-icon">⚙️</span>
+				<span class="tile-text">Admin Console</span>
+			</a>
 		{{/if}}
-		<a href="/signout">Sign Out</a>
-	</nav>
+	</div>
 </main>
