@@ -1,5 +1,18 @@
 <main class="page">
 	<h1>Attorneys</h1>
-	<p>TODO: Render attorney directory with filters.</p>
+	{{#if attorneys}}
+		<ul class="card-grid">
+			{{#each attorneys}}
+				<li class="card">
+					<h2 class="card-title">{{this.name}}</h2>
+					<p><strong>Email:</strong> <a href="mailto:{{this.email}}">{{this.email}}</a></p>
+					<p><strong>Phone:</strong> {{this.phone}}</p>
+					<p><strong>Website:</strong> <a href="{{this.website}}" target="_blank">{{this.website}}</a></p>
+				</li>
+			{{/each}}
+		</ul>
+	{{else}}
+		<p>No attorneys available at this time.</p>
+	{{/if}}
 	<a href="/dashboard">Back to Dashboard</a>
 </main>
