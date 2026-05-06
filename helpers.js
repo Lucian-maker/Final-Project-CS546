@@ -175,6 +175,115 @@ export const checkShortText = (val, name, maxLen = 500) => {
 	return trimmed;
 };
 
+/** Validates a public http(s) URL. */
+export const checkHttpUrl = (val, name = "url") => {
+	const s = checkString(val, name);
+	let u;
+	try {
+		u = new URL(s);
+	} catch {
+		throw `${name} must be a valid http or https URL`;
+	}
+	if (u.protocol !== "http:" && u.protocol !== "https:") {
+		throw `${name} must use http or https`;
+	}
+	return u.href;
+};
+
+const MAX_EVIDENCE_IMAGE_BYTES = 4 * 1024 * 1024;
+
+function bufferLooksLikeAllowedImage(buf) {
+	if (buf.length < 12) {
+		return false;
+	}
+	if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) {
+		return true;
+	}
+	if (
+		buf[0] === 0x89 &&
+		buf[1] === 0x50 &&
+		buf[2] === 0x4e &&
+		buf[3] === 0x47
+	) {
+		return true;
+	}
+	if (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46) {
+		return true;
+	}
+	if (
+		buf.length >= 12 &&
+		buf.toString("ascii", 0, 4) === "RIFF" &&
+		buf.toString("ascii", 8, 12) === "WEBP"
+	) {
+		return true;
+	}
+	return false;
+}
+
+/**
+ * Validates a browser data URL (FileReader.readAsDataURL) and returns fields for Mongo.
+ * Images only: JPEG, PNG, GIF, WebP — verified by magic bytes.
+ */
+export const parseEvidenceImageDataUri = (input, name = "image") => {
+	if (typeof input !== "string" || input.trim() === "") {
+		throw `${name} is required`;
+	}
+	const s = input.trim();
+	const m =
+		/^data:(image\/(?:jpeg|jpg|png|gif|webp));base64,([\s\S]+)$/i.exec(s);
+	if (!m) {
+		throw `${name} must be a base64 data URL for JPEG, PNG, GIF, or WebP`;
+	}
+	let mime = m[1].toLowerCase();
+	if (mime === "image/jpg") {
+		mime = "image/jpeg";
+	}
+	const b64 = m[2].replace(/\s/g, "");
+	let buf;
+	try {
+		buf = Buffer.from(b64, "base64");
+	} catch {
+		throw `${name} has invalid base64 data`;
+	}
+	if (buf.length === 0 || buf.length > MAX_EVIDENCE_IMAGE_BYTES) {
+		throw `${name} must decode to between 1 and ${MAX_EVIDENCE_IMAGE_BYTES} bytes`;
+	}
+	if (!bufferLooksLikeAllowedImage(buf)) {
+		throw `${name} content is not a supported image (JPEG, PNG, GIF, or WebP)`;
+	}
+	const dataUri = `data:${mime};base64,${buf.toString("base64")}`;
+	return {
+		dataUri,
+		mimeType: mime,
+		fileSize: buf.length,
+	};
+};
+
+/** Used by Handlebars: show <img> for data:image or legacy http(s) image paths. */
+export const evidenceVaultShowImage = (fileUrl, mimeType) => {
+	if (!fileUrl || typeof fileUrl !== "string") {
+		return false;
+	}
+	if (fileUrl.startsWith("data:image/")) {
+		return true;
+	}
+	if (mimeType === "application/pdf") {
+		return false;
+	}
+	const lower = fileUrl.toLowerCase();
+	if (lower.includes(".pdf")) {
+		return false;
+	}
+	try {
+		const pathname = new URL(fileUrl).pathname;
+		return /\.(jpe?g|png|gif|webp|bmp|svg|avif)$/i.test(pathname);
+	} catch {
+		return /\.(jpe?g|png|gif|webp|bmp|svg|avif)(\?|$)/i.test(
+			lower.split("?")[0],
+		);
+	}
+};
+
 //Properties
 export const checkAddress = (addr) => {
 	if (!addr || typeof addr !== "object") {
