@@ -68,12 +68,18 @@ router.route("/api/:id").delete(async (req, res) => {
 	}
 });
 
-// Routes to the notification website page.
+// Routes to the notifications 
 router.route("/").get(async (req, res) => {
-	return res.render("notifications", {
-		title: "Notifications",
-		user: req.session && req.session.user,
-	});
+	try {
+		const notificationsList = await getAllNotifications();
+		return res.render("notifications", {
+			title: "Notifications",
+			notifications: notificationsList,
+			user: req.session && req.session.user,
+		});
+	} catch (e) {
+		return res.status(500).render("error", { error: e.toString() });
+	}
 });
 
 export default router;

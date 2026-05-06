@@ -1,5 +1,18 @@
 <main class="page">
 	<h1>Disputes</h1>
-	<p>TODO: Render active disputes with status and deadlines.</p>
+	{{#if disputes}}
+		<ul class="card-grid">
+			{{#each disputes}}
+				<li class="card">
+					<span class="badge badge-info">{{this.status}}</span>
+					<h2 class="card-title">{{this.eventType}}</h2>
+					<p><strong>Result:</strong> {{this.result}}</p>
+					<p><strong>Created At:</strong> <small>{{this.createdAt}}</small></p>
+				</li>
+			{{/each}}
+		</ul>
+	{{else}}
+		<p>No active disputes.</p>
+	{{/if}}
 	<a href="/dashboard">Back to Dashboard</a>
 </main>

@@ -70,10 +70,16 @@ router.route("/api/:id").delete(async (req, res) => {
 
 // Routes to the dispute website page.
 router.route("/").get(async (req, res) => {
-	return res.render("disputes", {
-		title: "Disputes",
-		user: req.session && req.session.user,
-	});
+	try {
+		const disputesList = await getAllDisputes();
+		return res.render("disputes", {
+			title: "Disputes",
+			disputes: disputesList,
+			user: req.session && req.session.user,
+		});
+	} catch (e) {
+		return res.status(500).render("error", { error: e.toString() });
+	}
 });
 
 export default router;
