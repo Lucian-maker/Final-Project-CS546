@@ -1,5 +1,17 @@
 <main class="page">
 	<h1>Notifications</h1>
-	<p>TODO: Render notifications feed with read/unread state.</p>
+	{{#if notifications}}
+		<ul class="card-grid">
+			{{#each notifications}}
+				<li class="card">
+					<span class="badge badge-warning">{{this.channel}} - {{this.status}}</span>
+					<p>{{this.notificationDetails.text}}</p>
+					<p style="margin-top: auto; padding-top: 1rem;"><small style="color: #64748b;">{{this.createdAt}}</small></p>
+				</li>
+			{{/each}}
+		</ul>
+	{{else}}
+		<p>No new notifications.</p>
+	{{/if}}
 	<a href="/dashboard">Back to Dashboard</a>
 </main>

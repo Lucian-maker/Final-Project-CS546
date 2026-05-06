@@ -1,4 +1,5 @@
-import { users, violations } from "../config/mongoCollections.js";
+import { v4 as uuidv4 } from "uuid";
+import { properties, users, violations } from "../config/mongoCollections.js";
 import { checkId, checkString } from "../helpers.js";
 
 export const VIOLATION_STATUSES = Object.freeze([
@@ -13,7 +14,13 @@ const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /** Calendar-day difference from today to deadline (0 once deadline day has passed). */
 export const computeDeadlineFields = (originalCertifyByDate) => {
+	if (originalCertifyByDate == null || originalCertifyByDate === "") {
+		return { daysRemaining: null, isActionable: false };
+	}
 	const deadline = new Date(originalCertifyByDate);
+	if (Number.isNaN(deadline.getTime())) {
+		return { daysRemaining: null, isActionable: false };
+	}
 	const now = new Date();
 	const startToday = new Date(
 		now.getFullYear(),
@@ -32,6 +39,15 @@ export const computeDeadlineFields = (originalCertifyByDate) => {
 		daysRemaining: Math.max(0, daysRemaining),
 		isActionable,
 	};
+};
+
+export const getAllViolations = async () => {
+	const col = await violations();
+	const rows = await col.find({}).sort({ updatedAt: -1 }).toArray();
+	return rows.map((v) => ({
+		...v,
+		...computeDeadlineFields(v.originalCertifyByDate),
+	}));
 };
 
 /**
@@ -155,6 +171,148 @@ export const getViolationById = async (id) => {
 		...v,
 		...computeDeadlineFields(v.originalCertifyByDate),
 	};
+};
+
+export const getViolationsByPropertyId = async (propertyId) => {
+	const pid = checkId(propertyId, "propertyId");
+	const col = await violations();
+	const results = await col.find({ propertyId: pid }).toArray();
+	return results.map((v) => ({
+		...v,
+		...computeDeadlineFields(v.originalCertifyByDate),
+	}));
+};
+
+export const createViolation = async (data) => {
+	if (!data) throw "No data provided";
+
+	const collection = await violations();
+
+	const propertyId = checkId(data.propertyId, "propertyId");
+	const buildingAddress = checkString(data.buildingAddress, "address");
+	const violationType = checkString(data.violationType, "type");
+	const violationDescription = checkString(
+		data.violationDescription,
+		"description",
+	);
+
+	const originalCertifyByDate = data.originalCertifyByDate || null;
+	const deadlineFields = originalCertifyByDate
+		? computeDeadlineFields(originalCertifyByDate)
+		: { daysRemaining: null, isActionable: false };
+
+	const newViolation = {
+		_id: `viol-${uuidv4()}`,
+		propertyId,
+		buildingAddress,
+		normalizedAddress: buildingAddress.toLowerCase(),
+
+		violationType,
+		violationDescription,
+		violationStatus: "Open",
+
+		violationClass: data.violationClass || "B",
+		borough: data.borough || "",
+		zipCode: data.zipCode || "",
+
+		originalCertifyByDate,
+		inspectionDate: data.inspectionDate || null,
+
+		repairScheduledAt: null,
+		resolvedAt: null,
+
+		daysRemaining: deadlineFields.daysRemaining,
+		isActionable: deadlineFields.isActionable,
+
+		remediationStatus: {
+			currentState: "Open",
+			updatedByUserId: null,
+			updatedAt: new Date(),
+			notes: "",
+		},
+
+		statusHistory: [
+			{
+				state: "Open",
+				changedAt: new Date(),
+				changedBy: "system",
+			},
+		],
+
+		createdAt: new Date(),
+		updatedAt: new Date(),
+	};
+
+	const result = await collection.insertOne(newViolation);
+	if (!result.acknowledged) throw "Could not create violation";
+
+	const propCollection = await properties();
+	await propCollection.updateOne(
+		{ _id: propertyId },
+		{ $push: { violations: newViolation._id } },
+	);
+
+	return getViolationById(newViolation._id);
+};
+
+export const searchViolations = async (query) => {
+	const q = checkString(query, "search query");
+	const col = await violations();
+	const rx = escapeRegex(q);
+	const results = await col
+		.find({
+			$or: [
+				{ buildingAddress: { $regex: rx, $options: "i" } },
+				{ violationType: { $regex: rx, $options: "i" } },
+				{ violationStatus: { $regex: rx, $options: "i" } },
+				{ borough: { $regex: rx, $options: "i" } },
+				{ zipCode: { $regex: rx, $options: "i" } },
+			],
+		})
+		.toArray();
+
+	return results.map((v) => ({
+		...v,
+		...computeDeadlineFields(v.originalCertifyByDate),
+	}));
+};
+
+export const updateViolationStatus = async (
+	id,
+	newStatus,
+	userId = "admin",
+) => {
+	const vid = checkId(id, "violationId");
+	newStatus = checkString(newStatus, "status");
+	if (!VIOLATION_STATUSES.includes(newStatus)) {
+		throw `status must be one of: ${VIOLATION_STATUSES.join(", ")}`;
+	}
+
+	const collection = await violations();
+
+	const updateInfo = await collection.updateOne(
+		{ _id: vid },
+		{
+			$set: {
+				violationStatus: newStatus,
+				"remediationStatus.currentState": newStatus,
+				"remediationStatus.updatedByUserId": userId,
+				"remediationStatus.updatedAt": new Date(),
+				updatedAt: new Date(),
+			},
+			$push: {
+				statusHistory: {
+					state: newStatus,
+					changedAt: new Date(),
+					changedBy: userId,
+				},
+			},
+		},
+	);
+
+	if (updateInfo.modifiedCount === 0) throw "Could not update violation";
+
+	return getViolationById(vid);
 };
 
 async function loadUserForAuth(userId) {
