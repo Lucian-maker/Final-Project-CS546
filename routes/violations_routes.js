@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
 	VIOLATION_STATUSES,
 	assertUserCanAccessViolation,
+	createViolation,
 	getViolationById,
 	getViolationsForSessionUser,
 	updateViolationRemediation,
@@ -77,10 +78,25 @@ router.route("/").get(async (req, res) => {
 		}
 		filters.sort = req.query.sort || "updatedAt";
 		filters.order = req.query.order || "desc";
-		const violationsList = await getViolationsForSessionUser(
+
+		let violationsList = await getViolationsForSessionUser(
 			req.session.user,
 			filters,
 		);
+
+		if (req.query.days) {
+			const days = parseInt(req.query.days, 10);
+			if (!isNaN(days)) {
+				violationsList = violationsList.filter(
+					(v) =>
+						v.violationStatus !== "Closed" &&
+						v.daysRemaining !== null &&
+						v.daysRemaining !== undefined &&
+						v.daysRemaining <= days,
+				);
+			}
+		}
+
 		const decorated = violationsList.map(decorateViolationForView);
 		return res.render("violations", {
 			title: "Violations",
@@ -94,6 +110,7 @@ router.route("/").get(async (req, res) => {
 				propertyId: req.query.propertyId || "",
 				sort: req.query.sort || "updatedAt",
 				order: req.query.order || "desc",
+				days: req.query.days || "",
 			},
 			boroughs: BOROUGHS,
 			statuses: VIOLATION_STATUSES,
@@ -101,6 +118,24 @@ router.route("/").get(async (req, res) => {
 	} catch (e) {
 		return res.status(400).render("error", {
 			title: "Violations",
+			error: String(e),
+		});
+	}
+});
+
+router.route("/create").post(async (req, res) => {
+	try {
+		if (!req.session?.user || req.session.user.userRole !== "admin") {
+			return res.status(403).render("error", {
+				title: "Forbidden",
+				error: "Only administrators can create violations.",
+			});
+		}
+		const newViolation = await createViolation(req.body);
+		return res.redirect(`/violations/${newViolation._id}`);
+	} catch (e) {
+		return res.status(400).render("error", {
+			title: "Error",
 			error: String(e),
 		});
 	}
