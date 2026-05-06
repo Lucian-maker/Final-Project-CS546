@@ -20,7 +20,7 @@
 	<section>
 		<h2>All Properties</h2>
 
-		{{#if properties.length}}
+		{{#if propertiesList.length}}
 			<table>
 				<thead>
 					<tr>
@@ -31,7 +31,7 @@
 				</thead>
 
 				<tbody>
-					{{#each properties}}
+					{{#each propertiesList}}
 						<tr>
 							<td>
 								<a href="/properties/{{this._id}}">
