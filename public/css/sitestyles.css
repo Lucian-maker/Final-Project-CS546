@@ -82,7 +82,7 @@ th {
 	font-weight: 600;
 	padding: 0.5rem;
 	border-bottom: 2px solid #cbd5e1;
-	color: var (--nychcom-accent);
+	color: var(--nychcom-accent);
 }
 
 td {
