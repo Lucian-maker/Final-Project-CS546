@@ -1,17 +1,18 @@
 <main class="page">
 	<h1>Property Detail</h1>
 
-	<p>
-		<strong>Address:</strong>
-		{{property.address.number}} {{property.address.street}},
-		{{property.address.city}},
-		{{property.address.state}} {{property.address.zipCode}}
-	</p>
+	<section>
+		<h2>Property Information</h2>
 
-	<p><strong>Property ID:</strong> {{property._id}}</p>
+		<p>
+			<strong>Address:</strong>
+			{{property.address.number}} {{property.address.street}},
+			{{property.address.city}},
+			{{property.address.state}} {{property.address.zipCode}}
+		</p>
 
-	<p><strong># of Violations:</strong> {{property.violations.length}}</p>
-	<p><strong># of Reviews:</strong> {{property.reviews.length}}</p>
+		<p><strong>Property ID:</strong> {{property._id}}</p>
+	</section>
 
 	<p>
 		<a href="/violations?propertyId={{property._id}}">View violations for this property</a>

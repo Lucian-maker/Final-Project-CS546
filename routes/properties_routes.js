@@ -9,17 +9,17 @@ const router = Router();
 
 router.route("/").get(async (req, res) => {
 	try {
-		let properties;
+		let propertiesList;
 
 		if (req.query.search) {
-			properties = await searchProperties(req.query.search);
+			propertiesList = await searchProperties(req.query.search);
 		} else {
-			properties = await getAllProperties();
+			propertiesList = await getAllProperties();
 		}
 
 		return res.render("properties", {
 			title: "Properties",
-			properties,
+			propertiesList,
 			search: req.query.search || "",
 			user: req.session?.user,
 		});
