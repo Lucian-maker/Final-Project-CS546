@@ -15,6 +15,15 @@ import { createUser } from "../data/users.js";
 
 const idWithPrefix = (prefix) => `${prefix}-${uuidv4()}`;
 
+/** 1×1 PNG — matches evidence vault storage (data URI + base64 in Mongo). */
+const SEED_EVIDENCE_PNG_B64 =
+	"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+const SEED_EVIDENCE_PNG_DATA_URI = `data:image/png;base64,${SEED_EVIDENCE_PNG_B64}`;
+const SEED_EVIDENCE_PNG_BYTES = Buffer.from(
+	SEED_EVIDENCE_PNG_B64,
+	"base64",
+).length;
+
 const seedCredentials = [
 	{
 		label: "admin",
@@ -205,6 +214,7 @@ const main = async () => {
 	await (await violationsCol()).insertMany(violations);
 
 	const evidence1Id = idWithPrefix("evid");
+	const evidence2Id = idWithPrefix("evid");
 	await (
 		await evidenceCol()
 	).insertMany([
@@ -213,15 +223,33 @@ const main = async () => {
 			violationId: violation1Id,
 			propertyId: property1Id,
 			uploadedByUserId: tenantId,
-			evidenceType: "photo",
-			fileName: "bathroom_mold_03272026.jpg",
-			fileUrl: "/uploads/evidence/bathroom_mold_03272026.jpg",
-			mimeType: "image/jpeg",
-			fileSize: 2451821,
-			caption: "Mold still visible above shower vent",
-			noteText: "Photo taken after landlord said the issue was fixed.",
+			evidenceType: "note",
+			fileName: "",
+			fileUrl: "",
+			mimeType: "",
+			fileSize: 0,
+			caption: "",
+			noteText:
+				"Tenant log (text-only evidence): mold still visible above shower vent after landlord said the issue was fixed. To add a photo, open Evidence vault, attach an image, and include a caption or note.",
 			capturedAt: new Date("2026-03-27T18:10:00.000Z"),
 			uploadedAt: new Date("2026-03-27T18:15:00.000Z"),
+			isDeleted: false,
+		},
+		{
+			_id: evidence2Id,
+			violationId: violation1Id,
+			propertyId: property1Id,
+			uploadedByUserId: tenantId,
+			evidenceType: "photo",
+			fileName: "vent-area-sample.png",
+			fileUrl: SEED_EVIDENCE_PNG_DATA_URI,
+			mimeType: "image/png",
+			fileSize: SEED_EVIDENCE_PNG_BYTES,
+			caption:
+				"Seed sample: placeholder image for evidence vault (base64 in DB).",
+			noteText: "",
+			capturedAt: new Date("2026-03-27T18:20:00.000Z"),
+			uploadedAt: new Date("2026-03-27T18:21:00.000Z"),
 			isDeleted: false,
 		},
 	]);
@@ -335,7 +363,7 @@ const main = async () => {
 	console.log("  3 users (admin, landlord, tenant)");
 	console.log("  2 properties");
 	console.log("  2 violations");
-	console.log("  1 evidence record");
+	console.log("  2 evidence records (note + photo with embedded PNG)");
 	console.log("  1 review");
 	console.log("  2 comments");
 	console.log("  1 notification");

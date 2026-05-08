@@ -423,6 +423,140 @@ nav.home-nav a:hover {
 	cursor: pointer;
 }
 
+.violations-page,
+.evidence-page,
+.violation-detail {
+	max-width: 960px;
+}
+
+.filters-form {
+	margin-bottom: 1.5rem;
+	padding: 1rem;
+	background: #fff;
+	border: 1px solid #d0d7e2;
+	border-radius: 8px;
+}
+
+.filters-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+	gap: 0.75rem 1rem;
+	margin-bottom: 1rem;
+}
+
+.data-table {
+	width: 100%;
+	border-collapse: collapse;
+	background: #fff;
+	font-size: 0.95rem;
+}
+
+.data-table th,
+.data-table td {
+	border: 1px solid #d0d7e2;
+	padding: 0.5rem 0.6rem;
+	text-align: left;
+}
+
+.data-table th {
+	background: #e8edf5;
+}
+
+.success-banner {
+	padding: 0.5rem 0.75rem;
+	background: #e6f4ea;
+	border: 1px solid #1b7a3a;
+	border-radius: 4px;
+	color: #14532d;
+	margin-bottom: 1rem;
+}
+
+.detail-grid {
+	display: grid;
+	grid-template-columns: 11rem 1fr;
+	gap: 0.35rem 1rem;
+	margin: 1rem 0;
+}
+
+.detail-grid dt {
+	font-weight: 600;
+	color: #374151;
+}
+
+.detail-grid dd {
+	margin: 0;
+}
+
+.history-list {
+	padding-left: 1.25rem;
+}
+
+.muted {
+	color: #6b7280;
+	font-size: 0.92rem;
+}
+
+.actions-row {
+	margin: 1rem 0;
+}
+
+.button-link {
+	display: inline-block;
+	padding: 0.5rem 1rem;
+	background: var(--nychcom-accent);
+	color: #fff !important;
+	text-decoration: none !important;
+	border-radius: 4px;
+	font-weight: 600;
+}
+
+.button-link:hover {
+	opacity: 0.92;
+}
+
+.status-update {
+	margin-top: 1.5rem;
+	padding: 1rem;
+	background: #fff;
+	border: 1px solid #d0d7e2;
+	border-radius: 8px;
+}
+
+.evidence-thumb {
+	max-width: 100%;
+	max-height: 240px;
+	border-radius: 6px;
+	border: 1px solid #d0d7e2;
+	margin-top: 0.5rem;
+}
+
+.evidence-cards {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.evidence-card {
+	border: 1px solid #d0d7e2;
+	border-radius: 8px;
+	padding: 1rem;
+	margin-bottom: 1rem;
+	background: #fff;
+}
+
+.evidence-card header {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 0.5rem;
+}
+
+.evidence-card .btn-danger {
+	width: auto;
+	min-width: 10rem;
+	height: auto;
+	padding: 0.45rem 0.85rem;
+}
+
 .card-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

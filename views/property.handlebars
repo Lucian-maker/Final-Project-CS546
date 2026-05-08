@@ -14,14 +14,22 @@
 		<p><strong>Property ID:</strong> {{property._id}}</p>
 	</section>
 
-	<section>
-		<h2>Summary</h2>
+	<p>
+		<a href="/violations?propertyId={{property._id}}">View violations for this property</a>
+		·
+		<a href="/evidence?propertyId={{property._id}}">Evidence for this property</a>
+		·
+		<a href="/reviews/{{property._id}}">Reviews</a>
+	</p>
 
-		<p><strong># of Violations:</strong> {{property.violations.length}}</p>
-		<p><strong># of Reviews:</strong> {{property.reviews.length}}</p>
-	</section>
+	{{#if property.violations.length}}
+		<h2>Violations on file</h2>
+		<ul>
+			{{#each property.violations}}
+				<li><a href="/violations/{{this}}">{{this}}</a></li>
+			{{/each}}
+		</ul>
+	{{/if}}
 
-	<section class="site-footer">
-		<a href="/properties">Back to Properties</a>
-	</section>
+	<a href="/properties">Back to Properties</a>
 </main>
