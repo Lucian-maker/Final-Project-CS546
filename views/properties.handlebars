@@ -45,24 +45,116 @@
 
 	<section>
 
-		<h2>Search Properties</h2>
+		<h2>Filter Properties</h2>
 
-		<div class="dashboard-search">
-			<form class="search-form" method="GET" action="/properties">
+		<form method="GET" action="/properties" class="filters-form">
 
-				<input
-					type="text"
-					name="search"
-					placeholder="Search by address..."
-					value="{{search}}"
-				/>
+			<div class="filters-grid">
 
-				<button type="submit" class="btn-search">
-					Search
-				</button>
+				<div class="field">
+					<label for="search">Search</label>
+					<input
+						type="text"
+						id="search"
+						name="search"
+						value="{{filters.search}}"
+						placeholder="Address, city, zip..."
+					/>
+				</div>
 
-			</form>
-		</div>
+				<div class="field">
+					<label for="city">City</label>
+					<input
+						type="text"
+						id="city"
+						name="city"
+						value="{{filters.city}}"
+					/>
+				</div>
+
+				<div class="field">
+					<label for="state">State</label>
+					<input
+						type="text"
+						id="state"
+						name="state"
+						value="{{filters.state}}"
+					/>
+				</div>
+
+				<div class="field">
+					<label for="zipCode">Zip Code</label>
+					<input
+						type="text"
+						id="zipCode"
+						name="zipCode"
+						value="{{filters.zipCode}}"
+					/>
+				</div>
+
+				<div class="field">
+					<label for="minViolations">Min Violations</label>
+					<input
+						type="number"
+						id="minViolations"
+						name="minViolations"
+						min="0"
+						value="{{filters.minViolations}}"
+					/>
+				</div>
+
+				<div class="field">
+					<label for="minReviews">Min Reviews</label>
+					<input
+						type="number"
+						id="minReviews"
+						name="minReviews"
+						min="0"
+						value="{{filters.minReviews}}"
+					/>
+				</div>
+
+				<div class="field">
+					<label for="sort">Sort By</label>
+					<select id="sort" name="sort">
+						<option value="createdOn" {{#if (eq filters.sort "createdOn")}}selected{{/if}}>
+							Date Created
+						</option>
+
+						<option value="updatedOn" {{#if (eq filters.sort "updatedOn")}}selected{{/if}}>
+							Last Updated
+						</option>
+
+						<option value="address.street" {{#if (eq filters.sort "address.street")}}selected{{/if}}>
+							Street
+						</option>
+
+						<option value="address.city" {{#if (eq filters.sort "address.city")}}selected{{/if}}>
+							City
+						</option>
+					</select>
+				</div>
+
+				<div class="field">
+					<label for="order">Order</label>
+					<select id="order" name="order">
+						<option value="desc" {{#if (eq filters.order "desc")}}selected{{/if}}>
+							Newest First
+						</option>
+
+						<option value="asc" {{#if (eq filters.order "asc")}}selected{{/if}}>
+							Oldest First
+						</option>
+					</select>
+				</div>
+
+			</div>
+
+			<button type="submit">
+				Apply Filters
+			</button>
+
+		</form>
 
 		<h2>All Properties</h2>
 
@@ -112,9 +204,11 @@
 		{{else}}
 			<p>No properties found.</p>
 		{{/if}}
+
 	</section>
 
 	<section class="site-footer">
 		<a href="/dashboard">Back to Dashboard</a>
 	</section>
+
 </main>

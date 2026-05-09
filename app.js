@@ -2,6 +2,7 @@ import express from "express";
 import exphbs from "express-handlebars";
 import session from "express-session";
 import configRoutes from "./routes/index.js";
+import { evidenceVaultShowImage } from "./helpers.js";
 import {
 	logRequest,
 	guestOnly,
@@ -12,8 +13,8 @@ import {
 const app = express();
 
 app.use("/public", express.static("public"));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "12mb" }));
+app.use(express.urlencoded({ extended: true, limit: "12mb" }));
 
 app.use(
 	session({
@@ -30,6 +31,7 @@ app.engine(
 		defaultLayout: "main",
 		helpers: {
 			eq: (a, b) => a === b,
+			evidenceShowImage: evidenceVaultShowImage,
 		},
 	}),
 );

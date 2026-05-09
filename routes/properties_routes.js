@@ -1,9 +1,8 @@
 import { Router } from "express";
 import {
-	getAllProperties,
-	searchProperties,
+	getProperties,
 	getPropertyById,
-	createProperty
+	createProperty,
 } from "../data/properties.js";
 
 import { logDescriptions, logCategories } from "../helpers.js";
@@ -12,33 +11,41 @@ const router = Router();
 
 router.get("/", async (req, res) => {
 	try {
-		let properties;
+		res.locals.logCategory = logCategories.properties;
+		res.locals.logDescription =
+			logDescriptions.viewPropertiesList();
 
-		const search = (req.query.search || "").trim();
+		const filters = {
+			search: req.query.search || "",
+			city: req.query.city || "",
+			state: req.query.state || "",
+			zipCode: req.query.zipCode || "",
+			minViolations:
+				req.query.minViolations !== undefined &&
+				req.query.minViolations !== ""
+					? Number(req.query.minViolations)
+					: null,
+			minReviews:
+				req.query.minReviews !== undefined &&
+				req.query.minReviews !== ""
+					? Number(req.query.minReviews)
+					: null,
+			sort: req.query.sort || "createdOn",
+			order: req.query.order || "desc",
+		};
 
-		if (search) {
-			res.locals.logCategory = logCategories.properties;
-			res.locals.logDescription =
-				logDescriptions.searchProperties(search);
-
-			properties = await searchProperties(search);
-		} else {
-			res.locals.logCategory = logCategories.properties;
-			res.locals.logDescription =
-				logDescriptions.viewPropertiesList();
-
-			properties = await getAllProperties();
-		}
+		let properties = await getProperties(filters);
 
 		return res.render("properties", {
 			title: "Properties",
 			properties,
-			search,
-			user: req.session?.user
+			filters,
+			user: req.session?.user,
 		});
-
 	} catch (e) {
-		return res.status(500).render("error", { error: e });
+		return res.status(500).render("error", {
+			error: String(e),
+		});
 	}
 });
 
@@ -53,16 +60,14 @@ router.get("/:id", async (req, res) => {
 		return res.render("property", {
 			title: "Property Detail",
 			property,
-			user: req.session?.user
+			user: req.session?.user,
 		});
-
 	} catch (e) {
 		return res.status(404).render("error", {
-			error: "Property not found"
+			error: "Property not found",
 		});
 	}
 });
-
 
 router.post("/create", async (req, res) => {
 	try {
@@ -86,7 +91,7 @@ router.post("/create", async (req, res) => {
 			street,
 			city,
 			state,
-			zipCode
+			zipCode,
 		});
 
 		res.locals.logCategory = logCategories.properties;
@@ -98,6 +103,5 @@ router.post("/create", async (req, res) => {
 		return res.status(400).render("error", { error: e });
 	}
 });
-
 
 export default router;

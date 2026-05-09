@@ -1,5 +1,113 @@
-<main class="page">
-	<h1>Evidence Vault</h1>
-	<p>TODO: Render uploaded evidence with upload form.</p>
-	<a href="/dashboard">Back to Dashboard</a>
+<main class="page evidence-page">
+	<h1>Evidence vault</h1>
+	<p><a href="/dashboard">Back to Dashboard</a></p>
+
+	{{#if message}}
+		<p class="success-banner">{{message}}</p>
+	{{/if}}
+	{{#if error}}
+		<p class="error">{{error}}</p>
+	{{/if}}
+
+	<section class="evidence-add">
+		<h2>Add evidence</h2>
+		<p class="muted">
+			Add a text note, optionally attach an image, and use the caption and/or note fields as needed. An image must include at least a caption or note; text-only entries require note text.
+		</p>
+		<form method="POST" action="/evidence" class="evidence-form" id="evidence-form">
+			<div class="field">
+				<label for="violationId">Violation ID</label>
+				<input type="text" id="violationId" name="violationId" value="{{violationId}}" required placeholder="viol-..." />
+			</div>
+			<div class="field" id="field-evidence-image">
+				<label for="evidenceFile">Image file</label>
+				<input type="file" id="evidenceFile" accept="image/jpeg,image/png,image/gif,image/webp" />
+				<input type="hidden" name="imageData" id="imageData" value="" autocomplete="off" />
+				<input type="hidden" name="originalFileName" id="originalFileName" value="" autocomplete="off" />
+			</div>
+			<div class="field">
+				<label for="caption">Caption (short)</label>
+				<input type="text" id="caption" name="caption" maxlength="500" placeholder="Optional; useful with an image" />
+			</div>
+			<div class="field" id="field-note-text">
+				<label for="noteText">Note text</label>
+				<textarea id="noteText" name="noteText" rows="4" maxlength="2000" placeholder="Required for text-only; with an image, add note and/or caption"></textarea>
+			</div>
+			<button type="submit">Save evidence</button>
+		</form>
+	</section>
+
+	<section class="evidence-list">
+		<h2>Recorded evidence ({{evidenceRows.length}})</h2>
+		{{#if evidenceRows.length}}
+			<ul class="evidence-cards">
+				{{#each evidenceRows}}
+					<li class="evidence-card">
+						<header>
+							<strong>{{this.evidenceType}}</strong>
+							<span class="muted">{{this.uploadedAtFormatted}}</span>
+						</header>
+						{{#if this.fileUrl}}
+							<p><a href="{{this.fileUrl}}" target="_blank" rel="noopener noreferrer">{{this.fileName}}</a></p>
+							{{#if (evidenceShowImage this.fileUrl this.mimeType)}}
+								<img src="{{this.fileUrl}}" alt="" class="evidence-thumb" referrerpolicy="no-referrer" />
+							{{/if}}
+						{{/if}}
+						{{#if this.caption}}
+							<p><em>{{this.caption}}</em></p>
+						{{/if}}
+						{{#if this.noteText}}
+							<p>{{this.noteText}}</p>
+						{{/if}}
+						<p class="muted">
+							Violation:
+							<a href="/violations/{{this.violationId}}">{{this.violationId}}</a>
+							· Property:
+							<a href="/properties/{{this.propertyId}}">{{this.propertyId}}</a>
+						</p>
+						{{#if (eq ../user._id this.uploadedByUserId)}}
+							<form method="POST" action="/evidence/{{this._id}}/delete" class="inline-form">
+								{{#if ../violationId}}
+									<input type="hidden" name="violationId" value="{{../violationId}}" />
+								{{/if}}
+								<button type="submit" class="btn-danger">Delete my entry</button>
+							</form>
+						{{/if}}
+					</li>
+				{{/each}}
+			</ul>
+		{{else}}
+			<p>No evidence yet.</p>
+		{{/if}}
+	</section>
+
+	<script>
+		(function () {
+			var form = document.getElementById("evidence-form");
+			var evidenceFile = document.getElementById("evidenceFile");
+			var imageData = document.getElementById("imageData");
+			var originalFileName = document.getElementById("originalFileName");
+			if (form && evidenceFile) {
+				form.addEventListener("submit", function (e) {
+					if (!evidenceFile.files || !evidenceFile.files[0]) {
+						if (imageData) imageData.value = "";
+						if (originalFileName) originalFileName.value = "";
+						return;
+					}
+					e.preventDefault();
+					var fr = new FileReader();
+					fr.onerror = function () {
+						alert("Could not read the image file.");
+					};
+					fr.onload = function () {
+						if (imageData) imageData.value = fr.result;
+						if (originalFileName)
+							originalFileName.value = evidenceFile.files[0].name;
+						form.submit();
+					};
+					fr.readAsDataURL(evidenceFile.files[0]);
+				});
+			}
+		})();
+	</script>
 </main>
