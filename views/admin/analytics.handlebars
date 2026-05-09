@@ -1,0 +1,86 @@
+<main class="page">
+	<div class="dashboard-header">
+		<h1>Analytics</h1>
+
+		<p class="dashboard-subtitle">
+			Platform activity metrics.
+		</p>
+	</div>
+
+	<div class="analytics-container">
+		<div class="metric-card">
+			<span class="metric-value">
+				{{stats.totalUsers}}
+			</span>
+
+			<span class="metric-label">
+				Users
+			</span>
+		</div>
+
+		<div class="metric-card">
+			<span class="metric-value">
+				{{stats.totalProperties}}
+			</span>
+
+			<span class="metric-label">
+				Properties
+			</span>
+		</div>
+
+		<div class="metric-card">
+			<span class="metric-value">
+				{{stats.totalReviews}}
+			</span>
+
+			<span class="metric-label">
+				Reviews
+			</span>
+		</div>
+
+		<div class="metric-card">
+			<span class="metric-value metric-warning">
+				{{stats.totalViolations}}
+			</span>
+
+			<span class="metric-label">
+				Violations
+			</span>
+		</div>
+	</div>
+
+	<h2>By Borough</h2>
+
+	<div class="dashboard-grid">
+
+		{{#each boroughStats}}
+
+			<div class="card">
+
+				<h3 class="card-title">
+					{{this._id}}
+				</h3>
+
+				<div class="analytics-container">
+
+					<div class="metric-card">
+						<div class="metric-value">
+							{{this.totalViolations}}
+						</div>
+
+						<div class="metric-label">
+							Violations
+						</div>
+					</div>
+
+				</div>
+
+			</div>
+
+		{{/each}}
+
+	</div>
+
+    <a href="/admin">Back to Admin Controls</a>
+
+</main>

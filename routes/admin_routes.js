@@ -1,12 +1,193 @@
 import { Router } from "express";
+import * as usersData from "../data/users.js";
+import * as propertiesData from "../data/properties.js";
+import * as violationsData from "../data/violations.js";
+import { getAllLogs, searchLogs } from "../data/logs.js";
+import { logDescriptions, logCategories } from "../helpers.js";
+import { users,
+	properties,
+	violations,
+	reviews
+} from "../config/mongoCollections.js";
 
 const router = Router();
 
-router.route("/").get(async (req, res) => {
+
+router.get("/", async (req, res) => {
+	res.locals.logCategory = logCategories.admin;
+	res.locals.logDescription = logDescriptions.adminDashboard();
 	return res.render("admin", {
-		title: "Admin Console",
-		user: req.session.user,
+		title: "Admin Controls",
+		user: req.session.user
 	});
+});
+
+router.get("/users", async (req, res) => {
+	try {
+		const search = (req.query.search || "").trim().toLowerCase();
+
+		let users = await usersData.getAllUsers();
+
+		if (search) {
+			users = users.filter((user) => {
+				return (
+					user.firstName?.toLowerCase().includes(search) ||
+					user.lastName?.toLowerCase().includes(search) ||
+					user.email?.toLowerCase().includes(search) ||
+					user.userRole?.toLowerCase().includes(search)
+				);
+			});
+		}
+
+		res.locals.logCategory = logCategories.admin;
+		res.locals.logDescription = logDescriptions.adminViewUsers();
+
+		return res.render("admin/users", {
+			title: "User Management",
+			users,
+			search,
+			user: req.session.user
+		});
+	} catch (e) {
+		return res.status(500).render("error", { error: e });
+	}
+});
+
+router.get("/users/:id", async (req, res) => {
+	try {
+		const user = await usersData.getUserById(req.params.id);
+
+		res.locals.logCategory = logCategories.admin;
+		res.locals.logDescription = logDescriptions.adminViewUser(req.params.id);
+
+		return res.render("admin/user", {
+			title: "User Detail",
+			viewedUser: user,
+			user: req.session.user
+		});
+	} catch (e) {
+		return res.status(404).render("error", {
+			error: "User not found"
+		});
+	}
+});
+
+router.post("/users/:id/update", async (req, res) => {
+	try {
+		const { firstName, lastName, email, phoneNumber, userRole } = req.body;
+
+		await usersData.updateUserById(req.params.id, {
+			firstName,
+			lastName,
+			email,
+			phoneNumber,
+			userRole
+		});
+
+		res.locals.logCategory = logCategories.admin;
+		res.locals.logDescription = logDescriptions.adminUpdateUser(req.params.id);
+
+		return res.redirect(`/admin/users/${req.params.id}`);
+	} catch (e) {
+		return res.status(500).render("error", { error: e });
+	}
+});
+
+router.get("/analytics", async (req, res) => {
+	try {
+		const usersCollection = await users();
+		const propertiesCollection = await properties();
+		const reviewsCollection = await reviews();
+		const violationsCollection = await violations();
+
+		const totalUsers = await usersCollection.countDocuments();
+		const totalProperties = await propertiesCollection.countDocuments();
+		const totalReviews = await reviewsCollection.countDocuments();
+		const totalViolations = await violationsCollection.countDocuments();
+
+		const boroughStats =
+			await violationsCollection.aggregate([
+				{
+					$group: {
+						_id: "$borough",
+						totalViolations: { $sum: 1 }
+					}
+				},
+				{
+					$sort: { totalViolations: -1 }
+				}
+			]).toArray();
+
+		res.locals.logCategory = logCategories.admin;
+		res.locals.logDescription = logDescriptions.adminAnalytics();
+
+		return res.render("admin/analytics", {
+			title: "Analytics",
+			stats: {
+				totalUsers,
+				totalProperties,
+				totalReviews,
+				totalViolations
+			},
+			boroughStats,
+			user: req.session.user
+		});
+	} catch (e) {
+		return res.status(500).render("error", { error: e });
+	}
+});
+
+router.get("/logs", async (req, res) => {
+	try {
+		const filters = {
+			search: req.query.search || "",
+			role: req.query.role || "",
+			category: req.query.category || "",
+			fromDate: req.query.fromDate || "",
+			toDate: req.query.toDate || "",
+			sort: req.query.sort || "newest"
+		};
+
+		const logs = await searchLogs(filters);
+
+		res.locals.logCategory = logCategories.admin;
+		res.locals.logDescription = logDescriptions.adminLogs();
+
+		return res.render("admin/logs", {
+			title: "System Logs",
+			logs,
+
+			search: filters.search,
+			role: filters.role,
+			category: filters.category,
+
+			fromDate: filters.fromDate,
+			toDate: filters.toDate,
+			sort: filters.sort,
+
+			categories: [
+				"auth",
+				"admin",
+				"violations",
+				"properties",
+				"evidence",
+				"reviews",
+				"comments",
+				"notifications",
+				"disputes",
+				"dashboard"
+			],
+
+			user: req.session.user
+			
+		});
+
+	} catch (e) {
+		return res.status(500).render("error", {
+			title: "Error",
+			error: e
+		});
+	}
 });
 
 export default router;
