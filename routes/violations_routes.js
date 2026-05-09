@@ -184,4 +184,72 @@ router
 		}
 	});
 
+router
+	.route("/:id")
+	.get(async (req, res) => {
+		try {
+			await assertUserCanAccessViolation(req.session.user, req.params.id);
+			const violation = await getViolationById(req.params.id);
+			const allowed = allowedNextStatuses(
+				req.session.user.userRole,
+				violation.violationStatus,
+			);
+			return res.render("violation", {
+				title: `Violation — ${violation.buildingAddress}`,
+				user: req.session.user,
+				violation: decorateViolationForView(violation),
+				allowedNextStatuses: allowed,
+				statusMessage: req.query.updated ? "Status updated." : null,
+				error: null,
+			});
+		} catch (e) {
+			const msg = String(e);
+			if (msg.includes("not found")) {
+				return res.status(404).render("error", {
+					title: "Not Found",
+					error: msg,
+				});
+			}
+			return res.status(403).render("error", {
+				title: "Forbidden",
+				error: msg,
+			});
+		}
+	})
+	.post(async (req, res) => {
+		try {
+			const body = req.body || {};
+			await updateViolationRemediation(req.params.id, req.session.user, {
+				newStatus: body.newStatus,
+				notes: body.notes,
+			});
+			return res.redirect(`/violations/${req.params.id}?updated=1`);
+		} catch (e) {
+			try {
+				await assertUserCanAccessViolation(
+					req.session.user,
+					req.params.id,
+				);
+				const violation = await getViolationById(req.params.id);
+				const allowed = allowedNextStatuses(
+					req.session.user.userRole,
+					violation.violationStatus,
+				);
+				return res.status(400).render("violation", {
+					title: `Violation — ${violation.buildingAddress}`,
+					user: req.session.user,
+					violation: decorateViolationForView(violation),
+					allowedNextStatuses: allowed,
+					statusMessage: null,
+					error: String(e),
+				});
+			} catch {
+				return res.status(400).render("error", {
+					title: "Error",
+					error: String(e),
+				});
+			}
+		}
+	});
+
 export default router;
