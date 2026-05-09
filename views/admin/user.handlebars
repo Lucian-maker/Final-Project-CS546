@@ -1,0 +1,82 @@
+<main class="page">
+
+	<div class="dashboard-header">
+		<h1>User Details</h1>
+
+		<p class="dashboard-subtitle">
+			View and manage user account information.
+		</p>
+	</div>
+
+	<section class="card">
+
+		<h2 class="card-title">
+			{{viewedUser.firstName}} {{viewedUser.lastName}}
+		</h2>
+
+		<span class="badge badge-info">
+			{{viewedUser.userRole}}
+		</span>
+
+		<p><strong>Email:</strong> {{viewedUser.email}}</p>
+		<p><strong>Phone:</strong> {{viewedUser.phoneNumber}}</p>
+		<p><strong>User ID:</strong> {{viewedUser._id}}</p>
+
+	</section>
+
+	<section class="card">
+
+		<h2>Edit User</h2>
+
+		<form method="POST" action="/admin/users/{{viewedUser._id}}/update">
+
+			<div class="field">
+				<label>First Name</label>
+				<input name="firstName" value="{{viewedUser.firstName}}" />
+			</div>
+
+			<div class="field">
+				<label>Last Name</label>
+				<input name="lastName" value="{{viewedUser.lastName}}" />
+			</div>
+
+			<div class="field">
+				<label>Email</label>
+				<input name="email" value="{{viewedUser.email}}" />
+			</div>
+
+			<div class="field">
+				<label>Phone Number</label>
+				<input name="phoneNumber" value="{{viewedUser.phoneNumber}}" />
+			</div>
+
+			<div class="field">
+				<label>Role</label>
+				<select name="userRole">
+					<option value="tenant" {{#if (eq viewedUser.userRole "tenant")}}selected{{/if}}>
+						Tenant
+					</option>
+					<option value="landlord" {{#if (eq viewedUser.userRole "landlord")}}selected{{/if}}>
+						Landlord
+					</option>
+					<option value="admin" {{#if (eq viewedUser.userRole "admin")}}selected{{/if}}>
+						Admin
+					</option>
+				</select>
+			</div>
+
+			<button type="submit">
+				Update User
+			</button>
+
+		</form>
+
+	</section>
+
+	<section class="site-footer">
+		<a href="/admin/users">
+			Back to User Management
+		</a>
+	</section>
+
+</main>
