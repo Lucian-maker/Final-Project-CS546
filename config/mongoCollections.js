@@ -22,3 +22,4 @@ export const comments = getCollectionFn("comments");
 export const notifications = getCollectionFn("notifications");
 export const disputes = getCollectionFn("disputes");
 export const attorneys = getCollectionFn("attorneys");
+export const logs = getCollectionFn("logs");
