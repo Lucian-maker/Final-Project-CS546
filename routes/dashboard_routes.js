@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { getAllViolations } from "../data/violations.js";
 
+import { logDescriptions, logCategories } from "../helpers.js";
+
 const router = Router();
 
 router.route("/").get(async (req, res) => {
@@ -23,6 +25,8 @@ router.route("/").get(async (req, res) => {
 		console.error("Could not fetch violations for dashboard metrics:", e);
 	}
 
+	res.locals.logCategory = logCategories.dashboard;
+	res.locals.logDescription = logDescriptions.viewDashboard();
 	return res.render("dashboard", {
 		title: "Dashboard",
 		user,

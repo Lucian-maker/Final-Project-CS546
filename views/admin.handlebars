@@ -1,6 +1,36 @@
 <main class="page">
-	<h1>Admin Console</h1>
-	<p>Welcome, {{user.firstName}} {{user.lastName}}.</p>
-	<p>TODO: Render admin tools: user management, content moderation, audit log.</p>
-	<a href="/dashboard">Back to Dashboard</a>
+	<div class="dashboard-header">
+		<h1>Admin Controls</h1>
+
+		<p class="dashboard-subtitle">
+			Welcome,
+			<strong>{{user.firstName}} {{user.lastName}}</strong>
+			({{user.userRole}})
+		</p>
+	</div>
+
+		<div class="dashboard-grid">
+			<a href="/admin/users" class="dashboard-tile admin-tile">
+				<span class="tile-icon">👥</span>
+				<span class="tile-text">
+					Manage Users
+				</span>
+			</a>
+
+			<a href="/admin/analytics" class="dashboard-tile admin-tile">
+				<span class="tile-icon">📊</span>
+				<span class="tile-text">
+					Analytics
+				</span>
+			</a>
+
+			<a href="/admin/logs" class="dashboard-tile admin-tile">
+				<span class="tile-icon">📜</span>
+				<span class="tile-text">
+					System Logs
+				</span>
+			</a>
+		</div>
+
+	<a href="/dashboard" class="back-link">Back to Dashboard</a>
 </main>

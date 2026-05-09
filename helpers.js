@@ -199,3 +199,79 @@ export const checkAddress = (addr) => {
 		zipCode,
 	};
 };
+
+//Logging
+export const logDescriptions = {
+
+  login: (email) => `User logged in (${email})`,
+  logout: () => `User logged out`,
+  register: (email) => `New user registered (${email})`,
+  home: () => `Viewed home page`,
+  viewRegister: () => `Viewed registration page`,
+  viewSignIn: () => `Viewed signin page`,
+
+  viewDashboard: () => `Viewed dashboard`,
+
+  viewUsersList: () => `Viewed user directory`,
+  viewUserProfile: (id) => `Viewed user ${id}`,
+
+  viewComments: () => `Viewed comments page`,
+
+  viewPropertiesList: () => `Viewed properties list`,
+  viewProperty: (id) => `Viewed property ${id}`,
+  createProperty: (id) => `Created property ${id}`,
+  searchProperties: (q) => `Searched properties: "${q}"`,
+
+  viewViolationsList: () => `Viewed violations list`,
+  viewViolation: (id) => `Viewed violation ${id}`,
+  createViolation: (id) => `Created violation ${id}`,
+  updateViolationStatus: (id, status) =>
+    `Updated violation ${id} → ${status}`,
+  searchViolations: (q) => `Searched violations: "${q}"`,
+
+  createReview: (id) => `Created review ${id}`,
+  updateReview: (id) => `Updated review ${id}`,
+  deleteReview: (id) => `Deleted review ${id}`,
+  viewPropertyReviews: (id) => `Viewed reviews for property ${id}`,
+
+  createDispute: (id) => `Created dispute ${id}`,
+  updateDispute: (id) => `Updated dispute ${id}`,
+  deleteDispute: (id) => `Deleted dispute ${id}`,
+  viewDisputes: () => `Viewed disputes`,
+
+  uploadEvidence: (id) => `Uploaded evidence ${id}`,
+  viewEvidence: (id) => `Viewed evidence ${id}`,
+
+  createNotification: (id) => `Created notification ${id}`,
+  updateNotification: (id) => `Updated notification ${id}`,
+  deleteNotification: (id) => `Deleted notification ${id}`,
+  viewNotifications: () => `Viewed notifications list`,
+  viewNotification: (id) => `Viewed notification ${id}`,
+
+  viewAttorneys: () => `Viewed attorney directory`,
+  viewAttorney: (id) => `Viewed attorney ${id}`,
+  createAttorney: (id) => `Created attorney ${id}`,
+  updateAttorney: (id) => `Updated attorney ${id}`,
+  deleteAttorney: (id) => `Deleted attorney ${id}`,
+
+  adminDashboard: () => `Opened admin dashboard`,
+  adminViewUsers: () => `Admin opened user management`,
+  adminViewUser: (id) => `Admin viewed user ${id}`,
+  adminUpdateUser: (id) => `Updated user ${id}`,
+  adminLogs: () => `Admin opened system logs`,
+  adminAnalytics: () => `Admin opened analytics`,
+};
+
+export const logCategories = {
+	auth: "auth",
+	admin: "admin",
+	violations: "violations",
+	properties: "properties",
+	evidence: "evidence",
+	reviews: "reviews",
+	comments: "comments",
+	disputes: "disputes",
+	notifications: "notifications",
+	attorneys: "attorneys",
+	dashboard: "dashboard"
+};

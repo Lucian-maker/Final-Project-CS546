@@ -1,6 +1,7 @@
 import { violations } from '../config/mongoCollections.js';
 import { v4 as uuidv4 } from "uuid";
 import { checkId, checkString } from '../helpers.js';
+import { properties } from '../config/mongoCollections.js';
 
 export const getAllViolations = async () => {
     const collection = await violations();
@@ -34,36 +35,38 @@ export const createViolation = async (data) => {
     if (!data) throw "No data provided";
 
     const collection = await violations();
+    const propertyCollection = await properties();
 
     const propertyId = checkId(data.propertyId, "propertyId");
-    const buildingAddress = checkString(data.buildingAddress, "address");
+
+    const property = await propertyCollection.findOne({ _id: propertyId });
+
+    if (!property) throw "Invalid propertyId: property does not exist";
+
+    const buildingAddress = 
+        `${property.address.number} ${property.address.street}, ${property.address.city}, 
+        ${property.address.state} ${property.address.zipCode}`;
+    const borough = "Unspecified";
+    const zipCode = property.zipCode || "";
+
     const violationType = checkString(data.violationType, "type");
     const violationDescription = checkString(data.violationDescription, "description");
 
-    let daysRemaining = null;
-    let isActionable = false;
-
-    if (data.originalCertifyByDate) {
-        const diff = Math.ceil(
-            (new Date(data.originalCertifyByDate) - new Date()) / (1000 * 60 * 60 * 24)
-        );
-        daysRemaining = diff;
-        isActionable = diff <= 0;
-    }
-
     const newViolation = {
         _id: `viol-${uuidv4()}`,
+
         propertyId,
+
         buildingAddress,
         normalizedAddress: buildingAddress.toLowerCase(),
+        borough,
+        zipCode,
 
         violationType,
         violationDescription,
         violationStatus: "Open",
 
         violationClass: data.violationClass || "B",
-        borough: data.borough || "",
-        zipCode: data.zipCode || "",
 
         originalCertifyByDate: data.originalCertifyByDate || null,
         inspectionDate: data.inspectionDate || null,
@@ -71,23 +74,14 @@ export const createViolation = async (data) => {
         repairScheduledAt: null,
         resolvedAt: null,
 
-        daysRemaining,
-        isActionable,
+        daysRemaining: null,
+        isActionable: null,
 
         remediationStatus: {
             currentState: "Open",
             updatedByUserId: null,
             updatedAt: new Date(),
-            notes: ""
         },
-
-        statusHistory: [
-            {
-                state: "Open",
-                changedAt: new Date(),
-                changedBy: "system"
-            }
-        ],
 
         createdAt: new Date(),
         updatedAt: new Date()
@@ -138,13 +132,6 @@ export const updateViolationStatus = async (id, newStatus, userId = "admin") => 
                 "remediationStatus.updatedByUserId": userId,
                 "remediationStatus.updatedAt": new Date(),
                 updatedAt: new Date()
-            },
-            $push: {
-                statusHistory: {
-                    state: newStatus,
-                    changedAt: new Date(),
-                    changedBy: userId
-                }
             }
         }
     );

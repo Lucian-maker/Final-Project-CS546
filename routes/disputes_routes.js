@@ -7,6 +7,8 @@ import {
 	updateDispute,
 } from "../data/disputes.js";
 
+import { logDescriptions, logCategories } from "../helpers.js";
+
 const router = Router();
 
 // Returns the dispute list.
@@ -72,6 +74,8 @@ router.route("/api/:id").delete(async (req, res) => {
 router.route("/").get(async (req, res) => {
 	try {
 		const disputesList = await getAllDisputes();
+		res.locals.logCategory = logCategories.dashboard;
+		res.locals.logDescription = logDescriptions.viewDisputes();
 		return res.render("disputes", {
 			title: "Disputes",
 			disputes: disputesList,

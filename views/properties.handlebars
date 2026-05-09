@@ -1,51 +1,114 @@
 <main class="page">
-	<h1>Properties</h1>
+
+	<div class="dashboard-header">
+		<h1>Properties</h1>
+
+		<p class="dashboard-subtitle">
+			Browse and search registered properties.
+		</p>
+	</div>
 
 	<section>
+
+	{{#if (eq user.userRole "admin")}}
+	<section class="card">
+		<h2>Create Property</h2>
+
+		<form method="POST" action="/properties/create">
+		
+			<div class="field">
+				<label>Street Address</label>
+				<input name="streetAddress" required />
+			</div>
+
+			<div class="field">
+				<label>City</label>
+				<input name="city" required />
+			</div>
+
+			<div class="field">
+				<label>State</label>
+				<input name="state" required />
+			</div>
+
+			<div class="field">
+				<label>Zip Code</label>
+				<input name="zipCode" required />
+			</div>
+
+			<button type="submit">
+				Create Property
+			</button>
+		</form>
+	</section>
+	{{/if}}
+
+	<section>
+
 		<h2>Search Properties</h2>
 
-		<form class="field" method="GET" action="/properties">
-			<div class="field">
+		<div class="dashboard-search">
+			<form class="search-form" method="GET" action="/properties">
+
 				<input
 					type="text"
 					name="search"
 					placeholder="Search by address..."
 					value="{{search}}"
 				/>
-			</div>
-			<button type="submit">Search</button>
-		</form>
-	</section>
 
-	<section>
+				<button type="submit" class="btn-search">
+					Search
+				</button>
+
+			</form>
+		</div>
+
 		<h2>All Properties</h2>
 
-		{{#if propertiesList.length}}
-			<table>
-				<thead>
-					<tr>
-						<th>Address</th>
-						<th># Violations</th>
-						<th># Reviews</th>
-					</tr>
-				</thead>
+		{{#if properties.length}}
 
-				<tbody>
-					{{#each propertiesList}}
-						<tr>
-							<td>
-								<a href="/properties/{{this._id}}">
-									{{this.address.number}} {{this.address.street}},
-									{{this.address.city}},
-									{{this.address.state}} {{this.address.zipCode}}
-								</a>
-							</td>
-							<td>{{this.violations.length}}</td>
-							<td>{{this.reviews.length}}</td>
-						</tr>
-					{{/each}}
-				</tbody>
-			</table>
+			<div class="card-grid">
+
+				{{#each properties}}
+
+					<div class="card">
+
+						<h3 class="card-title">
+							{{this.address.number}} {{this.address.street}}
+						</h3>
+
+						<span class="badge badge-info">
+							Property
+						</span>
+
+						<p>
+							<strong>Location:</strong>
+							{{this.address.city}},
+							{{this.address.state}}
+							{{this.address.zipCode}}
+						</p>
+
+						<p>
+							<strong>Violations:</strong>
+							{{this.violations.length}}
+						</p>
+
+						<p>
+							<strong>Reviews:</strong>
+							{{this.reviews.length}}
+						</p>
+
+						<a href="/properties/{{this._id}}">
+							View Details
+						</a>
+
+					</div>
+
+				{{/each}}
+
+			</div>
+
 		{{else}}
 			<p>No properties found.</p>
 		{{/if}}

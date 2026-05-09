@@ -1,83 +1,99 @@
 <main class="page">
-	<h1>Violations</h1>
 
-	{{#if user}}
-		{{#if (eq user.userRole "admin")}}
-			<section class="card">
-				<h2>Create New Violation</h2>
-			
-				<form method="POST" action="/violations/create">
-					<div class="field">
-						<label>Property ID</label>
-						<input name="propertyId" placeholder="Property ID" required />
-					</div>
-					<div class="field">
-						<label>Building Address</label>
-						<input name="buildingAddress" placeholder="Address" required />
-					</div>
-					<div class="field">
-						<label>Violation Type</label>
-						<input name="violationType" placeholder="Type (e.g. Mold, Heat)" required />
-					</div>
-					<div class="field">
-						<label>Violation Description</label>
-						<input name="violationDescription" placeholder="Description" required />
-					</div>
-					<button type="submit">Create Violation</button>
-				</form>
-			</section>
-		{{/if}}
+	<div class="dashboard-header">
+		<h1>Violations</h1>
+
+		<p class="dashboard-subtitle">
+			Browse and search violations.
+		</p>
+	</div>
+
+	{{#if (eq user.userRole "admin")}}
+	<section class="card">
+		<h2>Create Violation</h2>
+
+		<form method="POST" action="/violations/create">
+
+			<div class="field">
+				<label>Property ID</label>
+				<input name="propertyId" required />
+			</div>
+
+			<div class="field">
+				<label>Violation Type</label>
+				<input name="violationType" required />
+			</div>
+
+			<div class="field">
+				<label>Description</label>
+				<input name="violationDescription" required />
+			</div>
+
+			<button type="submit">Create Violation</button>
+		</form>
+	</section>
 	{{/if}}
 
 	<section>
+
 		<h2>Search Violations</h2>
 
-		<form class="field" method="GET" action="/violations">
-			<div class="field">
+		<div class="dashboard-search">
+			<form class="search-form" method="GET" action="/violations">
+
 				<input
 					type="text"
 					name="search"
 					placeholder="Search by address, type, status..."
 					value="{{search}}"
 				/>
-			</div>
-			<button type="submit">Search</button>
-		</form>
-	</section>
 
-	<section>
+				<button type="submit" class="btn-search">
+					Search
+				</button>
+
+			</form>
+		</div>
+
 		<h2>All Violations</h2>
 
 		{{#if violations.length}}
-			<table>
-				<thead>
-					<tr>
-						<th>Address</th>
-						<th>Type</th>
-						<th>Status</th>
-					</tr>
-				</thead>
 
-				<tbody>
-					{{#each violations}}
-						<tr>
-							<td>
-								<a href="/violations/{{this._id}}">
-									{{this.buildingAddress}}
-								</a>
-							</td>
-							<td>{{this.violationType}}</td>
-							<td>{{this.violationStatus}}</td>
-						</tr>
-					{{/each}}
-				</tbody>
-			</table>
+			<div class="card-grid">
+
+				{{#each violations}}
+
+					<div class="card">
+
+						<h3 class="card-title">
+							{{buildingAddress}}
+						</h3>
+
+						<span class="badge badge-info">
+							{{violationStatus}}
+						</span>
+
+						<p><strong>Type:</strong> {{violationType}}</p>
+						<p><strong>Description:</strong> {{violationDescription}}</p>
+
+						<a href="/violations/{{_id}}">
+							View Details
+						</a>
+
+					</div>
+
+				{{/each}}
+
+			</div>
+
 		{{else}}
 			<p>No violations found.</p>
 		{{/if}}
+
 	</section>
 
 	<section class="site-footer">
 		<a href="/dashboard">Back to Dashboard</a>
 	</section>
+
 </main>

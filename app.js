@@ -24,8 +24,6 @@ app.use(
 	}),
 );
 
-app.use(logRequest);
-
 app.engine(
 	"handlebars",
 	exphbs.engine({
@@ -50,6 +48,8 @@ app.use("/disputes", requireAuth);
 app.use("/attorneys", requireAuth);
 app.use("/admin", adminGuard);
 app.use("/signout", requireAuth);
+
+app.use(logRequest);
 
 configRoutes(app);
 
