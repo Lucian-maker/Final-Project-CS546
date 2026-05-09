@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { logCategories, logDescriptions } from "../helpers.js";
 import {
 	createEvidence,
 	listEvidenceForSessionUser,
@@ -20,6 +21,10 @@ router
 	.route("/")
 	.get(async (req, res) => {
 		try {
+
+			res.locals.logCategory = logCategories.evidence;
+			res.locals.logDescription = logDescriptions.viewEvidence();
+
 			const filters = {};
 			if (req.query.violationId) {
 				filters.violationId = req.query.violationId;
@@ -64,6 +69,9 @@ router
 				noteText: body.noteText,
 			});
 
+			res.locals.logCategory = logCategories.evidence;
+			res.locals.logDescription = logDescriptions.uploadEvidence();
+
 			const q = new URLSearchParams();
 			if (body.violationId) {
 				q.set("violationId", body.violationId);
@@ -101,6 +109,10 @@ router
 router.route("/:id/delete").post(async (req, res) => {
 	try {
 		await softDeleteEvidence(req.params.id, req.session.user);
+
+		res.locals.logCategory = logCategories.evidence;
+		res.locals.logDescription = logDescriptions.deleteEvidence(req.params.id);
+
 		const vid = req.body?.violationId || req.query?.violationId;
 		if (vid) {
 			return res.redirect(

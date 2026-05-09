@@ -12,7 +12,6 @@ export const VIOLATION_STATUSES = Object.freeze([
 
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-/** Calendar-day difference from today to deadline (0 once deadline day has passed). */
 export const computeDeadlineFields = (originalCertifyByDate) => {
 	if (originalCertifyByDate == null || originalCertifyByDate === "") {
 		return { daysRemaining: null, isActionable: false };
@@ -62,6 +61,8 @@ export const getAllViolations = async () => {
  */
 export const getViolations = async (filters = {}) => {
 	const col = await violations();
+	const propertyCollection = await properties();
+
 	const query = {};
 
 	if (
@@ -72,55 +73,90 @@ export const getViolations = async (filters = {}) => {
 	} else if (filters.propertyId) {
 		query.propertyId = checkId(filters.propertyId, "propertyId");
 	}
+
 	if (filters.borough) {
 		query.borough = checkString(filters.borough, "borough");
 	}
+
 	if (filters.violationStatus) {
 		const st = checkString(filters.violationStatus, "violationStatus");
+
 		if (!VIOLATION_STATUSES.includes(st)) {
 			throw `violationStatus must be one of: ${VIOLATION_STATUSES.join(", ")}`;
 		}
+
 		query.violationStatus = st;
 	}
+
 	if (filters.violationType) {
 		const t = checkString(filters.violationType, "violationType");
-		query.violationType = { $regex: escapeRegex(t), $options: "i" };
-	}
-	if (filters.q) {
-		const q = checkString(filters.q, "search");
-		query.$or = [
-			{ buildingAddress: { $regex: escapeRegex(q), $options: "i" } },
-			{ violationDescription: { $regex: escapeRegex(q), $options: "i" } },
-			{
-				normalizedAddress: {
-					$regex: escapeRegex(q.toLowerCase()),
-					$options: "i",
-				},
-			},
-		];
+
+		query.violationType = {
+			$regex: escapeRegex(t),
+			$options: "i",
+		};
 	}
 
 	let sortField = "updatedAt";
+
 	if (filters.sort) {
 		const s = checkString(filters.sort, "sort");
+
 		const allowed = [
 			"updatedAt",
 			"originalCertifyByDate",
 			"buildingAddress",
 		];
+
 		if (!allowed.includes(s)) {
 			throw `sort must be one of: ${allowed.join(", ")}`;
 		}
+
 		sortField = s;
 	}
+
 	const order = filters.order === "asc" ? 1 : -1;
 	const sort = { [sortField]: order };
 
 	const rows = await col.find(query).sort(sort).toArray();
-	return rows.map((v) => ({
-		...v,
-		...computeDeadlineFields(v.originalCertifyByDate),
-	}));
+
+	const enriched = await Promise.all(
+		rows.map(async (v) => {
+			const property = await propertyCollection.findOne({
+				_id: v.propertyId,
+			});
+
+			let buildingAddress = "Unknown Address";
+
+			if (property?.address) {
+				const addr = property.address;
+
+				buildingAddress =
+					`${addr.number} ${addr.street}, ` +
+					`${addr.city}, ${addr.state} ${addr.zipCode}`;
+			}
+
+			return {
+				...v,
+				buildingAddress,
+				normalizedAddress: buildingAddress.toLowerCase(),
+				...computeDeadlineFields(v.originalCertifyByDate),
+			};
+		}),
+	);
+
+	if (filters.q) {
+		const q = checkString(filters.q, "search").toLowerCase();
+
+		return enriched.filter(
+			(v) =>
+				v.buildingAddress.toLowerCase().includes(q) ||
+				v.normalizedAddress.includes(q) ||
+				v.violationDescription.toLowerCase().includes(q),
+		);
+	}
+
+	return enriched;
 };
 
 /**
@@ -162,13 +198,34 @@ export const getViolationsForSessionUser = async (
 
 export const getViolationById = async (id) => {
 	const cleanId = checkId(id, "violationId");
+
 	const col = await violations();
+	const propertyCollection = await properties();
+
 	const v = await col.findOne({ _id: cleanId });
+
 	if (!v) {
-		throw `Violation not found`;
+		throw "Violation not found";
 	}
+
+	const property = await propertyCollection.findOne({
+		_id: v.propertyId,
+	});
+
+	let buildingAddress = "Unknown Address";
+
+	if (property?.address) {
+		const addr = property.address;
+
+		buildingAddress =
+			`${addr.number} ${addr.street}, ` +
+			`${addr.city}, ${addr.state} ${addr.zipCode}`;
+	}
+
 	return {
 		...v,
+		buildingAddress,
+		normalizedAddress: buildingAddress.toLowerCase(),
 		...computeDeadlineFields(v.originalCertifyByDate),
 	};
 };
@@ -187,48 +244,45 @@ export const createViolation = async (data) => {
 	if (!data) throw "No data provided";
 
 	const collection = await violations();
+	const propertyCollection = await properties();
 
 	const propertyId = checkId(data.propertyId, "propertyId");
-	const buildingAddress = checkString(data.buildingAddress, "address");
-	const violationType = checkString(data.violationType, "type");
-	const violationDescription = checkString(
-		data.violationDescription,
-		"description",
-	);
+	const property = await propertyCollection.findOne({ _id: propertyId });
 
-	const originalCertifyByDate = data.originalCertifyByDate || null;
-	const deadlineFields = originalCertifyByDate
-		? computeDeadlineFields(originalCertifyByDate)
-		: { daysRemaining: null, isActionable: false };
+	if (!property) throw "Invalid propertyId";
+    const addr = property.address;
+    const buildingAddress = `${addr.number} ${addr.street}, ${addr.city}, ${addr.state} ${addr.zipCode}`;
+
+	const violationType = checkString(data.violationType, "type");
+	const violationDescription = checkString(data.violationDescription, "description");
 
 	const newViolation = {
 		_id: `viol-${uuidv4()}`,
 		propertyId,
+
 		buildingAddress,
 		normalizedAddress: buildingAddress.toLowerCase(),
 
 		violationType,
 		violationDescription,
+
 		violationStatus: "Open",
 
-		violationClass: data.violationClass || "B",
-		borough: data.borough || "",
-		zipCode: data.zipCode || "",
+		borough: data.borough || "Unspecified",
+		zipCode: property.address.zipCode || "",
 
-		originalCertifyByDate,
-		inspectionDate: data.inspectionDate || null,
+		originalCertifyByDate: data.originalCertifyByDate || null,
 
 		repairScheduledAt: null,
 		resolvedAt: null,
 
-		daysRemaining: deadlineFields.daysRemaining,
-		isActionable: deadlineFields.isActionable,
+		daysRemaining: null,
+		isActionable: false,
 
 		remediationStatus: {
 			currentState: "Open",
 			updatedByUserId: null,
 			updatedAt: new Date(),
-			notes: "",
 		},
 
 		statusHistory: [
@@ -243,13 +297,11 @@ export const createViolation = async (data) => {
 		updatedAt: new Date(),
 	};
 
-	const result = await collection.insertOne(newViolation);
-	if (!result.acknowledged) throw "Could not create violation";
+	await collection.insertOne(newViolation);
 
-	const propCollection = await properties();
-	await propCollection.updateOne(
+	await propertyCollection.updateOne(
 		{ _id: propertyId },
-		{ $push: { violations: newViolation._id } },
+		{ $push: { violations: newViolation._id } }
 	);
 
 	return getViolationById(newViolation._id);
@@ -275,44 +327,6 @@ export const searchViolations = async (query) => {
 		...v,
 		...computeDeadlineFields(v.originalCertifyByDate),
 	}));
-};
-
-export const updateViolationStatus = async (
-	id,
-	newStatus,
-	userId = "admin",
-) => {
-	const vid = checkId(id, "violationId");
-	newStatus = checkString(newStatus, "status");
-	if (!VIOLATION_STATUSES.includes(newStatus)) {
-		throw `status must be one of: ${VIOLATION_STATUSES.join(", ")}`;
-	}
-
-	const collection = await violations();
-
-	const updateInfo = await collection.updateOne(
-		{ _id: vid },
-		{
-			$set: {
-				violationStatus: newStatus,
-				"remediationStatus.currentState": newStatus,
-				"remediationStatus.updatedByUserId": userId,
-				"remediationStatus.updatedAt": new Date(),
-				updatedAt: new Date(),
-			},
-			$push: {
-				statusHistory: {
-					state: newStatus,
-					changedAt: new Date(),
-					changedBy: userId,
-				},
-			},
-		},
-	);
-
-	if (updateInfo.modifiedCount === 0) throw "Could not update violation";
-
-	return getViolationById(vid);
 };
 
 async function loadUserForAuth(userId) {

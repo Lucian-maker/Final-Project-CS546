@@ -1,9 +1,28 @@
+import { createLog } from "./data/logs.js";
+
 export const logRequest = (req, res, next) => {
-	const timestamp = new Date().toUTCString();
-	const who = req.session?.user
-		? `Authenticated ${req.session.user.userRole}`
-		: "Non-Authenticated";
-	console.log(`[${timestamp}]: ${req.method} ${req.path} (${who})`);
+	const start = Date.now();
+
+	res.on("finish", () => {
+		const timestamp = new Date().toUTCString();
+
+		const who = req.session?.user
+			? `${req.session.user.userRole} (${req.session.user.firstName ?? "User"})`
+			: "Guest";
+
+		console.log(
+			`[${timestamp}] ${req.method} ${req.originalUrl} ${res.statusCode} (${who})`
+		);
+		
+		createLog(
+			req,
+			res,
+			req.session?.user || null,
+			res.locals.logDescription || null,
+			res.locals.logCategory || "general"
+		).catch(console.error);
+	});
+
 	next();
 };
 

@@ -7,6 +7,7 @@ import {
 	checkPassword,
 	checkPhone,
 	checkUserRole,
+	checkId,
 	PUBLIC_USER_ROLES,
 } from "../helpers.js";
 
@@ -87,4 +88,43 @@ export const authenticateUser = async (email, password) => {
 		phoneNumber: user.phoneNumber,
 		userRole: user.userRole,
 	};
+};
+
+export const getAllUsers = async () => {
+	const collection = await users();
+	return await collection.find({}).toArray();
+};
+
+export const getUserById = async (id) => {
+	const collection = await users();
+
+	const user = await collection.findOne({ _id: id });
+
+	if (!user) throw "User not found";
+
+	return user;
+};
+
+export const updateUserById = async (id, updateData) => {
+	id = checkId(id, "userId");
+
+	const collection = await users();
+
+	const updateObject = {
+		$set: {
+			...updateData,
+			updatedAt: new Date()
+		}
+	};
+
+	const result = await collection.updateOne(
+		{ _id: id },
+		updateObject
+	);
+
+	if (result.modifiedCount === 0) {
+		throw "User update failed";
+	}
+
+	return await collection.findOne({ _id: id });
 };
