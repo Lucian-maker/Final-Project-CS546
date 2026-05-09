@@ -1,0 +1,80 @@
+<main class="page dispute-detail">
+	<h1>Dispute detail</h1>
+	<p><a href="/disputes">Back to disputes</a></p>
+
+	{{#if statusMessage}}
+		<p class="success-banner">{{statusMessage}}</p>
+	{{/if}}
+	{{#if error}}
+		<p class="error">{{error}}</p>
+	{{/if}}
+
+	<section class="dispute-summary">
+		<h2>{{dispute.eventType}}</h2>
+		<dl class="detail-grid">
+			<dt>Dispute ID</dt>
+			<dd><code>{{dispute._id}}</code></dd>
+			<dt>Status</dt>
+			<dd><span class="badge badge-info">{{dispute.status}}</span></dd>
+			<dt>Linked violation</dt>
+			<dd>
+				{{#if dispute.violationId}}
+					<a href="/violations/{{dispute.violationId}}">{{dispute.violationId}}</a>
+				{{else}}
+					—
+				{{/if}}
+			</dd>
+			<dt>Event type</dt>
+			<dd>{{dispute.eventType}}</dd>
+			<dt>Created by</dt>
+			<dd>
+				{{#if creator}}
+					{{creator.firstName}} {{creator.lastName}} ({{creator.userRole}})
+				{{else}}
+					<code>{{dispute.createdBy}}</code>
+				{{/if}}
+			</dd>
+			<dt>Created at</dt>
+			<dd>{{dispute.createdAtFormatted}}</dd>
+		</dl>
+	</section>
+
+	<section class="dispute-body">
+		<h2>Result</h2>
+		{{#if dispute.result}}
+			<blockquote>{{dispute.result}}</blockquote>
+		{{else}}
+			<p class="muted">No result recorded yet.</p>
+		{{/if}}
+	</section>
+
+	<p class="actions-row">
+		{{#if dispute.violationId}}
+			<a class="button-link" href="/violations/{{dispute.violationId}}">Open linked violation</a>
+			<a class="button-link" href="/evidence?violationId={{dispute.violationId}}">Evidence for this violation</a>
+		{{/if}}
+	</p>
+
+	{{#if canManage}}
+		<section class="status-update">
+			<h2>Update dispute</h2>
+			<form method="POST" action="/disputes/{{dispute._id}}/status">
+				<div class="field">
+					<label for="newStatus">Status</label>
+					<select id="newStatus" name="newStatus" required>
+						{{#each allowedStatuses}}
+							<option value="{{this}}" {{#if (eq this ../dispute.status)}}selected{{/if}}>{{this}}</option>
+						{{/each}}
+					</select>
+				</div>
+				<div class="field">
+					<label for="result">Result / notes</label>
+					<textarea id="result" name="result" rows="3" maxlength="2000" placeholder="Outcome or rationale">{{dispute.result}}</textarea>
+				</div>
+				<button type="submit">Submit update</button>
+			</form>
+		</section>
+	{{else}}
+		<p class="muted">Only an admin can update a dispute.</p>
+	{{/if}}
+</main>
