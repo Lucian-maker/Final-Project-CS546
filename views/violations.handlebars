@@ -34,28 +34,60 @@
 	</section>
 	{{/if}}
 
-	<section>
-
-		<h2>Search Violations</h2>
-
-		<div class="dashboard-search">
-			<form class="search-form" method="GET" action="/violations">
-
-				<input
-					type="text"
-					name="search"
-					placeholder="Search by address, type, status..."
-					value="{{search}}"
-				/>
-
-				<button type="submit" class="btn-search">
-					Search
-				</button>
-
-			</form>
+	<form method="GET" action="/violations" class="filters-form">
+		<div class="filters-grid">
+			<div class="field">
+				<label for="q">Search address / description</label>
+				<input type="text" id="q" name="q" value="{{filters.q}}" placeholder="Keywords..." />
+			</div>
+			<div class="field">
+				<label for="borough">Borough</label>
+				<select id="borough" name="borough">
+					<option value="">Any</option>
+					{{#each boroughs}}
+						<option value="{{this}}" {{#if (eq ../filters.borough this)}}selected{{/if}}>{{this}}</option>
+					{{/each}}
+				</select>
+			</div>
+			<div class="field">
+				<label for="violationType">Violation type</label>
+				<input type="text" id="violationType" name="violationType" value="{{filters.violationType}}" placeholder="e.g. Mold" />
+			</div>
+			<div class="field">
+				<label for="violationStatus">Status</label>
+				<select id="violationStatus" name="violationStatus">
+					<option value="">Any</option>
+					{{#each statuses}}
+						<option value="{{this}}" {{#if (eq ../filters.violationStatus this)}}selected{{/if}}>{{this}}</option>
+					{{/each}}
+				</select>
+			</div>
+			<div class="field">
+				<label for="propertyId">Property ID</label>
+				<input type="text" id="propertyId" name="propertyId" value="{{filters.propertyId}}" placeholder="prop-..." />
+			</div>
+			<div class="field">
+				<label for="days">Due within (days)</label>
+				<input type="number" id="days" name="days" min="0" value="{{filters.days}}" placeholder="e.g. 30" />
+			</div>
+			<div class="field">
+				<label for="sort">Sort by</label>
+				<select id="sort" name="sort">
+					<option value="updatedAt" {{#if (eq filters.sort "updatedAt")}}selected{{/if}}>Last updated</option>
+					<option value="originalCertifyByDate" {{#if (eq filters.sort "originalCertifyByDate")}}selected{{/if}}>Certify-by date</option>
+					<option value="buildingAddress" {{#if (eq filters.sort "buildingAddress")}}selected{{/if}}>Address</option>
+				</select>
+			</div>
+			<div class="field">
+				<label for="order">Order</label>
+				<select id="order" name="order">
+					<option value="desc" {{#if (eq filters.order "desc")}}selected{{/if}}>Newest first</option>
+					<option value="asc" {{#if (eq filters.order "asc")}}selected{{/if}}>Oldest first</option>
+				</select>
+			</div>
 		</div>
-
-		<h2>All Violations</h2>
+		<button type="submit">Apply filters</button>
+	</form>
 
 		{{#if violations.length}}
 
