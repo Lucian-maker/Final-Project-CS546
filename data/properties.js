@@ -1,4 +1,4 @@
-import { properties } from "../config/mongoCollections.js";
+import { properties, comments, reviews } from "../config/mongoCollections.js";
 import { v4 as uuidv4 } from "uuid";
 import { checkString, checkId, checkAddress } from "../helpers.js";
 
@@ -123,4 +123,67 @@ export const searchProperties = async (query) => {
 	return getProperties({
 		search: query,
 	});
+};
+
+export const getCommunityInsights = async () => {
+	const propCollection = await properties();
+	const commentsCollection = await comments();
+	const reviewsCollection = await reviews();
+
+	const allProperties = await propCollection.find({}).toArray();
+	const insights = [];
+
+	for (const property of allProperties) {
+		const propertyComments = await commentsCollection
+			.find({ propertyId: property._id })
+			.toArray();
+
+		const propertyReviews = await reviewsCollection
+			.find({ propertyId: property._id, isDeleted: false })
+			.toArray();
+
+		const ratedComments = propertyComments.filter(
+			(c) => c.rating !== null && c.rating !== undefined
+		);
+
+		const allRatings = [
+			...propertyReviews.map((r) => Number(r.overallScore)),
+			...ratedComments.map((c) => Number(c.rating))
+		];
+
+		let displayRating = null;
+		if (allRatings.length > 0) {
+			const sum = allRatings.reduce((acc, score) => acc + score, 0);
+			displayRating = Math.round((sum / allRatings.length) * 10) / 10;
+		}
+
+		insights.push({
+			_id: property._id,
+			address: `${property.address.number} ${property.address.street}`,
+			city: property.address.city,
+			state: property.address.state,
+			zipCode: property.address.zipCode,
+			commentCount: propertyComments.length,
+			reviewCount: ratedComments.length,
+			displayRating
+		});
+	}
+
+	const highestRated = insights
+		.filter((p) => p.displayRating !== null)
+		.sort((a, b) => b.displayRating - a.displayRating)[0];
+
+	const mostReviewed = insights
+		.filter((p) => p.reviewCount > 0)
+		.sort((a, b) => b.reviewCount - a.reviewCount)[0];
+
+	const mostCommented = insights
+		.filter((p) => p.commentCount > 0)
+		.sort((a, b) => b.commentCount - a.commentCount)[0];
+
+	return {
+		highestRated,
+		mostReviewed,
+		mostCommented
+	};
 };

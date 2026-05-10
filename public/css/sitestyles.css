@@ -175,6 +175,18 @@ nav.home-nav a:hover {
 	border-color: var(--nychcom-accent);
 }
 
+.dashboard-header-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1rem;
+}
+
+.dashboard-mini-tile {
+	width: 180px;
+	padding: 1rem;
+}
+
 .tile-icon {
 	font-size: 2.5rem;
 	margin-bottom: 0.75rem;

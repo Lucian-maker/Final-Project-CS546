@@ -62,7 +62,9 @@
 			<div class="comment-card">
 				<div class="comment-header">
 					<strong>{{this.userName}}</strong>
-					<span class="comment-rating">Rating: {{this.rating}}/5</span>
+					{{#if this.rating}}
+						<span class="comment-rating">Rating: {{this.rating}}/5</span>
+					{{/if}}
 				</div>
 				<p class="comment-body">{{this.text}}</p>
 				<div class="comment-actions">
