@@ -1,36 +1,89 @@
 <main class="page" id="notifications-page">
-	<h1>Notifications</h1>
 
-	<button
-		type="button"
-		id="js-notif-mark-all"
-		class="btn-notif-clear notif-clear-form"
-		{{#unless hasQueued}}hidden{{/unless}}
-	>
-		Mark all read
-	</button>
+	<div class="dashboard-header dashboard-header-row">
+		<div>
+			<h1>Notifications</h1>
+			<p class="dashboard-subtitle">
+				View system alerts, violation updates, and important activity tied to your account.
+			</p>
+		</div>
 
-	<ul id="notification-card-list" class="card-grid">
-		{{#each notifications}}
-			<li class="card notif-card" data-notification-id="{{this.stringId}}">
-				<span class="badge badge-warning">{{this.channel}} — {{this.status}}</span>
-				<p>{{this.notificationDetails.text}}</p>
-				<p class="notif-meta">
-					<a href="/violations/{{this.violationId}}">Violation {{this.violationId}}</a>
-					· <small>{{this.createdAt}}</small>
-				</p>
-				{{#if (eq this.status "queued")}}
-					<button
-						type="button"
-						class="btn-notif-dismiss js-notif-mark-one"
-						data-notification-id="{{this.stringId}}"
-					>
-						Mark read
-					</button>
-				{{/if}}
-			</li>
-		{{/each}}
-	</ul>
+		<button
+			type="button"
+			id="js-notif-mark-all"
+			class="btn-notif-clear notif-clear-form"
+			{{#unless hasQueued}}hidden{{/unless}}
+		>
+			Mark all read
+		</button>
+	</div>
+
+	<nav class="page-back-nav">
+		<a href="/dashboard">
+			Back to Dashboard
+		</a>
+	</nav>
+
+	{{#if notifications.length}}
+		<div id="notification-card-list" class="card-grid">
+
+			{{#each notifications}}
+				<div
+					class="card notif-card"
+					data-notification-id="{{this.stringId}}"
+				>
+
+					<div class="dashboard-header dashboard-header-row">
+						<h3 class="card-title">
+							Notification
+						</h3>
+
+						<span class="badge badge-warning">
+							{{this.channel}} · {{this.status}}
+						</span>
+					</div>
+
+					<p>
+						{{this.notificationDetails.text}}
+					</p>
+
+					<div class="detail-grid">
+
+						<div>
+							<strong>Violation</strong>
+							<p>
+								<a href="/violations/{{this.violationId}}">
+									Violation {{this.violationId}}
+								</a>
+							</p>
+						</div>
+
+						<div>
+							<strong>Received</strong>
+							<p>{{this.createdAt}}</p>
+						</div>
+
+					</div>
+
+					{{#if (eq this.status "queued")}}
+						<div class="actions-row">
+							<button
+								type="button"
+								class="btn-notif-dismiss js-notif-mark-one"
+								data-notification-id="{{this.stringId}}"
+							>
+								Mark read
+							</button>
+						</div>
+					{{/if}}
+
+				</div>
+			{{/each}}
+
+		</div>
+	{{else}}
+		<div id="notification-card-list" class="card-grid"></div>
+	{{/if}}
 
 	<p id="notifications-empty-msg" {{#if notifications.length}}hidden{{/if}}>
 		No notifications yet.
@@ -38,7 +91,6 @@
 
 	<p id="notifications-error-msg" class="error" hidden></p>
 
-	<a href="/dashboard">Back to Dashboard</a>
-
 	<script src="/public/js/notifications_page.js" defer></script>
+
 </main>

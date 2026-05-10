@@ -8,11 +8,11 @@ import {
 	getAllTicketsForUser,
 	TICKET_CATEGORIES,
 	TICKET_PRIORITIES,
-	TICKET_STATUSES,
 	updateTicketStatus,
+	updateTicketPriority,
 } from "../data/tickets.js";
 import { properties as propertiesCollection, users } from "../config/mongoCollections.js";
-import { checkId, formatDateTime, logCategories } from "../helpers.js";
+import { checkId, formatDateTime, logCategories, logDescriptions } from "../helpers.js";
 
 const router = Router();
 
@@ -46,41 +46,121 @@ router.route("/").get(async (req, res) => {
 			priorityBadgeClass: priorityBadgeClass(t.priority),
 		}));
 
-		res.locals.logCategory = logCategories.dashboard;
-		res.locals.logDescription = "Viewed tickets list";
+		res.locals.logCategory = logCategories.tickets;
+		res.locals.logDescription = logDescriptions.viewTickets();
+
+		const isAdmin = sessionUser.userRole === "admin";
+
+		const myTickets = decorated.filter(
+			(t) => t.submittedById === sessionUser._id,
+		);
 
 		return res.render("tickets", {
 			title: "Tickets",
 			user: sessionUser,
-			tickets: decorated,
-			canCreate: Boolean(
-				sessionUser &&
-					(sessionUser.userRole === "tenant" ||
-						sessionUser.userRole === "admin"),
-			),
+			myTickets,
+			allTickets: isAdmin ? decorated : [],
+			isAdmin,
+			canCreate: !!sessionUser,
 			categories: TICKET_CATEGORIES,
 			priorities: TICKET_PRIORITIES,
 		});
+
 	} catch (e) {
-		return res.status(500).render("error", {
+		const sessionUser = req.session && req.session.user;
+
+		const list = await getAllTicketsForUser(sessionUser);
+
+		const decorated = list.map((t) => ({
+			...decorateTicket(t),
+			priorityBadgeClass: priorityBadgeClass(t.priority),
+		}));
+		
+		const isAdmin = sessionUser.userRole === "admin";
+
+		const myTickets = decorated.filter(
+			(t) => t.submittedById === sessionUser._id,
+		);
+
+		return res.status(400).render("tickets", {
 			title: "Tickets",
+			user: sessionUser,
+
 			error: String(e),
+
+			myTickets,
+			allTickets: isAdmin ? decorated : [],
+			isAdmin,
+
+			canCreate: !!sessionUser,
+
+			categories: TICKET_CATEGORIES,
+			priorities: TICKET_PRIORITIES,
+
+			formData: req.body,
 		});
 	}
 });
 
 router.route("/create").post(async (req, res) => {
+	const sessionUser = req.session && req.session.user;
+
+	if (!sessionUser) {
+		return res.redirect("/signin");
+	}
+
+	try {
+		const created = await createTicket(req.body, sessionUser);
+
+		res.locals.logCategory = logCategories.tickets;
+		res.locals.logDescription = logDescriptions.createTicket(created._id);
+
+		return res.redirect(`/tickets/${created._id}`);
+	} catch (e) {
+		const list = await getAllTicketsForUser(sessionUser);
+		const decorated = list.map((t) => ({
+			...decorateTicket(t),
+			priorityBadgeClass: priorityBadgeClass(t.priority),
+		}));
+
+		const isAdmin = sessionUser.userRole === "admin";
+
+		const myTickets = decorated.filter(
+			(t) => t.submittedById === sessionUser._id,
+		);
+
+		return res.status(400).render("tickets", {
+			title: "Tickets",
+			user: sessionUser,
+			error: String(e),
+			formData: req.body,
+			myTickets,
+			allTickets: isAdmin ? decorated : [],
+			isAdmin,
+			canCreate: true,
+			categories: TICKET_CATEGORIES,
+			priorities: TICKET_PRIORITIES,
+		});
+	}
+});
+
+router.route("/:id/priority").post(async (req, res) => {
 	try {
 		const sessionUser = req.session && req.session.user;
 		if (!sessionUser) {
 			return res.redirect("/signin");
 		}
-		const created = await createTicket(req.body, sessionUser);
 
-		res.locals.logCategory = logCategories.dashboard;
-		res.locals.logDescription = `Created ticket ${created._id}`;
+		const cleanId = checkId(req.params.id, "ticketId");
 
-		return res.redirect(`/tickets/${created._id}`);
+		await updateTicketPriority(cleanId, sessionUser, {
+			priority: req.body?.priority,
+		});
+
+		res.locals.logCategory = logCategories.tickets;
+		res.locals.logDescription = logDescriptions.updateTicketPriority(cleanId);
+
+		return res.redirect(`/tickets/${cleanId}?updated=1`);
 	} catch (e) {
 		return res.status(400).render("error", {
 			title: "Error",
@@ -121,8 +201,8 @@ router
 				ticket.status,
 			);
 
-			res.locals.logCategory = logCategories.dashboard;
-			res.locals.logDescription = `Viewed ticket ${cleanId}`;
+			res.locals.logCategory = logCategories.tickets;
+			res.locals.logDescription = logDescriptions.viewTicket(cleanId);
 
 			const isSubmitter = ticket.submittedById === dbUser._id;
 			const isAdmin = dbUser.userRole === "admin";
@@ -139,6 +219,7 @@ router
 				assignee,
 				buildingAddress,
 				allowedNextStatuses: allowed,
+				priorities: TICKET_PRIORITIES,
 				statusMessage: req.query.updated ? "Ticket updated." : null,
 				error: null,
 				canEdit,
@@ -177,7 +258,7 @@ router
 				notes: req.body?.notes,
 			});
 
-			res.locals.logCategory = logCategories.dashboard;
+			res.locals.logCategory = logCategories.tickets;
 			res.locals.logDescription = `Updated ticket ${cleanId}`;
 
 			return res.redirect(`/tickets/${cleanId}?updated=1`);
