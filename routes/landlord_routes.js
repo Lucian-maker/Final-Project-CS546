@@ -3,6 +3,7 @@ import { getUserById } from "../data/users.js";
 import { getPropertyById } from "../data/properties.js";
 
 import { logDescriptions, logCategories } from "../helpers.js";
+import { computeLandlordTrustScore } from "../data/reviews.js";
 
 const router = Router();
 
@@ -44,11 +45,14 @@ router.get("/", async (req, res) => {
 		res.locals.logCategory = logCategories.dashboard;
 		res.locals.logDescription = logDescriptions.viewLandlordDashboard();
 
+		const userScoreInfo = await computeLandlordTrustScore(user._id);
+
 		return res.render("landlord", {
 			title: "Landlord Dashboard",
 			user,
 			savedProperties,
-			ownedProperties
+			ownedProperties,
+			userScoreInfo
 		});
 
 	} catch (e) {

@@ -1,5 +1,15 @@
 <main class="page">
-	<h1>Attorneys</h1>
+	<div class="dashboard-header">
+		<h1>Attorneys</h1>
+		<p class="dashboard-subtitle">
+			Browse legal resources and connect with attorneys.
+		</p>
+	</div>
+	<nav class="page-back-nav">
+		<a href="/dashboard">
+			Back to Dashboard
+		</a>
+	</nav>
 	{{#if attorneys}}
 		<ul class="card-grid">
 			{{#each attorneys}}
@@ -14,5 +24,4 @@
 	{{else}}
 		<p>No attorneys available at this time.</p>
 	{{/if}}
-	<a href="/dashboard">Back to Dashboard</a>
 </main>

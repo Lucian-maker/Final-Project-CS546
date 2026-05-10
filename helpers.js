@@ -411,6 +411,14 @@ export const logDescriptions = {
   adminLogs: () => `Admin opened system logs`,
   adminLogsExport: () => `Exported system logs to PDF`,
   adminAnalytics: () => `Admin opened analytics`,
+  
+  createComment: (propertyId) => `Created comment for property ${propertyId}`,
+  replyComment: (propertyId, commentId) => `Replied to comment ${commentId} on property ${propertyId}`,
+  likeComment: (id) => `Liked/unliked comment ${id}`,
+  dislikeComment: (id) => `Disliked/undisliked comment ${id}`,
+  editComment: (id) => `Edited comment ${id}`,
+  deleteComment: (id) => `Deleted comment ${id}`,
+
   viewTenantDashboard: () => `Viewed tenant dashboard`,
   viewLandlordDashboard: () => `Viewed landlord dashboard`,
 
