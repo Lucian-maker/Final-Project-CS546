@@ -363,6 +363,18 @@ function assertCanActOnViolation(dbUser, violation) {
 		throw `Violation not found`;
 	}
 
+	if (dbUser.userRole === "admin") return;
+
+	const owned = dbUser.ownedProperties || [];
+	const saved = dbUser.savedProperties || [];
+
+	if (
+		!owned.includes(violation.propertyId) &&
+		!saved.includes(violation.propertyId)
+	) {
+		throw `You do not have access to this violation`;
+	}
+
 	return;
 }
 

@@ -20,6 +20,15 @@ function assertPropertyAccess(dbUser, propertyId) {
 		throw `You must be signed in to access evidence`;
 	}
 
+	if (dbUser.userRole === "admin") return;
+
+	const owned = dbUser.ownedProperties || [];
+	const saved = dbUser.savedProperties || [];
+
+	if (!owned.includes(propertyId) && !saved.includes(propertyId)) {
+		throw `You do not have access to evidence for this property`;
+	}
+
 	return;
 }
 
@@ -151,17 +160,43 @@ export const getEvidenceByViolation = async (violationId) => {
 export const listEvidenceForSessionUser = async (sessionUser, filters = {}) => {
 	const dbUser = await loadUser(sessionUser._id);
 	const eCol = await evidence();
-	const query = { isDeleted: false };
+	let query = { isDeleted: false };
+
+	if (dbUser.userRole !== "admin") {
+		const owned = dbUser.ownedProperties || [];
+		const saved = dbUser.savedProperties || [];
+		const accessiblePropertyIds = [...owned, ...saved];
+
+		query = {
+			$and: [
+				{ isDeleted: false },
+				{
+					$or: [
+						{ uploadedByUserId: dbUser._id },
+						{ propertyId: { $in: accessiblePropertyIds } },
+					],
+				},
+			],
+		};
+	}
 
 	if (filters.violationId) {
 		const vid = checkId(filters.violationId, "violationId");
-		query.violationId = vid;
+		if (query.$and) {
+			query.$and.push({ violationId: vid });
+		} else {
+			query.violationId = vid;
+		}
 	}
 
 	if (filters.propertyId) {
 		const pid = checkId(filters.propertyId, "propertyId");
 		assertPropertyAccess(dbUser, pid);
-		query.propertyId = pid;
+		if (query.$and) {
+			query.$and.push({ propertyId: pid });
+		} else {
+			query.propertyId = pid;
+		}
 	}
 
 	if (filters.evidenceType) {
