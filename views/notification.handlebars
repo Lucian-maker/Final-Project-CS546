@@ -1,0 +1,69 @@
+<main class="page notification-detail">
+	<h1>Notification detail</h1>
+	<p><a href="/notifications">Back to notifications</a></p>
+
+	{{#if statusMessage}}
+		<p class="success-banner">{{statusMessage}}</p>
+	{{/if}}
+	{{#if error}}
+		<p class="error">{{error}}</p>
+	{{/if}}
+
+	<section class="notification-summary">
+		<h2>{{notification.channel}} notification</h2>
+		<dl class="detail-grid">
+			<dt>Notification ID</dt>
+			<dd><code>{{notification._id}}</code></dd>
+			<dt>Channel</dt>
+			<dd><span class="badge badge-info">{{notification.channel}}</span></dd>
+			<dt>Status</dt>
+			<dd><span class="badge badge-warning">{{notification.status}}</span></dd>
+			<dt>Read</dt>
+			<dd>
+				{{#if notification.readAtFormatted}}
+					<span class="badge badge-success">Read · {{notification.readAtFormatted}}</span>
+				{{else}}
+					<span class="muted">Unread</span>
+				{{/if}}
+			</dd>
+			<dt>Recipient</dt>
+			<dd>
+				{{#if recipient}}
+					{{recipient.firstName}} {{recipient.lastName}} ({{recipient.userRole}})
+				{{else}}
+					<code>{{notification.userId}}</code>
+				{{/if}}
+			</dd>
+			<dt>Linked violation</dt>
+			<dd>
+				{{#if notification.violationId}}
+					<a href="/violations/{{notification.violationId}}">{{notification.violationId}}</a>
+				{{else}}
+					—
+				{{/if}}
+			</dd>
+			<dt>Created at</dt>
+			<dd>{{notification.createdAtFormatted}}</dd>
+		</dl>
+	</section>
+
+	<section class="notification-body">
+		<h2>Message</h2>
+		<blockquote>{{notification.notificationDetails.text}}</blockquote>
+	</section>
+
+	<p class="actions-row">
+		{{#if notification.violationId}}
+			<a class="button-link" href="/violations/{{notification.violationId}}">Open linked violation</a>
+		{{/if}}
+	</p>
+
+	{{#if canMarkRead}}
+		<section class="status-update">
+			<h2>Actions</h2>
+			<form method="POST" action="/notifications/{{notification._id}}/read">
+				<button type="submit">Mark as read</button>
+			</form>
+		</section>
+	{{/if}}
+</main>

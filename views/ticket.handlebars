@@ -1,0 +1,99 @@
+<main class="page ticket-detail">
+	<h1>Ticket detail</h1>
+	<p><a href="/tickets">Back to tickets</a></p>
+
+	{{#if statusMessage}}
+		<p class="success-banner">{{statusMessage}}</p>
+	{{/if}}
+	{{#if error}}
+		<p class="error">{{error}}</p>
+	{{/if}}
+
+	<section class="ticket-summary">
+		<h2>{{ticket.category}} — {{buildingAddress}}</h2>
+		<dl class="detail-grid">
+			<dt>Ticket ID</dt>
+			<dd><code>{{ticket._id}}</code></dd>
+			<dt>Property</dt>
+			<dd><a href="/properties/{{ticket.propertyId}}">{{ticket.propertyId}}</a></dd>
+			<dt>Category</dt>
+			<dd>{{ticket.category}}</dd>
+			<dt>Priority</dt>
+			<dd><span class="badge {{ticket.priorityBadgeClass}}">{{ticket.priority}}</span></dd>
+			<dt>Status</dt>
+			<dd><span class="badge badge-info">{{ticket.status}}</span></dd>
+			<dt>Submitted by</dt>
+			<dd>
+				{{#if submitter}}
+					{{submitter.firstName}} {{submitter.lastName}} ({{submitter.userRole}})
+				{{else}}
+					<code>{{ticket.submittedById}}</code>
+				{{/if}}
+			</dd>
+			<dt>Assigned to</dt>
+			<dd>
+				{{#if assignee}}
+					{{assignee.firstName}} {{assignee.lastName}} ({{assignee.userRole}})
+				{{else}}
+					<span class="muted">Unassigned</span>
+				{{/if}}
+			</dd>
+			<dt>Created</dt>
+			<dd>{{ticket.createdAtFormatted}}</dd>
+			<dt>Last updated</dt>
+			<dd>{{ticket.updatedAtFormatted}}</dd>
+		</dl>
+	</section>
+
+	<section class="ticket-body">
+		<h2>Description</h2>
+		<blockquote>{{ticket.description}}</blockquote>
+	</section>
+
+	<section class="ticket-history">
+		<h2>Status history</h2>
+		{{#if ticket.statusHistory.length}}
+			<ul class="history-list">
+				{{#each ticket.statusHistory}}
+					<li>
+						<strong>{{this.state}}</strong>
+						— {{this.changedAtFormatted}}
+						<span class="muted">({{this.changedBy}})</span>
+						{{#if this.notes}}
+							<p class="muted">{{this.notes}}</p>
+						{{/if}}
+					</li>
+				{{/each}}
+			</ul>
+		{{else}}
+			<p>No history entries.</p>
+		{{/if}}
+	</section>
+
+	<p class="actions-row">
+		<a class="button-link" href="/properties/{{ticket.propertyId}}">Open property</a>
+	</p>
+
+	{{#if allowedNextStatuses.length}}
+		<section class="status-update">
+			<h2>Update status</h2>
+			<form method="POST" action="/tickets/{{ticket._id}}">
+				<div class="field">
+					<label for="newStatus">New status</label>
+					<select id="newStatus" name="newStatus" required>
+						{{#each allowedNextStatuses}}
+							<option value="{{this}}">{{this}}</option>
+						{{/each}}
+					</select>
+				</div>
+				<div class="field">
+					<label for="notes">Notes</label>
+					<textarea id="notes" name="notes" rows="3" maxlength="2000" placeholder="Describe this update"></textarea>
+				</div>
+				<button type="submit">Submit update</button>
+			</form>
+		</section>
+	{{else}}
+		<p class="muted">No status transitions are available for your role from the current state.</p>
+	{{/if}}
+</main>

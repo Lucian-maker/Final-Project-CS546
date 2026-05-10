@@ -6,10 +6,28 @@ import {
 	removeDispute,
 	updateDispute,
 } from "../data/disputes.js";
-
-import { logDescriptions, logCategories } from "../helpers.js";
+import { users } from "../config/mongoCollections.js";
+import {
+	checkId,
+	formatDateTime,
+	logCategories,
+	logDescriptions,
+} from "../helpers.js";
+import { adminGuard } from "../middleware.js";
 
 const router = Router();
+
+const DISPUTE_STATUSES = Object.freeze([
+	"Pending",
+	"Under Review",
+	"Resolved",
+	"Denied",
+]);
+
+const decorateDispute = (d) => ({
+	...d,
+	createdAtFormatted: d.createdAt ? formatDateTime(d.createdAt) : "—",
+});
 
 // Returns the dispute list.
 router.route("/api").get(async (req, res) => {
@@ -74,15 +92,92 @@ router.route("/api/:id").delete(async (req, res) => {
 router.route("/").get(async (req, res) => {
 	try {
 		const disputesList = await getAllDisputes();
+		const decorated = disputesList.map(decorateDispute);
 		res.locals.logCategory = logCategories.dashboard;
 		res.locals.logDescription = logDescriptions.viewDisputes();
 		return res.render("disputes", {
 			title: "Disputes",
-			disputes: disputesList,
+			disputes: decorated,
 			user: req.session && req.session.user,
 		});
 	} catch (e) {
 		return res.status(500).render("error", { error: e.toString() });
+	}
+});
+
+// Renders a single dispute detail page.
+router.route("/:id").get(async (req, res) => {
+	try {
+		const cleanId = checkId(req.params.id, "id");
+		const dispute = await getDisputeById(cleanId);
+
+		let creator = null;
+		if (dispute.createdBy) {
+			try {
+				const usersCol = await users();
+				creator = await usersCol.findOne({ _id: dispute.createdBy });
+			} catch {
+				creator = null;
+			}
+		}
+
+		const sessionUser = req.session && req.session.user;
+		const canManage = Boolean(sessionUser && sessionUser.userRole === "admin");
+
+		res.locals.logCategory = logCategories.disputes;
+		res.locals.logDescription = `Viewed dispute ${cleanId}`;
+
+		return res.render("dispute", {
+			title: `Dispute — ${dispute.eventType}`,
+			user: sessionUser,
+			dispute: decorateDispute(dispute),
+			creator,
+			canManage,
+			allowedStatuses: DISPUTE_STATUSES,
+			statusMessage: req.query.updated ? "Dispute updated." : null,
+			error: null,
+		});
+	} catch (e) {
+		const msg = e.toString();
+		if (msg.includes("No dispute found")) {
+			return res.status(404).render("error", {
+				title: "Not Found",
+				error: msg,
+			});
+		}
+		return res.status(400).render("error", {
+			title: "Error",
+			error: msg,
+		});
+	}
+});
+
+// Admin-only status update from the detail page.
+router.route("/:id/status").post(adminGuard, async (req, res) => {
+	try {
+		const cleanId = checkId(req.params.id, "id");
+		const body = req.body || {};
+		const newStatus = String(body.newStatus || "").trim();
+		const result =
+			body.result !== undefined && body.result !== null
+				? String(body.result).trim().slice(0, 2000)
+				: "";
+
+		if (!DISPUTE_STATUSES.includes(newStatus)) {
+			throw `Status must be one of: ${DISPUTE_STATUSES.join(", ")}`;
+		}
+
+		await updateDispute(cleanId, { status: newStatus, result });
+
+		res.locals.logCategory = logCategories.disputes;
+		res.locals.logDescription = logDescriptions.updateDispute(cleanId);
+
+		return res.redirect(`/disputes/${cleanId}?updated=1`);
+	} catch (e) {
+		return res.status(400).render("error", {
+			title: "Error",
+			error: e.toString(),
+		});
 	}
 });
 
