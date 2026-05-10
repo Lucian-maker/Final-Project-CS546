@@ -35,10 +35,10 @@ router.get("/", async (req, res) => {
 				req.query.minReviews !== ""
 					? Number(req.query.minReviews)
 					: null,
-			minTrustScore:
-				req.query.minTrustScore !== undefined &&
-				req.query.minTrustScore !== ""
-					? Number(req.query.minTrustScore)
+			minPropertyRating:
+				req.query.minPropertyRating !== undefined &&
+				req.query.minPropertyRating !== ""
+					? Number(req.query.minPropertyRating)
 					: null,
 			maxAvgResolution:
 				req.query.maxAvgResolution !== undefined &&

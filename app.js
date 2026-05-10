@@ -29,6 +29,21 @@ app.use(
 	}),
 );
 
+app.use((req, res, next) => {
+	if (req.session?.user) return next();
+	const raw = req.signedCookies?.NYCHComUser;
+	if (!raw || typeof raw !== "string") return next();
+	try {
+		const parsed = JSON.parse(raw);
+		if (!parsed || typeof parsed !== "object" || !parsed._id) return next();
+		req.session.user = parsed;
+		return next();
+	} catch {
+		res.clearCookie("NYCHComUser");
+		return next();
+	}
+});
+
 // Current user for templates (`{{#if user}}`), or null if signed out.
 app.use((req, res, next) => {
 	res.locals.user = req.session?.user ?? null;
