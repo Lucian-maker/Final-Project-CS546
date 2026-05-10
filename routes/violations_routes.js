@@ -75,6 +75,8 @@ router.get("/", async (req, res) => {
 			violationType: req.query.violationType || "",
 			violationStatus: req.query.violationStatus || "",
 			propertyId: req.query.propertyId || "",
+			days: req.query.days || "",
+			minDays: req.query.minDays || "",
 			sort: req.query.sort || "updatedAt",
 			order: req.query.order || "desc",
 		};
@@ -86,12 +88,14 @@ router.get("/", async (req, res) => {
 
 		if (req.query.days) {
 			const days = parseInt(req.query.days, 10);
+			const minDays = req.query.minDays ? parseInt(req.query.minDays, 10) : null;
 			if (!isNaN(days)) {
 				violationsList = violationsList.filter(
 					(v) =>
 						v.violationStatus !== "Closed" &&
 						v.daysRemaining != null &&
-						v.daysRemaining <= days
+						v.daysRemaining <= days &&
+						(minDays === null || v.daysRemaining >= minDays)
 				);
 			}
 		}
