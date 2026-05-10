@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
 import { evidence, users, violations } from "../config/mongoCollections.js";
-import { assertUserCanAccessViolation } from "./violations.js";
 import { parseEvidenceImageDataUri, checkId, checkString } from "../helpers.js";
 
 export const EVIDENCE_TYPES = Object.freeze(["photo", "note"]);
@@ -15,23 +14,13 @@ async function loadUser(userId) {
 }
 
 function assertPropertyAccess(dbUser, propertyId) {
-	const pid = checkId(propertyId, "propertyId");
-	if (dbUser.userRole === "admin") {
-		return;
+	checkId(propertyId, "propertyId");
+
+	if (!dbUser) {
+		throw `You must be signed in to access evidence`;
 	}
-	if (
-		dbUser.userRole === "landlord" &&
-		(dbUser.ownedProperties || []).includes(pid)
-	) {
-		return;
-	}
-	if (
-		dbUser.userRole === "tenant" &&
-		(dbUser.savedProperties || []).includes(pid)
-	) {
-		return;
-	}
-	throw `You do not have permission to access evidence for this property`;
+
+	return;
 }
 
 /**
@@ -150,10 +139,6 @@ export const getEvidenceById = async (id) => {
 	return doc;
 };
 
-/**
- * List evidence the user may view (admin: all; landlord: owned properties;
- * tenant: saved properties). Optional filters by violationId or propertyId.
- */
 export const listEvidenceForSessionUser = async (sessionUser, filters = {}) => {
 	const dbUser = await loadUser(sessionUser._id);
 	const eCol = await evidence();
@@ -161,23 +146,36 @@ export const listEvidenceForSessionUser = async (sessionUser, filters = {}) => {
 
 	if (filters.violationId) {
 		const vid = checkId(filters.violationId, "violationId");
-		await assertUserCanAccessViolation(sessionUser, vid);
 		query.violationId = vid;
-	} else if (filters.propertyId) {
+	}
+
+	if (filters.propertyId) {
 		const pid = checkId(filters.propertyId, "propertyId");
 		assertPropertyAccess(dbUser, pid);
 		query.propertyId = pid;
-	} else if (dbUser.userRole === "admin") {
-		// no scope filter
-	} else {
-		const props =
-			dbUser.userRole === "landlord"
-				? dbUser.ownedProperties || []
-				: dbUser.savedProperties || [];
-		if (props.length === 0) {
-			return [];
+	}
+
+	if (filters.evidenceType) {
+		const type = checkString(
+			filters.evidenceType,
+			"evidenceType",
+		).toLowerCase();
+
+		if (!EVIDENCE_TYPES.includes(type)) {
+			throw `evidenceType must be one of: ${EVIDENCE_TYPES.join(", ")}`;
 		}
-		query.propertyId = { $in: props };
+
+		query.evidenceType = type;
+	}
+
+	if (filters.q) {
+		const q = checkString(filters.q, "search");
+
+		query.$or = [
+			{ caption: { $regex: q, $options: "i" } },
+			{ noteText: { $regex: q, $options: "i" } },
+			{ fileName: { $regex: q, $options: "i" } },
+		];
 	}
 
 	return eCol.find(query).sort({ uploadedAt: -1 }).toArray();
@@ -185,7 +183,6 @@ export const listEvidenceForSessionUser = async (sessionUser, filters = {}) => {
 
 export const softDeleteEvidence = async (evidenceId, sessionUser) => {
 	const doc = await getEvidenceById(evidenceId);
-	await assertUserCanAccessViolation(sessionUser, doc.violationId);
 
 	const dbUser = await loadUser(sessionUser._id);
 	if (

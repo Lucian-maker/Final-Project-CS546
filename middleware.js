@@ -35,8 +35,21 @@ export const guestOnly = (req, res, next) => {
 	return next();
 };
 
+/** JSON fetch must get JSON back — redirect to signin returns HTML and breaks res.json(). */
+const wantsJsonErrorBody = (req) =>
+	Boolean(
+		req.is("application/json") ||
+		String(req.get("Accept") || "").includes("application/json"),
+	);
+
 export const requireAuth = (req, res, next) => {
 	if (!req.session?.user) {
+		if (wantsJsonErrorBody(req)) {
+			return res.status(401).json({
+				ok: false,
+				error: "Sign in required",
+			});
+		}
 		return res.redirect("/signin");
 	}
 	return next();
@@ -58,3 +71,5 @@ export const requireRole = (...roles) => {
 };
 
 export const adminGuard = requireRole("admin");
+export const tenantGuard = requireRole("tenant");
+export const landlordGuard = requireRole("landlord");

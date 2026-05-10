@@ -1,7 +1,6 @@
 import { Router } from "express";
 import {
 	createReview,
-	getAllReviewsVisibleToUser,
 	getReviewsByProperty,
 	getReviewById,
 	updateReview,
@@ -9,14 +8,9 @@ import {
 	getLandlordIdForProperty,
 } from "../data/reviews.js";
 import {
-	properties as propertiesCollection,
-	users,
-} from "../config/mongoCollections.js";
-import {
 	checkId,
 	checkScore,
 	checkShortText,
-	formatDateTime,
 	logDescriptions,
 	logCategories,
 } from "../helpers.js";
@@ -24,113 +18,7 @@ import { requireAuth, requireRole } from "../middleware.js";
 
 const router = Router();
 
-// Top-level reviews listing scoped to the signed-in user's role.
-router.route("/").get(async (req, res) => {
-	try {
-		const sessionUser = req.session && req.session.user;
-		const list = await getAllReviewsVisibleToUser(sessionUser);
-
-		const propsCol = await propertiesCollection();
-		const usersCol = await users();
-		const decorated = await Promise.all(
-			list.map(async (r) => {
-				const property = await propsCol.findOne({ _id: r.propertyId });
-				let buildingAddress = r.propertyId;
-				if (property?.address) {
-					const a = property.address;
-					buildingAddress = `${a.number} ${a.street}, ${a.city}, ${a.state} ${a.zipCode}`;
-				}
-				const reviewer = await usersCol.findOne({ _id: r.reviewerId });
-				return {
-					...r,
-					buildingAddress,
-					reviewerName: reviewer
-						? `${reviewer.firstName} ${reviewer.lastName}`
-						: r.reviewerId,
-					createdAtFormatted: r.createdAt
-						? formatDateTime(r.createdAt)
-						: "—",
-					isOwnReview:
-						sessionUser && r.reviewerId === sessionUser._id,
-				};
-			}),
-		);
-
-		res.locals.logCategory = logCategories.reviews;
-		res.locals.logDescription = "Viewed all reviews";
-
-		return res.render("reviews_index", {
-			title: "Reviews",
-			user: sessionUser,
-			reviews: decorated,
-		});
-	} catch (e) {
-		return res.status(400).render("error", {
-			title: "Reviews",
-			error: String(e),
-		});
-	}
-});
-
-// Renders a single review detail page. Mounted under /single/:reviewId so
-// that /reviews/:propertyId (the list-per-property route) is not shadowed.
-router.route("/single/:reviewId").get(async (req, res) => {
-	try {
-		const cleanId = checkId(req.params.reviewId, "reviewId");
-		const review = await getReviewById(cleanId);
-
-		const usersCol = await users();
-		const reviewer = await usersCol.findOne({ _id: review.reviewerId });
-		const landlord = await usersCol.findOne({ _id: review.landlordId });
-
-		const sessionUser = req.session && req.session.user;
-		const isOwnReview = Boolean(
-			sessionUser && review.reviewerId === sessionUser._id,
-		);
-
-		const decorated = {
-			...review,
-			createdAtFormatted: review.createdAt
-				? formatDateTime(review.createdAt)
-				: "—",
-			updatedAtFormatted: review.updatedAt
-				? formatDateTime(review.updatedAt)
-				: "—",
-			wasEdited:
-				review.updatedAt &&
-				review.createdAt &&
-				new Date(review.updatedAt).getTime() >
-					new Date(review.createdAt).getTime(),
-		};
-
-		res.locals.logCategory = logCategories.reviews;
-		res.locals.logDescription = `Viewed review ${cleanId}`;
-
-		return res.render("review", {
-			title: `Review — ${review._id}`,
-			user: sessionUser,
-			review: decorated,
-			reviewer,
-			landlord,
-			isOwnReview,
-			error: null,
-		});
-	} catch (e) {
-		const msg = String(e);
-		if (msg.includes("No review found")) {
-			return res.status(404).render("error", {
-				title: "Not Found",
-				error: msg,
-			});
-		}
-		return res.status(400).render("error", {
-			title: "Error",
-			error: msg,
-		});
-	}
-});
-
-const renderList = async (res, propertyId, user, extras = {}) => {
+const renderList = async (res, propertyId, user, from, extras = {}) => {
 	const list = await getReviewsByProperty(propertyId);
 	const landlordId = await getLandlordIdForProperty(propertyId);
 	const decorated = list.map((r) => ({
@@ -145,6 +33,7 @@ const renderList = async (res, propertyId, user, extras = {}) => {
 		user,
 		propertyId,
 		landlordId,
+		from,
 		reviews: decorated,
 		canReview:
 			Boolean(user && user.userRole === "tenant") &&
@@ -162,10 +51,19 @@ router
 				req.params.propertyId,
 				"propertyId",
 			);
+
+			const from = req.query.from || null;
+
 			res.locals.logCategory = logCategories.reviews;
 			res.locals.logDescription =
 				logDescriptions.viewPropertyReviews(cleanPropertyId);
-			return await renderList(res, cleanPropertyId, req.session?.user);
+
+			return await renderList(
+				res,
+				cleanPropertyId,
+				req.session?.user,
+				from,
+			);
 		} catch (e) {
 			return res.status(400).render("error", {
 				title: "Bad Request",
@@ -184,16 +82,22 @@ router
 			checkScore(body.resolution, "resolution");
 			checkShortText(body.reviewText, "reviewText", 500);
 		} catch (e) {
-			return renderList(res, req.params.propertyId, req.session.user, {
-				error: String(e),
-				form: body,
-			});
+			return renderList(
+				res,
+				req.params.propertyId,
+				req.session.user,
+				from,
+				{
+					error: String(e),
+					form: body,
+				},
+			);
 		}
 
 		try {
 			res.locals.logCategory = logCategories.reviews;
 			res.locals.logDescription =
-				logsDescription.createReview(cleanPropertyId);
+				logDescriptions.createReview(cleanPropertyId);
 			await createReview(
 				cleanPropertyId,
 				req.session.user._id,
@@ -203,9 +107,11 @@ router
 				body.resolution,
 				body.reviewText,
 			);
-			return res.redirect(`/reviews/${cleanPropertyId}`);
+			const from = req.query.from || req.body.from || "";
+
+			return res.redirect(`/reviews/${cleanPropertyId}?from=${from}`);
 		} catch (e) {
-			return renderList(res, cleanPropertyId, req.session.user, {
+			return renderList(res, cleanPropertyId, req.session.user, from, {
 				error: String(e),
 				form: body,
 			});
@@ -217,7 +123,9 @@ router.route("/:reviewId/edit").post(requireAuth, async (req, res) => {
 	try {
 		const existing = await getReviewById(req.params.reviewId);
 		res.locals.logCategory = logCategories.reviews;
-		res.locals.logDescription = logDescriptions.edi(req.params.reviewId);
+		res.locals.logDescription = logDescriptions.updateReview(
+			req.params.reviewId,
+		);
 		await updateReview(
 			req.params.reviewId,
 			req.session.user._id,

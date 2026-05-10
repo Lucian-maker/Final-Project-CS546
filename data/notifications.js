@@ -89,6 +89,61 @@ export const getAllNotifications = async () => {
 	return collection.find({}).toArray();
 };
 
+const NOTIFICATIONS_PAGE_LIMIT = 100;
+
+/** Notifications for in-app UI (scoped per user). Newest first. */
+export const getNotificationsForUser = async (userId) => {
+	const uid = checkId(userId, "userId");
+	const collection = await notifications();
+	return collection
+		.find({ userId: uid })
+		.sort({ createdAt: -1 })
+		.limit(NOTIFICATIONS_PAGE_LIMIT)
+		.toArray();
+};
+
+/** Queued-only feed for badge/toasts (not capped by mixed-status page window). */
+export const getQueuedNotificationsForUser = async (userId) => {
+	const uid = checkId(userId, "userId");
+	const collection = await notifications();
+	return collection
+		.find({ userId: uid, status: "queued" })
+		.sort({ createdAt: -1 })
+		.limit(NOTIFICATIONS_PAGE_LIMIT)
+		.toArray();
+};
+
+/** Mark queued notifications delivered for this user; skips unknown/other-user ids (silent). */
+export const markQueuedDeliveredForUser = async (
+	userId,
+	notificationIdStrings,
+) => {
+	const uid = checkId(userId, "userId");
+	if (!Array.isArray(notificationIdStrings)) {
+		throw `notificationIds must be an array`;
+	}
+	const objectIds = [];
+	for (const raw of notificationIdStrings) {
+		if (typeof raw !== "string") continue;
+		const trimmed = raw.trim();
+		if (!trimmed) continue;
+		try {
+			objectIds.push(checkId(trimmed, "notificationId"));
+		} catch {
+			/* malformed id — skip */
+		}
+	}
+	const collection = await notifications();
+	if (objectIds.length === 0) {
+		return { modifiedCount: 0 };
+	}
+	const result = await collection.updateMany(
+		{ userId: uid, status: "queued", _id: { $in: objectIds } },
+		{ $set: { status: "delivered" } },
+	);
+	return { modifiedCount: result.modifiedCount };
+};
+
 // Gets the notification by the id #.
 export const getNotificationById = async (id) => {
 	const cleanId = checkId(id, "id");

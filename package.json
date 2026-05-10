@@ -15,10 +15,12 @@
 	},
 	"dependencies": {
 		"bcrypt": "^6.0.0",
+		"cookie-parser": "^1.4.7",
 		"express": "^5.2.1",
 		"express-handlebars": "^9.0.1",
 		"express-session": "^1.19.0",
 		"mongodb": "^7.1.1",
+		"pdfkit": "^0.18.0",
 		"uuid": "^13.0.0"
 	},
 	"devDependencies": {

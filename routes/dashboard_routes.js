@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { getAllViolations } from "../data/violations.js";
+import { getViolationsForSessionUser } from "../data/violations.js";
+import { getCommunityInsights } from "../data/properties.js";
 
 import { logDescriptions, logCategories } from "../helpers.js";
 
@@ -7,22 +8,34 @@ const router = Router();
 
 router.route("/").get(async (req, res) => {
 	const user = req.session.user;
-	
+
 	let violations30Days = 0;
 	let violations15Days = 0;
 	let violations7Days = 0;
 
+	let communityInsights = null;
+
 	try {
-		const allViolations = await getAllViolations();
-		allViolations.forEach(v => {
-			if (v.violationStatus !== "Closed" && v.daysRemaining !== null && v.daysRemaining !== undefined) {
-				if (v.daysRemaining <= 7) violations7Days++;
-				if (v.daysRemaining <= 15) violations15Days++;
-				if (v.daysRemaining <= 30) violations30Days++;
+		communityInsights = await getCommunityInsights();
+
+		const allViolations = await getViolationsForSessionUser(user);
+		allViolations.forEach((v) => {
+			if (
+				v.violationStatus !== "Closed" &&
+				v.daysRemaining !== null &&
+				v.daysRemaining !== undefined
+			) {
+				if (v.daysRemaining <= 7) {
+					violations7Days++;
+				} else if (v.daysRemaining <= 15) {
+					violations15Days++;
+				} else if (v.daysRemaining <= 30) {
+					violations30Days++;
+				}
 			}
 		});
 	} catch (e) {
-		console.error("Could not fetch violations for dashboard metrics:", e);
+		console.error("Could not fetch dashboard metrics:", e);
 	}
 
 	res.locals.logCategory = logCategories.dashboard;
@@ -33,7 +46,8 @@ router.route("/").get(async (req, res) => {
 		isAdmin: user.userRole === "admin",
 		violations30Days,
 		violations15Days,
-		violations7Days
+		violations7Days,
+		communityInsights,
 	});
 });
 

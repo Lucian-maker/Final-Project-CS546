@@ -1,147 +1,200 @@
+import { comments } from "../config/mongoCollections.js";
 import { v4 as uuidv4 } from "uuid";
-import { comments, properties, users } from "../config/mongoCollections.js";
-import {
-	checkId,
-	checkShortText,
-	checkUserRole,
-	PUBLIC_USER_ROLES,
-} from "../helpers.js";
+import { checkId, checkString } from "../helpers.js";
+
+// Validation helper for score
+const checkScore = (score, varName) => {
+	if (score === undefined || score === null)
+		throw `You must provide a ${varName}`;
+	const parsed = Number(score);
+	if (typeof parsed !== "number" || isNaN(parsed))
+		throw `${varName} must be a number`;
+	if (parsed < 1 || parsed > 5) throw `${varName} must be between 1 and 5`;
+	return parsed;
+};
 
 export const createComment = async (
 	propertyId,
-	authorId,
-	authorRole,
-	commentText,
+	userId,
+	userName,
+	text,
+	rating,
+	parentCommentId = null,
 ) => {
-	const cleanPropertyId = checkId(propertyId, "propertyId");
-	const cleanAuthorId = checkId(authorId, "authorId");
-	const cleanRole = checkUserRole(authorRole, PUBLIC_USER_ROLES);
-	const cleanText = checkShortText(commentText, "commentText", 1000);
+	propertyId = checkId(propertyId, "propertyId");
+	userId = checkId(userId, "userId");
+	userName = checkString(userName, "userName");
+	text = checkString(text, "comment text");
 
-	const collection = await comments();
-	const now = new Date();
+	let parsedRating = null;
+	if (parentCommentId === null) {
+		parsedRating = checkScore(rating, "rating");
+	}
+
+	if (parentCommentId !== null) {
+		parentCommentId = checkId(parentCommentId, "parentCommentId");
+	}
+
 	const newComment = {
 		_id: `comment-${uuidv4()}`,
-		propertyId: cleanPropertyId,
-		authorId: cleanAuthorId,
-		authorRole: cleanRole,
-		commentText: cleanText,
-		isDeleted: false,
-		createdAt: now,
-		updatedAt: now,
+		propertyId,
+		userId,
+		userName,
+		text,
+		rating: parsedRating, // only top level comments get ratings
+		parentCommentId,
+		likes: [], // array of userIds who liked it
+		dislikes: [], // array of userIds who disliked it
+		createdAt: new Date(),
+		updatedAt: new Date(),
 	};
 
-	const insertResult = await collection.insertOne(newComment);
-	if (!insertResult.acknowledged || !insertResult.insertedId) {
-		throw "Could not create comment";
+	const commentsCollection = await comments();
+	const insertInfo = await commentsCollection.insertOne(newComment);
+	if (!insertInfo.acknowledged || !insertInfo.insertedId) {
+		throw "Could not add comment";
 	}
+
 	return newComment;
 };
 
 export const getCommentsByProperty = async (propertyId) => {
-	const cleanPropertyId = checkId(propertyId, "propertyId");
-	const collection = await comments();
-	return collection
-		.find({ propertyId: cleanPropertyId, isDeleted: false })
+	propertyId = checkId(propertyId, "propertyId");
+	const commentsCollection = await comments();
+	const propertyComments = await commentsCollection
+		.find({ propertyId })
 		.sort({ createdAt: 1 })
 		.toArray();
+
+	// Format as a nested thread
+	const commentMap = {};
+	const topLevelComments = [];
+
+	propertyComments.forEach((c) => {
+		c.replies = [];
+		c.likes = c.likes || [];
+		c.dislikes = c.dislikes || [];
+		c.likeCount = c.likes.length;
+		c.dislikeCount = c.dislikes.length;
+		commentMap[c._id] = c;
+	});
+
+	propertyComments.forEach((c) => {
+		if (c.parentCommentId) {
+			if (commentMap[c.parentCommentId]) {
+				commentMap[c.parentCommentId].replies.push(c);
+			}
+		} else {
+			topLevelComments.push(c);
+		}
+	});
+
+	// Sort top level by newest first, replies by oldest first
+	topLevelComments.sort((a, b) => b.createdAt - a.createdAt);
+
+	return topLevelComments;
 };
 
-export const getCommentById = async (commentId) => {
-	const cleanId = checkId(commentId, "commentId");
-	const collection = await comments();
-	const comment = await collection.findOne({
-		_id: cleanId,
-		isDeleted: false,
-	});
-	if (!comment) {
-		throw `No comment found with id "${cleanId}"`;
-	}
-	return comment;
-};
+export const likeComment = async (commentId, userId) => {
+	commentId = checkId(commentId, "commentId");
+	userId = checkId(userId, "userId");
 
-export const updateComment = async (commentId, userId, commentText) => {
-	const cleanCommentId = checkId(commentId, "commentId");
-	const cleanUserId = checkId(userId, "userId");
-	const cleanText = checkShortText(commentText, "commentText", 1000);
+	const commentsCollection = await comments();
+	const comment = await commentsCollection.findOne({ _id: commentId });
+	if (!comment) throw "Comment not found";
 
-	const collection = await comments();
-	const existing = await collection.findOne({
-		_id: cleanCommentId,
-		isDeleted: false,
-	});
-	if (!existing) {
-		throw `No comment found with id "${cleanCommentId}"`;
-	}
-	if (existing.authorId !== cleanUserId) {
-		throw "You may only edit your own comments";
+	let updateObj = {};
+	if (comment.likes && comment.likes.includes(userId)) {
+		// Unlike
+		updateObj = { $pull: { likes: userId } };
+	} else {
+		// Like (and remove from dislikes)
+		updateObj = {
+			$addToSet: { likes: userId },
+			$pull: { dislikes: userId },
+		};
 	}
 
-	const updateResult = await collection.updateOne(
-		{ _id: cleanCommentId },
-		{ $set: { commentText: cleanText, updatedAt: new Date() } },
+	const updateInfo = await commentsCollection.updateOne(
+		{ _id: commentId },
+		updateObj,
 	);
-	if (!updateResult.acknowledged) {
-		throw "Could not update comment";
-	}
-	return getCommentById(cleanCommentId);
+
+	if (!updateInfo.acknowledged) throw "Failed to toggle like on comment";
+
+	return await commentsCollection.findOne({ _id: commentId });
 };
 
-export const softDeleteComment = async (commentId, userId) => {
-	const cleanCommentId = checkId(commentId, "commentId");
-	const cleanUserId = checkId(userId, "userId");
+export const dislikeComment = async (commentId, userId) => {
+	commentId = checkId(commentId, "commentId");
+	userId = checkId(userId, "userId");
 
-	const collection = await comments();
-	const existing = await collection.findOne({
-		_id: cleanCommentId,
-		isDeleted: false,
-	});
-	if (!existing) {
-		throw `No comment found with id "${cleanCommentId}"`;
-	}
-	if (existing.authorId !== cleanUserId) {
-		throw "You may only delete your own comments";
+	const commentsCollection = await comments();
+	const comment = await commentsCollection.findOne({ _id: commentId });
+	if (!comment) throw "Comment not found";
+
+	let updateObj = {};
+	if (comment.dislikes && comment.dislikes.includes(userId)) {
+		// Undislike
+		updateObj = { $pull: { dislikes: userId } };
+	} else {
+		// Dislike (and remove from likes)
+		updateObj = {
+			$addToSet: { dislikes: userId },
+			$pull: { likes: userId },
+		};
 	}
 
-	const updateResult = await collection.updateOne(
-		{ _id: cleanCommentId },
-		{ $set: { isDeleted: true, updatedAt: new Date() } },
+	const updateInfo = await commentsCollection.updateOne(
+		{ _id: commentId },
+		updateObj,
 	);
-	if (!updateResult.acknowledged) {
-		throw "Could not delete comment";
-	}
-	return { commentDeleted: true, _id: cleanCommentId };
+
+	if (!updateInfo.acknowledged) throw "Failed to toggle dislike on comment";
+
+	return await commentsCollection.findOne({ _id: commentId });
 };
 
-export const getAllCommentsVisibleToUser = async (sessionUser) => {
-	if (!sessionUser) {
-		return [];
+export const editComment = async (commentId, userId, newRating) => {
+	commentId = checkId(commentId, "commentId");
+	userId = checkId(userId, "userId");
+	newRating = checkScore(newRating, "rating");
+
+	const commentsCollection = await comments();
+	const comment = await commentsCollection.findOne({ _id: commentId });
+	if (!comment) throw "Comment not found";
+	if (comment.userId !== userId) throw "You can only edit your own comments";
+	if (comment.parentCommentId !== null)
+		throw "Cannot edit rating on a nested reply";
+
+	const updateInfo = await commentsCollection.updateOne(
+		{ _id: commentId },
+		{ $set: { rating: newRating, updatedAt: new Date() } },
+	);
+
+	if (!updateInfo.acknowledged) throw "Failed to edit comment rating";
+
+	return await commentsCollection.findOne({ _id: commentId });
+};
+
+export const deleteComment = async (commentId, userId) => {
+	commentId = checkId(commentId, "commentId");
+	userId = checkId(userId, "userId");
+
+	const commentsCollection = await comments();
+	const comment = await commentsCollection.findOne({ _id: commentId });
+	if (!comment) throw "Comment not found";
+	if (comment.userId !== userId)
+		throw "You can only delete your own comments";
+
+	// Delete the comment itself
+	const deleteInfo = await commentsCollection.deleteOne({ _id: commentId });
+	if (!deleteInfo.acknowledged) throw "Failed to delete comment";
+
+	// If it's a top-level comment, also delete its replies
+	if (comment.parentCommentId === null) {
+		await commentsCollection.deleteMany({ parentCommentId: commentId });
 	}
-	const usersCol = await users();
-	const dbUser = await usersCol.findOne({ _id: sessionUser._id });
-	if (!dbUser) {
-		return [];
-	}
 
-	const collection = await comments();
-	const baseQuery = { isDeleted: false };
-
-	if (dbUser.userRole === "admin") {
-		return collection.find(baseQuery).sort({ createdAt: -1 }).toArray();
-	}
-
-	const propIds =
-		dbUser.userRole === "landlord"
-			? dbUser.ownedProperties || []
-			: dbUser.savedProperties || [];
-
-	const orClauses = [{ authorId: dbUser._id }];
-	if (propIds.length > 0) {
-		orClauses.push({ propertyId: { $in: propIds } });
-	}
-
-	return collection
-		.find({ ...baseQuery, $or: orClauses })
-		.sort({ createdAt: -1 })
-		.toArray();
+	return { deleted: true };
 };
