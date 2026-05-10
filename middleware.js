@@ -18,7 +18,8 @@ export const logRequest = (req, res, next) => {
 			req,
 			res,
 			req.session?.user || null,
-			res.locals.logDescription || null,
+			res.locals.logDescription ||
+				`${req.method} ${req.originalUrl}`,
 			res.locals.logCategory || "general"
 		).catch(console.error);
 	});
@@ -58,3 +59,5 @@ export const requireRole = (...roles) => {
 };
 
 export const adminGuard = requireRole("admin");
+export const tenantGuard = requireRole("tenant");
+export const landlordGuard = requireRole("landlord");

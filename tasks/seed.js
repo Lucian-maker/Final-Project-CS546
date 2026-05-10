@@ -119,6 +119,7 @@ const mapNYCDataToSeed = (nycData, adminId) => {
 					state: "NY",
 					zipCode: row.zip || "00000"
 				},
+				claimedBy: null,
 				violations: [],
 				createdOn: now,
 				updatedOn: now,
@@ -245,6 +246,13 @@ const main = async () => {
 	).updateOne(
 		{ _id: landlordId },
 		{ $set: { ownedProperties: properties.slice(0, 15).map(p => p._id) } },
+	);
+
+	await (
+		await propertiesCol()
+	).updateMany(
+		{ _id: { $in: properties.slice(0, 15).map(p => p._id) } },
+		{ $set: { claimedBy: landlordId } }
 	);
 
 	// Assign first property to tenant saved list

@@ -7,16 +7,26 @@
 	</head>
 	<body>
 		<header class="site-header">
-			<div class="header-content">
-				<a href="/" class="brand-logo">NYCHCom</a>
-				<nav class="header-nav">
-					{{#if user}}
-						<a href="/signout" class="header-signout">Sign Out</a>
-					{{/if}}
-				</nav>
-			</div>
-		</header>
-		{{{body}}}
-		<script src="/public/js/form_validate.js"></script>
+		<div class="header-content">
+			<a href="/" class="brand-logo">NYCHCom</a>
+
+			<nav class="header-nav">
+				{{#if user}}
+					<a href="/dashboard" class="header-dashboard">
+						Dashboard
+					</a>
+
+					<a href="/signout" class="header-signout">
+						Sign Out
+					</a>
+				{{/if}}
+			</nav>
+		</div>
+	</header>
+
+	{{{body}}}
+
+	<script src="/public/js/form_validate.js"></script>
+
 	</body>
 </html>

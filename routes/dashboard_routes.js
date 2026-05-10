@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { getViolationsForSessionUser } from "../data/violations.js";
-import { computeLandlordTrustScore, computeTenantReviewAverage } from "../data/reviews.js";
 import { getCommunityInsights } from "../data/properties.js";
 
 import { logDescriptions, logCategories } from "../helpers.js";
@@ -14,15 +13,9 @@ router.route("/").get(async (req, res) => {
 	let violations15Days = 0;
 	let violations7Days = 0;
 
-	let userScoreInfo = null;
 	let communityInsights = null;
 
 	try {
-		if (user.userRole === "landlord") {
-			userScoreInfo = await computeLandlordTrustScore(user._id);
-		} else if (user.userRole === "tenant") {
-			userScoreInfo = await computeTenantReviewAverage(user._id);
-		}
 
 		communityInsights = await getCommunityInsights();
 
@@ -51,7 +44,6 @@ router.route("/").get(async (req, res) => {
 		violations30Days,
 		violations15Days,
 		violations7Days,
-		userScoreInfo,
 		communityInsights
 	});
 });

@@ -54,15 +54,29 @@ h1 {
 	color: inherit;
 }
 
-button[type="submit"] {
+button[type="submit"],
+.button-link,
+.btn-danger {
 	padding: 0.6rem 1.25rem;
-	border: 1px solid var(--nychcom-accent);
 	border-radius: 4px;
+	font-family: inherit;
+	font-size: 1rem;
+	font-weight: 600;
+	line-height: 1.2;
+	min-height: 2.5rem;
+	box-sizing: border-box;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	white-space: nowrap;
+	cursor: pointer;
+	text-decoration: none;
+}
+
+button[type="submit"] {
+	border: 1px solid var(--nychcom-accent);
 	background-color: var(--nychcom-accent);
 	color: #fff;
-	font-size: 1rem;
-	cursor: pointer;
-	align-self: flex-start;
 }
 
 button[type="submit"]:hover {
@@ -143,7 +157,11 @@ nav.home-nav a:hover {
 
 .dashboard-subtitle {
 	color: #64748b;
-	margin-bottom: 2rem;
+	font-size: 0.95rem;
+	font-weight: 400;
+	margin-top: 0.15rem;
+	margin-bottom: 0.5rem;
+	line-height: 1.35;
 }
 
 .dashboard-grid {
@@ -248,6 +266,42 @@ nav.home-nav a:hover {
 	background: rgba(255, 255, 255, 0.3);
 }
 
+.header-nav {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.header-dashboard {
+	color: #fff;
+	text-decoration: none;
+	font-weight: 500;
+	background: rgba(255, 255, 255, 0.2);
+	padding: 0.4rem 0.8rem;
+	border-radius: 4px;
+	transition: background 0.2s;
+}
+
+.header-dashboard:hover {
+	background: rgba(255, 255, 255, 0.3);
+}
+
+.page-back-nav {
+	margin: 0 0 1.5rem 0;
+}
+
+.page-back-nav a {
+	display: inline-flex;
+	align-items: center;
+	color: var(--nychcom-accent);
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.page-back-nav a:hover {
+	text-decoration: underline;
+}
+
 .site-footer {
 	margin-top: 2rem;
 	padding-top: 1rem;
@@ -343,19 +397,9 @@ nav.home-nav a:hover {
 
 .btn-danger {
 	background: #d62828;
+	border: 1px solid #d62828;
 	color: #fff;
-	border: 0;
-	border-radius: 4px;
-	cursor: pointer;
-	font-family: inherit;
-	font-size: 0.85rem;
-	font-weight: 600;
-	box-sizing: border-box;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 5rem;
-	height: 2rem;
+	width: auto;
 }
 
 .btn-danger:hover {
@@ -363,7 +407,8 @@ nav.home-nav a:hover {
 }
 
 .inline-form {
-	display: inline;
+	display: inline-flex;
+	align-items: center;
 }
 
 .review-card__own-actions {
@@ -511,6 +556,10 @@ nav.home-nav a:hover {
 
 .actions-row {
 	margin: 1rem 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	align-items: center;
 }
 
 .button-link {
@@ -610,6 +659,12 @@ nav.home-nav a:hover {
 	font-size: 0.95rem;
 }
 
+.card .button-link {
+	align-self: flex-start;
+	width: auto;
+	margin-top: 0.75rem;
+}
+
 .badge {
 	display: inline-block;
 	background: #64748b;
@@ -677,6 +732,14 @@ nav.home-nav a:hover {
 	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 	gap: 1rem;
 	margin-bottom: 2rem;
+}
+
+.logs-topbar {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 1.25rem;
+	gap: 1rem;
 }
 
 .metric-card {

@@ -2,11 +2,38 @@
 
 	<div class="dashboard-header">
 		<h1>Violations</h1>
-
 		<p class="dashboard-subtitle">
-			Browse and search violations.
+			Browse, search, and manage housing violations.
 		</p>
 	</div>
+
+	<nav class="page-back-nav">
+		{{#if filters.propertyId}}
+			<a href="/properties/{{filters.propertyId}}?from={{from}}">
+				Back to Property
+			</a>
+
+		{{else if (eq from "tenant")}}
+			<a href="/tenant">
+				Back to Tenant Dashboard
+			</a>
+
+		{{else if (eq from "landlord")}}
+			<a href="/landlord">
+				Back to Landlord Dashboard
+			</a>
+
+		{{else if (eq from "admin")}}
+			<a href="/admin">
+				Back to Admin Controls
+			</a>
+
+		{{else}}
+			<a href="/dashboard">
+				Back to Dashboard
+			</a>
+		{{/if}}
+	</nav>
 
 	{{#if (eq user.userRole "admin")}}
 	<section class="card">
@@ -34,7 +61,10 @@
 	</section>
 	{{/if}}
 
+	<h2>Filter Violations</h2>
+
 	<form method="GET" action="/violations" class="filters-form">
+
 		<div class="filters-grid">
 			<div class="field">
 				<label for="q">Search address / description</label>
@@ -92,29 +122,59 @@
 				</select>
 			</div>
 		</div>
-		<button type="submit">Apply filters</button>
+		<div class="actions-row">
+
+			<button type="submit">
+				Apply Filters
+			</button>
+
+			<a
+				class="button-link"
+				href="/violations{{#if from}}?from={{from}}{{/if}}"
+				style="
+					background:#e2e8f0;
+					color:#0f172a !important;
+					border:1px solid #cbd5e1;
+				"
+			>
+				Clear Filters
+			</a>
+
+		</div>
 	</form>
 
-	{{#if violations.length}}
-		<div class="card-grid" id="violationsGrid">
-			{{#each violations}}
-				<div class="card" data-date="{{originalCertifyByDate}}">
-					<h3 class="card-title">{{buildingAddress}}</h3>
-					<span class="badge badge-info">{{violationStatus}}</span>
-					<p><strong>Type:</strong> {{violationType}}</p>
-					<p><strong>Class:</strong> {{violationClass}}</p>
-					<p><strong>Due:</strong> {{originalCertifyByDateFormatted}} ({{daysRemaining}} days left)</p>
-					<p><strong>Description:</strong> {{violationDescription}}</p>
-					<a href="/violations/{{_id}}">View Details</a>
-				</div>
-			{{/each}}
-		</div>
-	{{else}}
-		<p>No violations found.</p>
-	{{/if}}
+		{{#if violations.length}}
+
+			<div class="card-grid">
+
+				{{#each violations}}
+
+					<div class="card">
+
+						<h3 class="card-title">
+							{{buildingAddress}}
+						</h3>
+
+						<span class="badge badge-info">
+							{{violationStatus}}
+						</span>
+
+						<p><strong>Type:</strong> {{violationType}}</p>
+						<p><strong>Description:</strong> {{violationDescription}}</p>
+
+						<a href="/violations/{{_id}}?from={{../from}}&propertyId={{propertyId}}">
+							View Details
+						</a>
+					</div>
+
+				{{/each}}
+
+			</div>
+
+		{{else}}
+			<p>No violations found.</p>
+		{{/if}}
+
 	</section>
 
-	<section class="site-footer">
-		<a href="/dashboard">Back to Dashboard</a>
-	</section>
 </main>
