@@ -207,3 +207,39 @@ export const getLandlordIdForProperty = async (propertyId) => {
 	});
 	return owner ? owner._id : null;
 };
+
+export const getAllReviewsVisibleToUser = async (sessionUser) => {
+	if (!sessionUser) {
+		return [];
+	}
+	const collection = await reviews();
+	const usersCol = await users();
+	const dbUser = await usersCol.findOne({ _id: sessionUser._id });
+	if (!dbUser) {
+		return [];
+	}
+
+	const baseQuery = { isDeleted: false };
+
+	if (dbUser.userRole === "admin") {
+		return collection.find(baseQuery).sort({ createdAt: -1 }).toArray();
+	}
+	if (dbUser.userRole === "landlord") {
+		return collection
+			.find({ ...baseQuery, landlordId: dbUser._id })
+			.sort({ createdAt: -1 })
+			.toArray();
+	}
+	if (dbUser.userRole === "tenant") {
+		const saved = dbUser.savedProperties || [];
+		const orClauses = [{ reviewerId: dbUser._id }];
+		if (saved.length > 0) {
+			orClauses.push({ propertyId: { $in: saved } });
+		}
+		return collection
+			.find({ ...baseQuery, $or: orClauses })
+			.sort({ createdAt: -1 })
+			.toArray();
+	}
+	return [];
+};
