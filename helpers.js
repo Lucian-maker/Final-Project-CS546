@@ -371,6 +371,14 @@ export const logDescriptions = {
 	adminUpdateUser: (id) => `Updated user ${id}`,
 	adminLogs: () => `Admin opened system logs`,
 	adminAnalytics: () => `Admin opened analytics`,
+
+	createComment: (propertyId) => `Created comment for property ${propertyId}`,
+	replyComment: (propertyId, commentId) =>
+		`Replied to comment ${commentId} on property ${propertyId}`,
+	likeComment: (id) => `Liked/unliked comment ${id}`,
+	dislikeComment: (id) => `Disliked/undisliked comment ${id}`,
+	editComment: (id) => `Edited comment ${id}`,
+	deleteComment: (id) => `Deleted comment ${id}`,
 };
 
 export const logCategories = {
