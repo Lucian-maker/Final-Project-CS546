@@ -1,0 +1,91 @@
+<main class="page review-detail">
+	<h1>Review detail</h1>
+	<p><a href="/reviews/{{review.propertyId}}">Back to reviews for this property</a></p>
+
+	{{#if error}}
+		<p class="error">{{error}}</p>
+	{{/if}}
+
+	<section class="review-summary">
+		<h2><span class="score-badge">{{review.overallScore}} / 5</span></h2>
+		<dl class="detail-grid">
+			<dt>Review ID</dt>
+			<dd><code>{{review._id}}</code></dd>
+			<dt>Property</dt>
+			<dd>
+				<a href="/properties/{{review.propertyId}}">{{review.propertyId}}</a>
+			</dd>
+			<dt>Reviewer</dt>
+			<dd>
+				{{#if reviewer}}
+					{{reviewer.firstName}} {{reviewer.lastName}} ({{reviewer.userRole}})
+				{{else}}
+					<code>{{review.reviewerId}}</code>
+				{{/if}}
+			</dd>
+			<dt>Landlord</dt>
+			<dd>
+				{{#if landlord}}
+					{{landlord.firstName}} {{landlord.lastName}}
+				{{else}}
+					<code>{{review.landlordId}}</code>
+				{{/if}}
+			</dd>
+			<dt>Responsiveness</dt>
+			<dd>{{review.responsiveness}} / 5</dd>
+			<dt>Value</dt>
+			<dd>{{review.value}} / 5</dd>
+			<dt>Resolution</dt>
+			<dd>{{review.resolution}} / 5</dd>
+			<dt>Overall</dt>
+			<dd><span class="badge badge-success">{{review.overallScore}} / 5</span></dd>
+			<dt>Posted</dt>
+			<dd>{{review.createdAtFormatted}}</dd>
+			{{#if review.wasEdited}}
+				<dt>Last edited</dt>
+				<dd>{{review.updatedAtFormatted}}</dd>
+			{{/if}}
+		</dl>
+	</section>
+
+	<section class="review-body">
+		<h2>Review</h2>
+		<blockquote>{{review.reviewText}}</blockquote>
+	</section>
+
+	<p class="actions-row">
+		<a class="button-link" href="/properties/{{review.propertyId}}">Open property</a>
+		<a class="button-link" href="/reviews/{{review.propertyId}}">All reviews for this property</a>
+	</p>
+
+	{{#if isOwnReview}}
+		<section class="status-update">
+			<h2>Manage your review</h2>
+			<details class="review-edit-toggle">
+				<summary class="review-edit-toggle__summary">Edit</summary>
+				<form class="review-edit-form" method="POST" action="/reviews/{{review._id}}/edit" novalidate>
+					<div class="field">
+						<label for="responsiveness-edit">Responsiveness (1-5)</label>
+						<input type="number" id="responsiveness-edit" name="responsiveness" min="1" max="5" value="{{review.responsiveness}}" required />
+					</div>
+					<div class="field">
+						<label for="value-edit">Value (1-5)</label>
+						<input type="number" id="value-edit" name="value" min="1" max="5" value="{{review.value}}" required />
+					</div>
+					<div class="field">
+						<label for="resolution-edit">Resolution (1-5)</label>
+						<input type="number" id="resolution-edit" name="resolution" min="1" max="5" value="{{review.resolution}}" required />
+					</div>
+					<div class="field">
+						<label for="reviewText-edit">Review</label>
+						<textarea id="reviewText-edit" name="reviewText" rows="4" maxlength="500" required>{{review.reviewText}}</textarea>
+					</div>
+					<button type="submit">Save</button>
+				</form>
+			</details>
+			<form class="inline-form" method="POST" action="/reviews/{{review._id}}/delete">
+				<button type="submit" class="btn-danger">Delete</button>
+			</form>
+		</section>
+	{{/if}}
+</main>

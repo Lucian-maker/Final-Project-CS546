@@ -23,3 +23,4 @@ export const notifications = getCollectionFn("notifications");
 export const disputes = getCollectionFn("disputes");
 export const attorneys = getCollectionFn("attorneys");
 export const logs = getCollectionFn("logs");
+export const tickets = getCollectionFn("tickets");

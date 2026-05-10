@@ -1,5 +1,63 @@
-<main class="page">
+<main class="page comments-page">
 	<h1>Comments</h1>
-	<p>TODO: Render comment threads and new-comment form.</p>
-	<a href="/dashboard">Back to Dashboard</a>
+	<p>
+		<a href="/properties/{{propertyId}}">Back to property</a>
+		·
+		<a href="/comments">All comments</a>
+	</p>
+
+	{{#if error}}
+		<div class="error">{{error}}</div>
+	{{/if}}
+
+	{{#if canComment}}
+		<section class="card">
+			<h2>Add a comment</h2>
+			<form method="POST" action="/comments/{{propertyId}}" novalidate>
+				<div class="field">
+					<label for="commentText">Comment</label>
+					<textarea id="commentText" name="commentText" rows="3" maxlength="1000" required>{{form.commentText}}</textarea>
+				</div>
+				<button type="submit">Post comment</button>
+			</form>
+		</section>
+	{{/if}}
+
+	<section class="comment-thread">
+		<h2>Thread ({{comments.length}})</h2>
+		{{#if comments.length}}
+			{{#each comments}}
+				<article class="comment-card">
+					<header class="comment-card__header">
+						<span class="badge badge-info">{{authorRole}}</span>
+						<time>{{createdAtFormatted}}</time>
+						{{#if wasEdited}}<span class="muted">(edited {{updatedAtFormatted}})</span>{{/if}}
+					</header>
+					<p class="comment-card__text">{{commentText}}</p>
+					<footer class="comment-card__footer">
+						<a href="/comments/single/{{_id}}">View Details</a>
+						{{#if isOwn}}
+							<details class="comment-edit-toggle">
+								<summary>Edit</summary>
+								<form method="POST" action="/comments/{{_id}}/edit" novalidate>
+									<div class="field">
+										<label>
+											Comment
+											<textarea name="commentText" rows="3" maxlength="1000" required>{{commentText}}</textarea>
+										</label>
+									</div>
+									<button type="submit">Save</button>
+								</form>
+							</details>
+							<form class="inline-form" method="POST" action="/comments/{{_id}}/delete">
+								<button type="submit" class="btn-danger">Delete</button>
+							</form>
+						{{/if}}
+					</footer>
+				</article>
+			{{/each}}
+		{{else}}
+			<p>No comments yet.</p>
+		{{/if}}
+	</section>
 </main>

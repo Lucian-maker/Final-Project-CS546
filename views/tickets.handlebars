@@ -1,0 +1,60 @@
+<main class="page">
+	<div class="dashboard-header">
+		<h1>Tickets</h1>
+		<p class="dashboard-subtitle">Maintenance and repair requests scoped to you.</p>
+	</div>
+
+	{{#if canCreate}}
+		<section class="card">
+			<h2>Open a ticket</h2>
+			<form method="POST" action="/tickets/create">
+				<div class="field">
+					<label for="propertyId">Property ID</label>
+					<input id="propertyId" name="propertyId" required />
+				</div>
+				<div class="field">
+					<label for="category">Category</label>
+					<select id="category" name="category" required>
+						{{#each categories}}
+							<option value="{{this}}">{{this}}</option>
+						{{/each}}
+					</select>
+				</div>
+				<div class="field">
+					<label for="priority">Priority</label>
+					<select id="priority" name="priority" required>
+						{{#each priorities}}
+							<option value="{{this}}">{{this}}</option>
+						{{/each}}
+					</select>
+				</div>
+				<div class="field">
+					<label for="description">Description</label>
+					<textarea id="description" name="description" rows="3" maxlength="1000" required></textarea>
+				</div>
+				<button type="submit">Submit ticket</button>
+			</form>
+		</section>
+	{{/if}}
+
+	{{#if tickets.length}}
+		<div class="card-grid">
+			{{#each tickets}}
+				<div class="card">
+					<h3 class="card-title">{{category}} · {{status}}</h3>
+					<span class="badge {{priorityBadgeClass}}">{{priority}}</span>
+					<p><strong>Property:</strong> <code>{{propertyId}}</code></p>
+					<p><strong>Description:</strong> {{description}}</p>
+					<p><small>Updated {{updatedAtFormatted}}</small></p>
+					<a href="/tickets/{{_id}}">View Details</a>
+				</div>
+			{{/each}}
+		</div>
+	{{else}}
+		<p>No tickets visible to you.</p>
+	{{/if}}
+
+	<section class="site-footer">
+		<a href="/dashboard">Back to Dashboard</a>
+	</section>
+</main>

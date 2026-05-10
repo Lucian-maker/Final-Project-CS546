@@ -172,6 +172,34 @@ export const updateNotification = async (id, updates) => {
 	return getNotificationById(cleanId);
 };
 
+// Marks a notification as read for its recipient (separate from status enum).
+export const markNotificationAsRead = async (id, userId) => {
+	const cleanId = checkId(id, "id");
+	const cleanUserId = checkId(userId, "userId");
+	const collection = await notifications();
+
+	const existing = await collection.findOne({ _id: cleanId });
+	if (!existing) {
+		throw `No notification found with that id "${cleanId}"`;
+	}
+	if (existing.userId !== cleanUserId) {
+		throw `You may only mark your own notifications as read`;
+	}
+	if (existing.readAt) {
+		return existing;
+	}
+
+	const updateResult = await collection.updateOne(
+		{ _id: cleanId },
+		{ $set: { readAt: new Date() } },
+	);
+	if (!updateResult.acknowledged) {
+		throw `Could not mark notification as read`;
+	}
+
+	return getNotificationById(cleanId);
+};
+
 // Deletes a notification after making sure it exists.
 export const removeNotification = async (id) => {
 	const cleanId = checkId(id, "id");
