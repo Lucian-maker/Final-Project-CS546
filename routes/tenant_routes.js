@@ -2,6 +2,7 @@ import { Router } from "express";
 import { getUserById } from "../data/users.js";
 import { getPropertyById } from "../data/properties.js";
 import { logDescriptions, logCategories } from "../helpers.js";
+import { computeTenantReviewAverage } from "../data/reviews.js";
 
 const router = Router();
 
@@ -31,10 +32,13 @@ router.get("/", async (req, res) => {
 		res.locals.logDescription =
 			"Viewed tenant dashboard";
 
+		const userScoreInfo = await computeTenantReviewAverage(user._id);
+
 		return res.render("tenant", {
 			title: "Tenant Dashboard",
 			user,
-			savedProperties
+			savedProperties,
+			userScoreInfo
 		});
 
 	} catch (e) {
