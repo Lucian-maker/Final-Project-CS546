@@ -155,6 +155,7 @@ nav.home-nav a:hover {
 }
 
 .dashboard-tile {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -167,6 +168,12 @@ nav.home-nav a:hover {
 	color: var(--nychcom-fg);
 	transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dashboard-notif-badge {
+	position: absolute;
+	top: 0.6rem;
+	right: 0.6rem;
 }
 
 .dashboard-tile:hover {
@@ -234,6 +241,169 @@ nav.home-nav a:hover {
 
 .header-signout:hover {
 	background: rgba(255, 255, 255, 0.3);
+}
+
+.header-nav {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.header-notifications {
+	color: #fff;
+	text-decoration: none;
+	font-weight: 500;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.header-notifications:hover {
+	text-decoration: underline;
+}
+
+.notif-badge {
+	min-width: 1.1rem;
+	padding: 0.1rem 0.35rem;
+	font-size: 0.7rem;
+	line-height: 1.2;
+	font-weight: 700;
+	background: #dc2626;
+	color: #fff;
+	border-radius: 9999px;
+	text-align: center;
+}
+
+/* Author display:inline-block beats [hidden] otherwise — badge stayed visible as "0". */
+.notif-badge[hidden] {
+	display: none !important;
+}
+
+.notif-badge:not([hidden]) {
+	display: inline-block;
+}
+
+.toast-stack {
+	position: fixed;
+	top: 4.5rem;
+	right: 1rem;
+	z-index: 1000;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	max-width: 22rem;
+	pointer-events: none;
+}
+
+.toast {
+	pointer-events: auto;
+	display: flex;
+	align-items: flex-start;
+	gap: 0.5rem;
+	background: #fff;
+	border: 1px solid #d0d7e2;
+	border-left: 4px solid var(--nychcom-accent);
+	border-radius: 8px;
+	padding: 0.65rem 0.85rem;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+	animation: toast-in 0.25s ease-out;
+}
+
+.toast-body {
+	flex: 1;
+	min-width: 0;
+}
+
+.toast-dismiss-btn {
+	flex-shrink: 0;
+	margin: -0.15rem -0.25rem 0 0;
+	padding: 0 0.35rem;
+	border: 0;
+	background: transparent;
+	color: #64748b;
+	font-size: 1.35rem;
+	line-height: 1;
+	cursor: pointer;
+	border-radius: 4px;
+}
+
+.toast-dismiss-btn:hover {
+	color: var(--nychcom-fg);
+	background: #f1f5f9;
+}
+
+@keyframes toast-in {
+	from {
+		opacity: 0;
+		transform: translateX(0.5rem);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+.toast-channel {
+	display: block;
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	color: var(--nychcom-accent);
+	margin-bottom: 0.25rem;
+}
+
+.toast-text {
+	margin: 0;
+	font-size: 0.9rem;
+	color: var(--nychcom-fg);
+}
+
+.notif-clear-form {
+	margin-bottom: 1rem;
+}
+
+.btn-notif-clear {
+	background: var(--nychcom-accent);
+	color: #fff;
+	border: 0;
+	padding: 0.4rem 0.85rem;
+	border-radius: 6px;
+	cursor: pointer;
+	font-weight: 600;
+}
+
+.btn-notif-clear:hover {
+	opacity: 0.92;
+}
+
+.btn-notif-dismiss {
+	margin-top: 0.75rem;
+	background: #64748b;
+	color: #fff;
+	border: 0;
+	padding: 0.35rem 0.65rem;
+	border-radius: 6px;
+	cursor: pointer;
+	font-weight: 600;
+	font-size: 0.85rem;
+}
+
+.btn-notif-dismiss:hover {
+	opacity: 0.92;
+}
+
+.notif-item-read-form {
+	margin-top: 0.5rem;
+}
+
+.notif-meta {
+	margin-top: auto;
+	padding-top: 1rem;
+	color: #64748b;
+	font-size: 0.9rem;
+}
+
+.notif-meta a {
+	color: var(--nychcom-accent);
 }
 
 .site-footer {

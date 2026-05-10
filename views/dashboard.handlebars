@@ -49,7 +49,8 @@
 			<span class="tile-icon">💬</span>
 			<span class="tile-text">Comments</span>
 		</a>
-		<a href="/notifications" class="dashboard-tile">
+		<a href="/notifications" class="dashboard-tile" id="dashboard-notif-tile">
+			<span class="dashboard-notif-badge notif-badge" hidden aria-live="polite">0</span>
 			<span class="tile-icon">🔔</span>
 			<span class="tile-text">Notifications</span>
 		</a>
@@ -68,4 +69,6 @@
 			</a>
 		{{/if}}
 	</div>
+
+	<script src="/public/js/dashboard_notif_badge.js" defer></script>
 </main>
