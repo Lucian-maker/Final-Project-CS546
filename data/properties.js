@@ -1,4 +1,4 @@
-import { properties, comments, reviews } from "../config/mongoCollections.js";
+import { properties, comments, reviews, users } from "../config/mongoCollections.js";
 import { v4 as uuidv4 } from "uuid";
 import { checkString, checkId, checkAddress } from "../helpers.js";
 
@@ -181,4 +181,82 @@ export const getCommunityInsights = async () => {
 		mostReviewed,
 		mostCommented
 	};
+};
+
+export const claimProperty = async (propertyId, userId) => {
+	propertyId = checkId(propertyId, "propertyId");
+	userId = checkId(userId, "userId");
+
+	const propCol = await properties();
+	const userCol = await users();
+
+	const property = await propCol.findOne({ _id: propertyId });
+
+	if (!property) {
+		throw "Property not found";
+	}
+
+	if (property.claimedBy && property.claimedBy !== userId) {
+		throw "This property is already claimed.";
+	}
+
+	await propCol.updateOne(
+		{ _id: propertyId },
+		{
+			$set: {
+				claimedBy: userId,
+				updatedOn: new Date(),
+			},
+		}
+	);
+
+	await userCol.updateOne(
+		{ _id: userId },
+		{
+			$addToSet: {
+				ownedProperties: propertyId,
+			},
+		}
+	);
+
+	return true;
+};
+
+export const unclaimProperty = async (propertyId, userId) => {
+	propertyId = checkId(propertyId, "propertyId");
+	userId = checkId(userId, "userId");
+
+	const propCol = await properties();
+	const userCol = await users();
+
+	const property = await propCol.findOne({ _id: propertyId });
+
+	if (!property) {
+		throw "Property not found";
+	}
+
+	if (property.claimedBy !== userId) {
+		throw "You do not own this property.";
+	}
+
+	await propCol.updateOne(
+		{ _id: propertyId },
+		{
+			$set: {
+				claimedBy: null,
+				updatedOn: new Date(),
+			},
+		}
+	);
+
+	await userCol.updateOne(
+		{ _id: userId },
+		{
+			$pull: {
+				ownedProperties: propertyId,
+			},
+		}
+	);
+
+	return true;
 };

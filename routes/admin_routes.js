@@ -9,6 +9,7 @@ import { users,
 	violations,
 	reviews
 } from "../config/mongoCollections.js";
+import PDFDocument from "pdfkit";
 
 const router = Router();
 
@@ -74,14 +75,28 @@ router.get("/users/:id", async (req, res) => {
 
 router.post("/users/:id/update", async (req, res) => {
 	try {
-		const { firstName, lastName, email, phoneNumber, userRole } = req.body;
+		const {
+			firstName,
+			lastName,
+			email,
+			phoneNumber,
+			userRole,
+			secondaryContactName,
+			secondaryContactEmail,
+			secondaryContactPhone
+		} = req.body;
 
 		await usersData.updateUserById(req.params.id, {
 			firstName,
 			lastName,
 			email,
 			phoneNumber,
-			userRole
+			userRole,
+			secondaryContact: {
+				name: secondaryContactName || "",
+				email: secondaryContactEmail || "",
+				phoneNumber: secondaryContactPhone || ""
+			}
 		});
 
 		res.locals.logCategory = logCategories.admin;
@@ -189,5 +204,54 @@ router.get("/logs", async (req, res) => {
 		});
 	}
 });
+
+router.get("/logs/export", async (req, res) => {
+	try {
+		const filters = {
+			search: req.query.search || "",
+			role: req.query.role || "",
+			category: req.query.category || "",
+			fromDate: req.query.fromDate || "",
+			toDate: req.query.toDate || "",
+			sort: req.query.sort || "newest"
+		};
+
+		const logs = await searchLogs(filters);
+
+		res.locals.logCategory = logCategories.admin;
+		res.locals.logDescription =
+			logDescriptions.adminLogsExport
+				? logDescriptions.adminLogsExport()
+				: "Exported system logs to PDF";
+
+		const doc = new PDFDocument();
+
+		res.setHeader("Content-Type", "application/pdf");
+		res.setHeader(
+			"Content-Disposition",
+			"attachment; filename=system-logs.pdf"
+		);
+
+		doc.pipe(res);
+
+		doc.fontSize(18).text("System Logs Export", { align: "center" });
+		doc.moveDown();
+
+		doc.fontSize(10);
+
+		logs.forEach((log) => {
+			doc.text(
+				`${log.timestamp} | ${log.user.name} | ${log.user.role} | ${log.category} | ${log.status}`
+			);
+			doc.text(`Description: ${log.description}`);
+			doc.moveDown();
+		});
+
+		doc.end();
+	} catch (e) {
+		return res.status(500).render("error", { error: e });
+	}
+});
+
 
 export default router;
