@@ -9,6 +9,8 @@ import {
 	guestOnly,
 	requireAuth,
 	adminGuard,
+	tenantGuard,
+	landlordGuard,
 } from "./middleware.js";
 
 const app = express();
@@ -81,6 +83,8 @@ app.use("/notifications", requireAuth);
 app.use("/disputes", requireAuth);
 app.use("/attorneys", requireAuth);
 app.use("/admin", adminGuard);
+app.use("/tenant", tenantGuard);
+app.use("/landlord", landlordGuard);
 app.use("/signout", requireAuth);
 
 app.use(logRequest);

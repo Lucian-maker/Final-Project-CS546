@@ -1,13 +1,107 @@
 <main class="page evidence-page">
-	<h1>Evidence vault</h1>
-	<p><a href="/dashboard">Back to Dashboard</a></p>
+	
+	<div class="dashboard-header">
+		<h1>Evidence Vault</h1>
+		<p class="dashboard-subtitle">
+			Review, filter, and upload violation evidence records.
+		</p>
+	</div>
 
-	{{#if message}}
-		<p class="success-banner">{{message}}</p>
-	{{/if}}
-	{{#if error}}
-		<p class="error">{{error}}</p>
-	{{/if}}
+	<nav class="page-back-nav">
+		{{#if violationId}}
+			<a href="/violations/{{violationId}}?from={{from}}&propertyId={{propertyId}}">
+				Back to Violation
+			</a>
+
+		{{else if propertyId}}
+			<a href="/properties/{{propertyId}}?from={{from}}">
+				Back to Property
+			</a>
+
+		{{else if (eq from "tenant")}}
+			<a href="/tenant">Back to Tenant Dashboard</a>
+
+		{{else if (eq from "landlord")}}
+			<a href="/landlord">Back to Landlord Dashboard</a>
+
+		{{else if (eq from "admin")}}
+			<a href="/admin">Back to Admin Controls</a>
+
+		{{else}}
+			<a href="/dashboard">Back to Dashboard</a>
+		{{/if}}
+	</nav>
+
+	<section>
+		<h2>Filter Evidence</h2>
+
+		<form method="GET" action="/evidence" class="filters-form">
+			<div class="filters-grid">
+				<div class="field">
+					<label for="violationIdFilter">Violation ID</label>
+					<input
+						type="text"
+						id="violationIdFilter"
+						name="violationId"
+						value="{{filters.violationId}}"
+						placeholder="viol-..."
+					/>
+				</div>
+
+				<div class="field">
+					<label for="propertyIdFilter">Property ID</label>
+					<input
+						type="text"
+						id="propertyIdFilter"
+						name="propertyId"
+						value="{{filters.propertyId}}"
+						placeholder="prop-..."
+					/>
+				</div>
+
+				<div class="field">
+					<label for="evidenceType">Evidence Type</label>
+					<select id="evidenceType" name="evidenceType">
+						<option value="">Any</option>
+						<option value="photo" {{#if (eq filters.evidenceType "photo")}}selected{{/if}}>Photo</option>
+						<option value="note" {{#if (eq filters.evidenceType "note")}}selected{{/if}}>Note</option>
+					</select>
+				</div>
+
+				<div class="field">
+					<label for="q">Search Notes / Captions</label>
+					<input
+						type="text"
+						id="q"
+						name="q"
+						value="{{filters.q}}"
+						placeholder="Keywords..."
+					/>
+				</div>
+			</div>
+
+			<div class="actions-row">
+
+				<button type="submit">
+					Apply Filters
+				</button>
+
+				<a
+					class="button-link"
+					href="/evidence{{#if from}}?from={{from}}{{/if}}"
+					style="
+						background:#e2e8f0;
+						color:#0f172a !important;
+						border:1px solid #cbd5e1;
+					"
+				>
+					Clear Filters
+				</a>
+
+			</div>
+			
+		</form>
+	</section>
 
 	<section class="evidence-add">
 		<h2>Add evidence</h2>
@@ -15,6 +109,8 @@
 			Add a text note, optionally attach an image, and use the caption and/or note fields as needed. An image must include at least a caption or note; text-only entries require note text.
 		</p>
 		<form method="POST" action="/evidence" class="evidence-form" id="evidence-form">
+			<input type="hidden" name="from" value="{{from}}" />
+			<input type="hidden" name="propertyId" value="{{propertyId}}" />
 			<div class="field">
 				<label for="violationId">Violation ID</label>
 				<input type="text" id="violationId" name="violationId" value="{{violationId}}" required placeholder="viol-..." />
@@ -61,16 +157,42 @@
 						{{/if}}
 						<p class="muted">
 							Violation:
-							<a href="/violations/{{this.violationId}}">{{this.violationId}}</a>
+							<a href="/violations/{{this.violationId}}?from={{../from}}&propertyId={{this.propertyId}}">{{this.violationId}}</a>
 							· Property:
-							<a href="/properties/{{this.propertyId}}">{{this.propertyId}}</a>
+							<a href="/properties/{{this.propertyId}}?from={{../from}}">{{this.propertyId}}</a>
 						</p>
-						{{#if (eq ../user._id this.uploadedByUserId)}}
+						{{#if (eq ../user.userRole "admin")}}
 							<form method="POST" action="/evidence/{{this._id}}/delete" class="inline-form">
 								{{#if ../violationId}}
 									<input type="hidden" name="violationId" value="{{../violationId}}" />
 								{{/if}}
-								<button type="submit" class="btn-danger">Delete my entry</button>
+
+								{{#if ../propertyId}}
+									<input type="hidden" name="propertyId" value="{{../propertyId}}" />
+								{{/if}}
+
+								<input type="hidden" name="from" value="{{../from}}" />
+
+								<button type="submit" class="btn-danger">
+									Delete entry
+								</button>
+							</form>
+
+						{{else if (eq ../user._id this.uploadedByUserId)}}
+							<form method="POST" action="/evidence/{{this._id}}/delete" class="inline-form">
+								{{#if ../violationId}}
+									<input type="hidden" name="violationId" value="{{../violationId}}" />
+								{{/if}}
+
+								{{#if ../propertyId}}
+									<input type="hidden" name="propertyId" value="{{../propertyId}}" />
+								{{/if}}
+
+								<input type="hidden" name="from" value="{{../from}}" />
+
+								<button type="submit" class="btn-danger">
+									Delete my entry
+								</button>
 							</form>
 						{{/if}}
 					</li>

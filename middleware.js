@@ -26,7 +26,7 @@ export const logRequest = (req, res, next) => {
 	next();
 };
 
-export const roleHome = (role) => (role === "admin" ? "/admin" : "/dashboard");
+export const roleHome = () => "/dashboard";
 
 export const guestOnly = (req, res, next) => {
 	if (req.session?.user) {
@@ -71,3 +71,5 @@ export const requireRole = (...roles) => {
 };
 
 export const adminGuard = requireRole("admin");
+export const tenantGuard = requireRole("tenant");
+export const landlordGuard = requireRole("landlord");

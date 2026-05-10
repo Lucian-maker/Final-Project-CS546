@@ -1,5 +1,15 @@
 <main class="page">
-	<h1>Disputes</h1>
+	<div class="dashboard-header">
+		<h1>Disputes</h1>
+		<p class="dashboard-subtitle">
+			Track and manage active housing disputes.
+		</p>
+	</div>
+	<nav class="page-back-nav">
+		<a href="/dashboard">
+			Back to Dashboard
+		</a>
+	</nav>
 	{{#if disputes}}
 		<ul class="card-grid">
 			{{#each disputes}}
@@ -14,5 +24,4 @@
 	{{else}}
 		<p>No active disputes.</p>
 	{{/if}}
-	<a href="/dashboard">Back to Dashboard</a>
 </main>
