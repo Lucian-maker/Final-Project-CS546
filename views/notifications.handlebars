@@ -6,7 +6,8 @@
 				<li class="card">
 					<span class="badge badge-warning">{{this.channel}} - {{this.status}}</span>
 					<p>{{this.notificationDetails.text}}</p>
-					<p style="margin-top: auto; padding-top: 1rem;"><small style="color: #64748b;">{{this.createdAt}}</small></p>
+					<p style="margin-top: auto; padding-top: 1rem;"><small style="color: #64748b;">{{this.createdAtFormatted}}</small></p>
+					<a href="/notifications/{{this._id}}">View Details</a>
 				</li>
 			{{/each}}
 		</ul>

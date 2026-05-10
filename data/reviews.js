@@ -182,6 +182,38 @@ export const computeLandlordTrustScore = async (landlordId) => {
 	return { score, count: live.length };
 };
 
+export const getAllReviewsVisibleToUser = async (sessionUser) => {
+	if (!sessionUser) {
+		return [];
+	}
+	const collection = await reviews();
+	const usersCol = await users();
+	const dbUser = await usersCol.findOne({ _id: sessionUser._id });
+	if (!dbUser) {
+		return [];
+	}
+
+	const baseQuery = { isDeleted: false };
+	let query = baseQuery;
+
+	if (dbUser.userRole === "admin") {
+		query = baseQuery;
+	} else if (dbUser.userRole === "landlord") {
+		query = { ...baseQuery, landlordId: dbUser._id };
+	} else if (dbUser.userRole === "tenant") {
+		const saved = dbUser.savedProperties || [];
+		const orClauses = [{ reviewerId: dbUser._id }];
+		if (saved.length > 0) {
+			orClauses.push({ propertyId: { $in: saved } });
+		}
+		query = { ...baseQuery, $or: orClauses };
+	} else {
+		return [];
+	}
+
+	return collection.find(query).sort({ createdAt: -1 }).toArray();
+};
+
 export const getLandlordIdForProperty = async (propertyId) => {
 	const cleanPropertyId = checkId(propertyId, "propertyId");
 	const usersCollection = await users();

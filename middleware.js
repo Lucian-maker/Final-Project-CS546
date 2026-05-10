@@ -11,26 +11,26 @@ export const logRequest = (req, res, next) => {
 			: "Guest";
 
 		console.log(
-			`[${timestamp}] ${req.method} ${req.originalUrl} ${res.statusCode} (${who})`
+			`[${timestamp}] ${req.method} ${req.originalUrl} ${res.statusCode} (${who})`,
 		);
-		
+
 		createLog(
 			req,
 			res,
 			req.session?.user || null,
 			res.locals.logDescription || null,
-			res.locals.logCategory || "general"
+			res.locals.logCategory || "general",
 		).catch(console.error);
 	});
 
 	next();
 };
 
-export const roleHome = (role) => (role === "admin" ? "/admin" : "/dashboard");
+export const roleHome = () => "/dashboard";
 
 export const guestOnly = (req, res, next) => {
 	if (req.session?.user) {
-		return res.redirect(roleHome(req.session.user.userRole));
+		return res.redirect(roleHome());
 	}
 	return next();
 };

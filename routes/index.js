@@ -9,6 +9,7 @@ import notificationsRoutes from "./notifications_routes.js";
 import disputesRoutes from "./disputes_routes.js";
 import attorneysRoutes from "./attorneys_routes.js";
 import adminRoutes from "./admin_routes.js";
+import ticketsRoutes from "./tickets_routes.js";
 
 const constructorMethod = (app) => {
 	app.use("/", authRoutes);
@@ -21,6 +22,7 @@ const constructorMethod = (app) => {
 	app.use("/notifications", notificationsRoutes);
 	app.use("/disputes", disputesRoutes);
 	app.use("/attorneys", attorneysRoutes);
+	app.use("/tickets", ticketsRoutes);
 	app.use("/admin", adminRoutes);
 
 	app.use((req, res) => {
