@@ -116,7 +116,6 @@
 						li.getAttribute("data-notification-id");
 					var id = rawId ? rawId.trim() : "";
 					if (!id) return;
-					if (!canSyncInBackground()) return;
 					ev.preventDefault();
 					markReadLocal(id);
 					li.remove();

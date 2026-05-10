@@ -1,6 +1,8 @@
 <main class="page ticket-detail">
-	<h1>Ticket detail</h1>
-	<p><a href="/tickets">Back to tickets</a></p>
+	<h1>Ticket Details</h1>
+	<nav class="page-back-nav">
+		<a href="/tickets">Back to Tickets</a>
+	</nav>
 
 	{{#if statusMessage}}
 		<p class="success-banner">{{statusMessage}}</p>
@@ -96,4 +98,25 @@
 	{{else}}
 		<p class="muted">No status transitions are available for your role from the current state.</p>
 	{{/if}}
+
+	
+	<section class="status-update">
+		<h2>Update priority</h2>
+
+		<form method="POST" action="/tickets/{{ticket._id}}/priority">
+			<div class="field">
+				<label for="priority">Priority</label>
+				<select id="priority" name="priority" required>
+					{{#each priorities}}
+						<option value="{{this}}" {{#if (eq ../ticket.priority this)}}selected{{/if}}>
+							{{this}}
+						</option>
+					{{/each}}
+				</select>
+			</div>
+
+			<button type="submit">Update priority</button>
+		</form>
+	</section>
+	
 </main>

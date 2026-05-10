@@ -12,6 +12,7 @@ import {
 	tenantGuard,
 	landlordGuard,
 } from "./middleware.js";
+import { users } from "./config/mongoCollections.js";
 
 const app = express();
 
@@ -29,15 +30,44 @@ app.use(
 	}),
 );
 
-// Small persistence layer: if MemoryStore is empty after restart, restore session user from signed cookie.
-app.use((req, res, next) => {
 	if (req.session?.user) return next();
+
 	const raw = req.signedCookies?.NYCHComUser;
 	if (!raw || typeof raw !== "string") return next();
+
 	try {
 		const parsed = JSON.parse(raw);
-		if (!parsed || typeof parsed !== "object" || !parsed._id) return next();
-		req.session.user = parsed;
+
+		if (!parsed || typeof parsed !== "object" || !parsed._id) {
+			res.clearCookie("NYCHComUser", {
+				httpOnly: true,
+				sameSite: "lax",
+				signed: true,
+			});
+			return next();
+		}
+
+		const usersCol = await users();
+		const dbUser = await usersCol.findOne({ _id: parsed._id });
+
+		if (!dbUser) {
+			res.clearCookie("NYCHComUser", {
+				httpOnly: true,
+				sameSite: "lax",
+				signed: true,
+			});
+			return next();
+		}
+
+		req.session.user = {
+			_id: dbUser._id,
+			firstName: dbUser.firstName,
+			lastName: dbUser.lastName,
+			email: dbUser.email,
+			phoneNumber: dbUser.phoneNumber,
+			userRole: dbUser.userRole,
+		};
+
 		return next();
 	} catch {
 		res.clearCookie("NYCHComUser");

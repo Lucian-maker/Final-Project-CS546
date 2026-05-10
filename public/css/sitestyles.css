@@ -565,6 +565,11 @@ nav.home-nav a:hover {
 	font-size: 0.85rem;
 }
 
+.ticket-preview {
+	max-height: 4.5rem;
+	overflow: hidden;
+}
+
 .btn-danger {
 	background: #d62828;
 	border: 1px solid #d62828;
