@@ -3,11 +3,13 @@ import {
 	comments,
 	reviews,
 	users,
+	violations as violationsCol,
 } from "../config/mongoCollections.js";
 import { v4 as uuidv4 } from "uuid";
 import { checkString, checkId, checkAddress } from "../helpers.js";
 
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const roundOne = (n) => Math.round(n * 10) / 10;
 
 export const getAllProperties = async () => {
 	const propCollection = await properties();
@@ -119,6 +121,92 @@ export const getProperties = async (filters = {}) => {
 	) {
 		results = results.filter(
 			(p) => p.reviews.length >= Number(filters.minReviews),
+		);
+	}
+
+	// Gets Trust Score & Avg Resolution Time
+	const reviewsCollection = await reviews();
+	const violCollection = await violationsCol();
+
+	// Cache landlord scores
+	const landlordScoreCache = {};
+
+	results = await Promise.all(
+		results.map(async (p) => {
+			// Trust Score from reviews targeting the landlord who claimed this property
+			let trustScore = null;
+			if (p.claimedBy) {
+				if (!(p.claimedBy in landlordScoreCache)) {
+					const landlordReviews = await reviewsCollection
+						.find({ landlordId: p.claimedBy, isDeleted: false })
+						.toArray();
+					if (landlordReviews.length > 0) {
+						const sum = landlordReviews.reduce(
+							(acc, r) => acc + (r.overallScore || 0),
+							0,
+						);
+						landlordScoreCache[p.claimedBy] = roundOne(
+							sum / landlordReviews.length,
+						);
+					} else {
+						landlordScoreCache[p.claimedBy] = null;
+					}
+				}
+				trustScore = landlordScoreCache[p.claimedBy];
+			}
+
+			// Avg Resolution Time from violations on this property
+			let avgResolutionDays = null;
+			const propViolations = await violCollection
+				.find({
+					propertyId: p._id,
+					resolvedAt: { $ne: null },
+				})
+				.toArray();
+			if (propViolations.length > 0) {
+				let totalDays = 0;
+				let count = 0;
+				for (const v of propViolations) {
+					const start = v.createdAt || v.inspectionDate;
+					const end = v.resolvedAt;
+					if (start && end) {
+						const diffMs =
+							new Date(end).getTime() -
+							new Date(start).getTime();
+						totalDays += Math.max(0, diffMs / 86400000);
+						count++;
+					}
+				}
+				if (count > 0) {
+					avgResolutionDays = roundOne(totalDays / count);
+				}
+			}
+
+			return { ...p, trustScore, avgResolutionDays };
+		}),
+	);
+
+	// Apply trust score filter
+	if (
+		filters.minTrustScore !== undefined &&
+		filters.minTrustScore !== "" &&
+		filters.minTrustScore !== null
+	) {
+		const min = Number(filters.minTrustScore);
+		results = results.filter(
+			(p) => p.trustScore !== null && p.trustScore >= min,
+		);
+	}
+
+	// Apply max avg resolution filter
+	if (
+		filters.maxAvgResolution !== undefined &&
+		filters.maxAvgResolution !== "" &&
+		filters.maxAvgResolution !== null
+	) {
+		const max = Number(filters.maxAvgResolution);
+		results = results.filter(
+			(p) => p.avgResolutionDays !== null && p.avgResolutionDays <= max,
 		);
 	}
 

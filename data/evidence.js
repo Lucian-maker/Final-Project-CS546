@@ -139,6 +139,15 @@ export const getEvidenceById = async (id) => {
 	return doc;
 };
 
+export const getEvidenceByViolation = async (violationId) => {
+	const clean = checkId(violationId, "violationId");
+	const eCol = await evidence();
+	return eCol
+		.find({ violationId: clean, isDeleted: false })
+		.sort({ createdAt: -1 })
+		.toArray();
+};
+
 export const listEvidenceForSessionUser = async (sessionUser, filters = {}) => {
 	const dbUser = await loadUser(sessionUser._id);
 	const eCol = await evidence();

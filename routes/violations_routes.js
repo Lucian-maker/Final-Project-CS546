@@ -8,10 +8,12 @@ import {
 	getViolationsForSessionUser,
 	updateViolationRemediation,
 } from "../data/violations.js";
+import { getEvidenceByViolation } from "../data/evidence.js";
 
 import { logDescriptions, logCategories } from "../helpers.js";
 import { formatDateTime } from "../helpers.js";
 import { notifyViolationStatusUpdated } from "../data/notification_events.js";
+import PDFDocument from "pdfkit";
 
 const router = Router();
 
@@ -27,9 +29,9 @@ const BOROUGHS = [
 function decorateViolationForView(v) {
 	const history = Array.isArray(v.statusHistory)
 		? v.statusHistory.map((h) => ({
-				...h,
-				changedAtFormatted: formatDateTime(h.changedAt),
-			}))
+			...h,
+			changedAtFormatted: formatDateTime(h.changedAt),
+		}))
 		: [];
 
 	return {
@@ -49,22 +51,8 @@ function decorateViolationForView(v) {
 }
 
 function allowedNextStatuses(role, current) {
-	if (role === "admin") return [...VIOLATION_STATUSES];
-
-	if (role === "landlord") {
-		if (current === "Open") return ["Repair Scheduled", "Resolved"];
-		if (current === "Repair Scheduled") return ["Resolved"];
-		return [];
-	}
-
-	if (role === "tenant") {
-		if (current === "Open" || current === "Repair Scheduled") {
-			return ["Disputed"];
-		}
-		return [];
-	}
-
-	return [];
+	// All roles (admin, landlord, tenant) get the same status options
+	return VIOLATION_STATUSES.filter((s) => s !== current);
 }
 
 router.get("/", async (req, res) => {
@@ -212,7 +200,7 @@ router
 				actorUserId: req.session.user._id,
 				oldStatus: existing.violationStatus,
 				newStatus: body.newStatus,
-			}).catch(() => {});
+			}).catch(() => { });
 
 			res.locals.logCategory = logCategories.violations;
 			res.locals.logDescription = logDescriptions.updateViolationStatus(
@@ -256,5 +244,163 @@ router
 			}
 		}
 	});
+// PDF export 
+router.get("/:id/export", async (req, res) => {
+	try {
+		await assertUserCanAccessViolation(req.session.user, req.params.id);
+		const violation = await getViolationById(req.params.id);
+
+		let evidenceRecords = [];
+		try {
+			evidenceRecords = await getEvidenceByViolation(req.params.id);
+		} catch {
+
+		}
+
+		const doc = new PDFDocument({ margin: 50 });
+
+		res.setHeader("Content-Type", "application/pdf");
+		res.setHeader(
+			"Content-Disposition",
+			`attachment; filename=violation-report-${req.params.id}.pdf`,
+		);
+		doc.pipe(res);
+
+		// Header
+		doc.fontSize(20).text("NYCHCom — Verifiable Violation Status Report", {
+			underline: true,
+		});
+		doc.moveDown();
+		doc.fontSize(10).fillColor("#666").text(
+			`Generated: ${new Date().toLocaleString("en-US", { timeZone: "America/New_York" })}`,
+		);
+		doc.moveDown();
+
+		// Violation Details
+		doc.fontSize(14).fillColor("#000").text("Violation Details", {
+			underline: true,
+		});
+		doc.moveDown(0.5);
+		doc.fontSize(10);
+		const details = [
+			["Violation ID", violation._id],
+			["Property ID", violation.propertyId],
+			["Building Address", violation.buildingAddress],
+			["Borough", violation.borough || "—"],
+			["Zip Code", violation.zipCode || "—"],
+			["Type", violation.violationType],
+			["Class", violation.violationClass || "—"],
+			["Description", violation.violationDescription],
+			["Current Status", violation.violationStatus],
+			[
+				"Certify-By Date",
+				violation.originalCertifyByDate
+					? formatDateTime(violation.originalCertifyByDate)
+					: "—",
+			],
+			[
+				"Inspection Date",
+				violation.inspectionDate
+					? formatDateTime(violation.inspectionDate)
+					: "—",
+			],
+			["Days Remaining", violation.daysRemaining ?? "—"],
+			["Actionable", violation.isActionable ? "Yes" : "No"],
+		];
+
+		for (const [label, value] of details) {
+			doc.font("Helvetica-Bold").text(`${label}: `, { continued: true });
+			doc.font("Helvetica").text(String(value));
+		}
+
+		// Remediation Status
+		doc.moveDown();
+		doc.fontSize(14).font("Helvetica-Bold").text("Remediation Status", {
+			underline: true,
+		});
+		doc.moveDown(0.5);
+		doc.fontSize(10);
+		if (violation.remediationStatus) {
+			doc.font("Helvetica-Bold").text("Current State: ", {
+				continued: true,
+			});
+			doc.font("Helvetica").text(
+				violation.remediationStatus.currentState || "—",
+			);
+			doc.font("Helvetica-Bold").text("Notes: ", { continued: true });
+			doc.font("Helvetica").text(
+				violation.remediationStatus.notes || "—",
+			);
+			doc.font("Helvetica-Bold").text("Last Updated: ", {
+				continued: true,
+			});
+			doc.font("Helvetica").text(
+				violation.remediationStatus.updatedAt
+					? formatDateTime(violation.remediationStatus.updatedAt)
+					: "—",
+			);
+		}
+
+		// Status History
+		doc.moveDown();
+		doc.fontSize(14)
+			.font("Helvetica-Bold")
+			.text("Status History", { underline: true });
+		doc.moveDown(0.5);
+		doc.fontSize(10);
+		if (
+			Array.isArray(violation.statusHistory) &&
+			violation.statusHistory.length > 0
+		) {
+			for (const entry of violation.statusHistory) {
+				doc.font("Helvetica-Bold").text(
+					`${entry.state} — ${entry.changedAt ? formatDateTime(entry.changedAt) : "—"} (by ${entry.changedBy || "system"})`,
+				);
+			}
+		} else {
+			doc.font("Helvetica").text("No status history recorded.");
+		}
+
+		// Evidence Records
+		doc.moveDown();
+		doc.fontSize(14)
+			.font("Helvetica-Bold")
+			.text("Evidence Records", { underline: true });
+		doc.moveDown(0.5);
+		doc.fontSize(10);
+		if (evidenceRecords.length > 0) {
+			for (const ev of evidenceRecords) {
+				doc.font("Helvetica-Bold").text(
+					`[${ev.evidenceType?.toUpperCase() || "ITEM"}] ${ev.caption || ev.noteText || "Untitled"}`,
+				);
+				doc.font("Helvetica").text(
+					`  Uploaded: ${ev.createdAt ? formatDateTime(ev.createdAt) : "—"} | ID: ${ev._id}`,
+				);
+				if (ev.noteText) {
+					doc.text(`  Note: ${ev.noteText}`);
+				}
+				doc.moveDown(0.3);
+			}
+		} else {
+			doc.font("Helvetica").text("No evidence records on file.");
+		}
+
+
+		doc.moveDown(2);
+		doc.fontSize(8)
+			.fillColor("#999")
+			.text(
+				"This report was generated by the NYCHCom platform. It is intended as a verifiable record for housing court proceedings.",
+				{ align: "center" },
+			);
+
+		doc.end();
+	} catch (e) {
+		return res.status(400).render("error", {
+			title: "Export Error",
+			error: String(e),
+		});
+	}
+});
 
 export default router;
