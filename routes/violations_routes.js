@@ -11,7 +11,12 @@ import {
 
 import { logDescriptions, logCategories } from "../helpers.js";
 import { formatDateTime } from "../helpers.js";
-import { notifyViolationStatusUpdated } from "../data/notification_events.js";
+import {
+	notifyDisputeCreated,
+	notifyViolationStatusUpdated,
+} from "../data/notification_events.js";
+import { createDispute } from "../data/disputes.js";
+import { adminGuard } from "../middleware.js";
 
 const router = Router();
 
@@ -128,7 +133,7 @@ router.get("/", async (req, res) => {
 	}
 });
 
-router.post("/create", async (req, res) => {
+router.post("/create", adminGuard, async (req, res) => {
 	try {
 		const newViolation = await createViolation(req.body);
 
@@ -256,5 +261,45 @@ router
 			}
 		}
 	});
+
+// Tenant/landlord-facing entrypoint
+// admins resolve disputes from /disputes/:id instead.
+router.post("/:id/dispute", async (req, res) => {
+	try {
+		const sessionUser = req.session.user;
+		if (sessionUser.userRole === "admin") {
+			throw "Admins should update disputes from the disputes page";
+		}
+
+		await assertUserCanAccessViolation(sessionUser, req.params.id);
+
+		const notesRaw = req.body?.notes ? String(req.body.notes).trim() : "";
+		const result =
+			notesRaw.length > 0 ? notesRaw.slice(0, 2000) : "Dispute filed.";
+
+		const created = await createDispute({
+			violationId: req.params.id,
+			createdBy: sessionUser._id,
+			eventType: "status_change",
+			status: "Pending",
+			result,
+		});
+
+		void notifyDisputeCreated({
+			disputeId: created._id,
+			actorUserId: sessionUser._id,
+		}).catch(() => {});
+
+		res.locals.logCategory = logCategories.disputes;
+		res.locals.logDescription = `Filed dispute ${created._id} for violation ${req.params.id}`;
+
+		return res.redirect(`/disputes/${created._id}`);
+	} catch (e) {
+		return res.status(400).render("error", {
+			title: "Dispute",
+			error: String(e),
+		});
+	}
+});
 
 export default router;

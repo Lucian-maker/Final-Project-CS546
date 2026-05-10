@@ -1,8 +1,8 @@
 import { disputes, users, violations } from "../config/mongoCollections.js";
 import { createNotification } from "./notifications.js";
-import { checkId, checkString } from "../helpers.js";
+import { checkChannel, checkId, checkString } from "../helpers.js";
 
-const CHANNEL = "email";
+const DEFAULT_CHANNEL = "email";
 
 const toUniqueIds = (ids) => [...new Set(ids.filter(Boolean).map(String))];
 
@@ -57,13 +57,16 @@ const getPrimaryViolationForProperty = async (propertyId) => {
 	return violation ? String(violation._id) : null;
 };
 
+// Channel is optional; falls back to email to preserve prior behavior when callers omit it.
 export const emitNotifications = async ({
 	recipientIds,
 	violationId,
 	text,
+	channel,
 }) => {
 	const cleanViolationId = checkId(violationId, "violationId");
 	const cleanText = checkString(text, "notificationText");
+	const cleanChannel = channel ? checkChannel(channel) : DEFAULT_CHANNEL;
 
 	const ids = toUniqueIds(recipientIds);
 	let createdCount = 0;
@@ -74,7 +77,7 @@ export const emitNotifications = async ({
 		await createNotification({
 			userId: cleanUserId,
 			violationId: cleanViolationId,
-			channel: CHANNEL,
+			channel: cleanChannel,
 			notificationDetails: { text: cleanText },
 			status: "queued",
 			createdAt: new Date(),
@@ -121,6 +124,7 @@ export const notifyViolationStatusUpdated = async ({
 	actorUserId,
 	oldStatus,
 	newStatus,
+	channel,
 }) => {
 	const { parties } = await resolveRelevantPartiesForViolation(
 		violationId,
@@ -131,10 +135,15 @@ export const notifyViolationStatusUpdated = async ({
 		recipientIds: parties,
 		violationId,
 		text: `Violation status changed from ${oldStatus} to ${newStatus}.`,
+		channel,
 	});
 };
 
-export const notifyDisputeCreated = async ({ disputeId, actorUserId }) => {
+export const notifyDisputeCreated = async ({
+	disputeId,
+	actorUserId,
+	channel,
+}) => {
 	const disputesCollection = await disputes();
 	const dispute = await disputesCollection.findOne({
 		_id: checkId(disputeId),
@@ -151,6 +160,7 @@ export const notifyDisputeCreated = async ({ disputeId, actorUserId }) => {
 		recipientIds: parties,
 		violationId: dispute.violationId,
 		text: `A dispute was created (${dispute.status}).`,
+		channel,
 	});
 };
 
@@ -158,6 +168,7 @@ export const notifyDisputeUpdated = async ({
 	disputeId,
 	actorUserId,
 	newStatus,
+	channel,
 }) => {
 	const disputesCollection = await disputes();
 	const dispute = await disputesCollection.findOne({
@@ -175,6 +186,7 @@ export const notifyDisputeUpdated = async ({
 		recipientIds: parties,
 		violationId: dispute.violationId,
 		text: `Dispute status updated to ${newStatus}.`,
+		channel,
 	});
 };
 
@@ -182,6 +194,7 @@ export const notifyCommentActivity = async ({
 	propertyId,
 	actorUserId,
 	text,
+	channel,
 }) => {
 	const cleanPropertyId = checkId(propertyId, "propertyId");
 	const relevant = await resolveRelevantPartiesForProperty(
@@ -196,6 +209,7 @@ export const notifyCommentActivity = async ({
 		recipientIds: relevant,
 		violationId: fallbackViolationId,
 		text,
+		channel,
 	});
 };
 
@@ -203,6 +217,7 @@ export const notifyReviewActivity = async ({
 	propertyId,
 	actorUserId,
 	text,
+	channel,
 }) => {
 	const cleanPropertyId = checkId(propertyId, "propertyId");
 	const recipients = await resolveRelevantPartiesForProperty(
@@ -219,5 +234,6 @@ export const notifyReviewActivity = async ({
 		recipientIds: recipients,
 		violationId: fallbackViolationId,
 		text,
+		channel,
 	});
 };
