@@ -11,6 +11,7 @@ import {
 } from "../data/notifications.js";
 
 import { logDescriptions, logCategories } from "../helpers.js";
+import { adminGuard } from "../middleware.js";
 
 const router = Router();
 
@@ -85,7 +86,7 @@ router.route("/api").get(async (req, res) => {
 });
 
 // Creates a new notification .
-router.route("/api").post(async (req, res) => {
+router.route("/api").post(adminGuard, async (req, res) => {
 	try {
 		const created = await createNotification(req.body);
 		res.locals.logCategory = logCategories.notifications;
@@ -116,7 +117,7 @@ router.route("/api/:id").get(async (req, res) => {
 });
 
 // Updates the notification by the id #.
-router.route("/api/:id").patch(async (req, res) => {
+router.route("/api/:id").patch(adminGuard, async (req, res) => {
 	try {
 		const updated = await updateNotification(req.params.id, req.body);
 		res.locals.logCategory = logCategories.notifications;
@@ -133,7 +134,7 @@ router.route("/api/:id").patch(async (req, res) => {
 });
 
 // Deletes the notification by the id #.
-router.route("/api/:id").delete(async (req, res) => {
+router.route("/api/:id").delete(adminGuard, async (req, res) => {
 	try {
 		const deleted = await removeNotification(req.params.id);
 		res.locals.logCategory = logCategories.notifications;

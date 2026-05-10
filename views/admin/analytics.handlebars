@@ -62,6 +62,23 @@
 			<span class="metric-value">{{displayValue statusStats.kpis.openLike.count}}</span>
 			<span class="metric-footnote">{{displayPercent statusStats.kpis.openLike.pct}} active pipeline</span>
 		</div>
+		<div class="metric-card metric-card-kpi metric-card-success">
+			<span class="metric-eyebrow">Avg Resolution Time</span>
+			<span class="metric-value">
+				{{#if resolutionStats.avgDays}}
+					{{resolutionStats.avgDays}}d
+				{{else}}
+					--
+				{{/if}}
+			</span>
+			<span class="metric-footnote">
+				{{#if resolutionStats.sampleSize}}
+					across {{resolutionStats.sampleSize}} resolved violations
+				{{else}}
+					no resolved violations yet
+				{{/if}}
+			</span>
+		</div>
 	</div>
 
 	<div class="status-breakdown-grid">

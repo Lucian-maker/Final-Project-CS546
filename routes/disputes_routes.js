@@ -45,7 +45,7 @@ router.route("/api").get(async (req, res) => {
 });
 
 // Creates a new dispute .
-router.route("/api").post(async (req, res) => {
+router.route("/api").post(adminGuard, async (req, res) => {
 	try {
 		const created = await createDispute(req.body);
 		void notifyDisputeCreated({
@@ -74,7 +74,7 @@ router.route("/api/:id").get(async (req, res) => {
 });
 
 // Updates the dispute by the id #.
-router.route("/api/:id").patch(async (req, res) => {
+router.route("/api/:id").patch(adminGuard, async (req, res) => {
 	try {
 		const updated = await updateDispute(req.params.id, req.body);
 		void notifyDisputeUpdated({
@@ -94,7 +94,7 @@ router.route("/api/:id").patch(async (req, res) => {
 });
 
 // Deletes the dispute by the id #.
-router.route("/api/:id").delete(async (req, res) => {
+router.route("/api/:id").delete(adminGuard, async (req, res) => {
 	try {
 		const deleted = await removeDispute(req.params.id);
 		return res.json(deleted);
