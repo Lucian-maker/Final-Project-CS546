@@ -12,6 +12,7 @@ import adminRoutes from "./admin_routes.js";
 import tenantRoutes from "./tenant_routes.js";
 import landlordRoutes from "./landlord_routes.js";
 import profileRoutes from "./profile_routes.js";
+import ticketsRoutes from "./tickets_routes.js";
 
 const constructorMethod = (app) => {
 	app.use("/", authRoutes);
@@ -24,6 +25,7 @@ const constructorMethod = (app) => {
 	app.use("/notifications", notificationsRoutes);
 	app.use("/disputes", disputesRoutes);
 	app.use("/attorneys", attorneysRoutes);
+	app.use("/tickets", ticketsRoutes);
 	app.use("/admin", adminRoutes);
 	app.use("/tenant", tenantRoutes);
 	app.use("/landlord", landlordRoutes);

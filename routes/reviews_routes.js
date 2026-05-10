@@ -21,6 +21,7 @@ import {
 	logCategories,
 } from "../helpers.js";
 import { requireAuth, requireRole } from "../middleware.js";
+import { notifyReviewActivity } from "../data/notification_events.js";
 
 const router = Router();
 
@@ -217,6 +218,11 @@ router
 				body.resolution,
 				body.reviewText,
 			);
+			void notifyReviewActivity({
+				propertyId: cleanPropertyId,
+				actorUserId: req.session.user._id,
+				text: "A new property review was posted.",
+			}).catch(() => {});
 			const from = req.query.from || req.body.from || "";
 
 			return res.redirect(`/reviews/${cleanPropertyId}?from=${from}`);
@@ -244,6 +250,11 @@ router.route("/:reviewId/edit").post(requireAuth, async (req, res) => {
 			body.resolution,
 			body.reviewText,
 		);
+		void notifyReviewActivity({
+			propertyId: existing.propertyId,
+			actorUserId: req.session.user._id,
+			text: "A property review was updated.",
+		}).catch(() => {});
 		return res.redirect(`/reviews/${existing.propertyId}`);
 	} catch (e) {
 		return res.status(400).render("error", {
@@ -261,6 +272,11 @@ router.route("/:reviewId/delete").post(requireAuth, async (req, res) => {
 			req.params.reviewId,
 		);
 		await softDeleteReview(req.params.reviewId, req.session.user._id);
+		void notifyReviewActivity({
+			propertyId: existing.propertyId,
+			actorUserId: req.session.user._id,
+			text: "A property review was removed.",
+		}).catch(() => {});
 		return res.redirect(`/reviews/${existing.propertyId}`);
 	} catch (e) {
 		return res.status(400).render("error", {
