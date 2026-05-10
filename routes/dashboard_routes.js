@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { getAllViolations } from "../data/violations.js";
+import { computeLandlordTrustScore, computeTenantReviewAverage } from "../data/reviews.js";
 
 import { logDescriptions, logCategories } from "../helpers.js";
 
@@ -12,7 +13,15 @@ router.route("/").get(async (req, res) => {
 	let violations15Days = 0;
 	let violations7Days = 0;
 
+	let userScoreInfo = null;
+
 	try {
+		if (user.userRole === "landlord") {
+			userScoreInfo = await computeLandlordTrustScore(user._id);
+		} else if (user.userRole === "tenant") {
+			userScoreInfo = await computeTenantReviewAverage(user._id);
+		}
+
 		const allViolations = await getAllViolations();
 		allViolations.forEach(v => {
 			if (v.violationStatus !== "Closed" && v.daysRemaining !== null && v.daysRemaining !== undefined) {
@@ -22,7 +31,7 @@ router.route("/").get(async (req, res) => {
 			}
 		});
 	} catch (e) {
-		console.error("Could not fetch violations for dashboard metrics:", e);
+		console.error("Could not fetch dashboard metrics:", e);
 	}
 
 	res.locals.logCategory = logCategories.dashboard;
@@ -33,7 +42,8 @@ router.route("/").get(async (req, res) => {
 		isAdmin: user.userRole === "admin",
 		violations30Days,
 		violations15Days,
-		violations7Days
+		violations7Days,
+		userScoreInfo
 	});
 });
 
