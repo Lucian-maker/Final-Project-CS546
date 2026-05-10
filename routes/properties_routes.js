@@ -63,7 +63,7 @@ router.get("/:id", async (req, res) => {
 		let totalRating = 0;
 		let ratingCount = 0;
 
-		const user = req.session?.user;
+		const user = freshUser;
 
 		const processComments = (cList) => {
 			cList.forEach((c) => {
@@ -108,14 +108,13 @@ router.get("/:id", async (req, res) => {
 		return res.render("property", {
 			title: "Property Detail",
 			property,
-			user: freshUser,
+			user,
 			isSaved,
 			isOwner,
 			claimedByOther,
 			from,
 			comments,
 			averageRating,
-			user,
 		});
 	} catch (e) {
 		return res.status(404).render("error", {
