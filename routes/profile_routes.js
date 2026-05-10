@@ -19,8 +19,7 @@ router
 			const user = await getUserById(req.session.user._id);
 
 			res.locals.logCategory = logCategories.auth;
-			res.locals.logDescription =
-				logDescriptions.viewProfile(user._id);
+			res.locals.logDescription = logDescriptions.viewProfile(user._id);
 
 			return res.render("profile", {
 				title: "Manage Profile",
@@ -38,12 +37,13 @@ router
 		}
 	})
 	.post(async (req, res) => {
-		const from = req.body.from || req.query.from || req.session.user.userRole;
+		const from =
+			req.body.from || req.query.from || req.session.user.userRole;
 
 		try {
 			const updatedUser = await updateProfileById(
 				req.session.user._id,
-				req.body
+				req.body,
 			);
 
 			req.session.user = {
@@ -56,8 +56,9 @@ router
 			};
 
 			res.locals.logCategory = logCategories.auth;
-			res.locals.logDescription =
-				logDescriptions.updateProfile(updatedUser._id);
+			res.locals.logDescription = logDescriptions.updateProfile(
+				updatedUser._id,
+			);
 
 			return res.redirect(`/profile?from=${from}&updated=1`);
 		} catch (e) {

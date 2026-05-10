@@ -30,7 +30,6 @@ const constructorMethod = (app) => {
 	app.use("/profile", profileRoutes);
 
 	app.use((req, res) => {
-
 		res.locals.logCategory = "general";
 		res.locals.logDescription = `Page not found: ${req.method} ${req.originalUrl}`;
 

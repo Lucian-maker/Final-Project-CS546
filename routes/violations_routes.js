@@ -5,10 +5,11 @@ import {
 	createViolation,
 	getViolationById,
 	getViolations,
+	getViolationsForSessionUser,
 	updateViolationRemediation,
 } from "../data/violations.js";
 
-import { logDescriptions, logCategories, checkId } from "../helpers.js";
+import { logDescriptions, logCategories } from "../helpers.js";
 import { formatDateTime } from "../helpers.js";
 
 const router = Router();
@@ -46,8 +47,23 @@ function decorateViolationForView(v) {
 	};
 }
 
-function allowedNextStatuses(current) {
-	return VIOLATION_STATUSES.filter((status) => status !== current);
+function allowedNextStatuses(role, current) {
+	if (role === "admin") return [...VIOLATION_STATUSES];
+
+	if (role === "landlord") {
+		if (current === "Open") return ["Repair Scheduled", "Resolved"];
+		if (current === "Repair Scheduled") return ["Resolved"];
+		return [];
+	}
+
+	if (role === "tenant") {
+		if (current === "Open" || current === "Repair Scheduled") {
+			return ["Disputed"];
+		}
+		return [];
+	}
+
+	return [];
 }
 
 router.get("/", async (req, res) => {
@@ -70,11 +86,16 @@ router.get("/", async (req, res) => {
 			order: req.query.order || "desc",
 		};
 
-		let violationsList = await getViolations(filters);
+		let violationsList = await getViolationsForSessionUser(
+			req.session.user,
+			filters,
+		);
 
 		if (req.query.days) {
 			const days = parseInt(req.query.days, 10);
-			const minDays = req.query.minDays ? parseInt(req.query.minDays, 10) : null;
+			const minDays = req.query.minDays
+				? parseInt(req.query.minDays, 10)
+				: null;
 
 			if (!isNaN(days)) {
 				violationsList = violationsList.filter(
@@ -82,7 +103,7 @@ router.get("/", async (req, res) => {
 						v.violationStatus !== "Closed" &&
 						v.daysRemaining != null &&
 						v.daysRemaining <= days &&
-						(minDays === null || v.daysRemaining >= minDays)
+						(minDays === null || v.daysRemaining >= minDays),
 				);
 			}
 		}
@@ -96,7 +117,7 @@ router.get("/", async (req, res) => {
 			filters,
 			boroughs: BOROUGHS,
 			statuses: VIOLATION_STATUSES,
-			from
+			from,
 		});
 	} catch (e) {
 		return res.status(400).render("error", {
@@ -111,16 +132,16 @@ router.post("/create", async (req, res) => {
 		const newViolation = await createViolation(req.body);
 
 		res.locals.logCategory = logCategories.violations;
-		res.locals.logDescription =
-			logDescriptions.createViolation(newViolation._id);
+		res.locals.logDescription = logDescriptions.createViolation(
+			newViolation._id,
+		);
 
 		const from = req.body.from || req.query.from || "";
 		const propertyId = req.body.propertyId || "";
 
 		return res.redirect(
-		`/violations/${newViolation._id}?from=${from}&propertyId=${propertyId}`
+			`/violations/${newViolation._id}?from=${from}&propertyId=${propertyId}`,
 		);
-
 	} catch (e) {
 		return res.status(400).render("error", {
 			title: "Error",
@@ -131,71 +152,71 @@ router.post("/create", async (req, res) => {
 
 router
 	.route("/:id")
-.get(async (req, res) => {
-	try {
-		const violation = await getViolationById(req.params.id);
+	.get(async (req, res) => {
+		try {
+			await assertUserCanAccessViolation(req.session.user, req.params.id);
+			const violation = await getViolationById(req.params.id);
 
-		const allowed = allowedNextStatuses(violation.violationStatus);
+			const allowed = allowedNextStatuses(
+				req.session.user.userRole,
+				violation.violationStatus,
+			);
 
-		const from = req.query.from || null;
-		const propertyId = req.query.propertyId || null;
+			const from = req.query.from || null;
+			const propertyId = req.query.propertyId || null;
 
-		res.locals.logCategory = logCategories.violations;
-		res.locals.logDescription = logDescriptions.viewViolation(req.params.id);
+			res.locals.logCategory = logCategories.violations;
+			res.locals.logDescription = logDescriptions.viewViolation(
+				req.params.id,
+			);
 
-		return res.render("violation", {
-			title: `Violation — ${violation.buildingAddress}`,
-			user: req.session.user,
-			violation: decorateViolationForView(violation),
-			allowedNextStatuses: allowed,
-			statusMessage: req.query.updated ? "Status updated." : null,
-			error: null,
-			from,
-			propertyId
-		});
-	} catch (e) {
-				const msg = String(e);
+			return res.render("violation", {
+				title: `Violation — ${violation.buildingAddress}`,
+				user: req.session.user,
+				violation: decorateViolationForView(violation),
+				allowedNextStatuses: allowed,
+				statusMessage: req.query.updated ? "Status updated." : null,
+				error: null,
+				from,
+				propertyId,
+			});
+		} catch (e) {
+			const msg = String(e);
 
-				if (msg.includes("not found")) {
-					return res.status(404).render("error", {
-						title: "Not Found",
-						error: msg,
-					});
-				}
-
-				return res.status(403).render("error", {
-					title: "Forbidden",
+			if (msg.includes("not found")) {
+				return res.status(404).render("error", {
+					title: "Not Found",
 					error: msg,
 				});
 			}
-})
+
+			return res.status(403).render("error", {
+				title: "Forbidden",
+				error: msg,
+			});
+		}
+	})
 	.post(async (req, res) => {
 		try {
 			const body = req.body || {};
 
-			await updateViolationRemediation(
-				req.params.id,
-				req.session.user,
-				{
-					newStatus: body.newStatus,
-					notes: body.notes,
-				}
-			);
+			await updateViolationRemediation(req.params.id, req.session.user, {
+				newStatus: body.newStatus,
+				notes: body.notes,
+			});
 
 			res.locals.logCategory = logCategories.violations;
-			res.locals.logDescription =
-				logDescriptions.updateViolationStatus(
-					req.params.id,
-					body.newStatus
-				);
+			res.locals.logDescription = logDescriptions.updateViolationStatus(
+				req.params.id,
+				body.newStatus,
+			);
 
 			const from = req.body.from || req.query.from || "";
 			const propertyId = req.body.propertyId || "";
 
 			return res.redirect(
-			`/violations/${req.params.id}?updated=1&from=${from}&propertyId=${propertyId}`
+				`/violations/${req.params.id}?updated=1&from=${from}&propertyId=${propertyId}`,
 			);
-			
 		} catch (e) {
 			try {
 				await assertUserCanAccessViolation(
@@ -205,7 +226,10 @@ router
 
 				const violation = await getViolationById(req.params.id);
 
-				const allowed = allowedNextStatuses(violation.violationStatus);
+				const allowed = allowedNextStatuses(
+					req.session.user.userRole,
+					violation.violationStatus,
+				);
 
 				return res.status(400).render("violation", {
 					title: `Violation — ${violation.buildingAddress}`,
