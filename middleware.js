@@ -30,7 +30,7 @@ export const roleHome = () => "/dashboard";
 
 export const guestOnly = (req, res, next) => {
 	if (req.session?.user) {
-		return res.redirect(roleHome(req.session.user.userRole));
+		return res.redirect(roleHome());
 	}
 	return next();
 };

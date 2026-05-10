@@ -17,7 +17,8 @@
 					<span class="badge badge-info">{{this.status}}</span>
 					<h2 class="card-title">{{this.eventType}}</h2>
 					<p><strong>Result:</strong> {{this.result}}</p>
-					<p><strong>Created At:</strong> <small>{{this.createdAt}}</small></p>
+					<p><strong>Created At:</strong> <small>{{this.createdAtFormatted}}</small></p>
+					<a href="/disputes/{{this._id}}">View Details</a>
 				</li>
 			{{/each}}
 		</ul>

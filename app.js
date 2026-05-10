@@ -82,6 +82,7 @@ app.use("/comments", requireAuth);
 app.use("/notifications", requireAuth);
 app.use("/disputes", requireAuth);
 app.use("/attorneys", requireAuth);
+app.use("/tickets", requireAuth);
 app.use("/admin", adminGuard);
 app.use("/tenant", tenantGuard);
 app.use("/landlord", landlordGuard);
