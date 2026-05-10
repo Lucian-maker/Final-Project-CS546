@@ -184,6 +184,7 @@ router
 	})
 	.post(requireRole("tenant"), async (req, res) => {
 		const body = req.body || {};
+		const from = req.query.from || body.from || null;
 		let cleanPropertyId;
 		try {
 			cleanPropertyId = checkId(req.params.propertyId, "propertyId");
@@ -223,9 +224,10 @@ router
 				actorUserId: req.session.user._id,
 				text: "A new property review was posted.",
 			}).catch(() => {});
-			const from = req.query.from || req.body.from || "";
 
-			return res.redirect(`/reviews/${cleanPropertyId}?from=${from}`);
+			return res.redirect(
+				`/reviews/${cleanPropertyId}?from=${from || ""}`,
+			);
 		} catch (e) {
 			return renderList(res, cleanPropertyId, req.session.user, from, {
 				error: String(e),
