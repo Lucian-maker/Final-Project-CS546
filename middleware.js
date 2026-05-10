@@ -58,3 +58,5 @@ export const requireRole = (...roles) => {
 };
 
 export const adminGuard = requireRole("admin");
+export const tenantGuard = requireRole("tenant");
+export const landlordGuard = requireRole("landlord");
