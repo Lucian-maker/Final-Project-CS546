@@ -2,11 +2,38 @@
 
 	<div class="dashboard-header">
 		<h1>Violations</h1>
-
 		<p class="dashboard-subtitle">
-			Browse and search violations.
+			Browse, search, and manage housing violations.
 		</p>
 	</div>
+
+	<nav class="page-back-nav">
+		{{#if filters.propertyId}}
+			<a href="/properties/{{filters.propertyId}}?from={{from}}">
+				Back to Property
+			</a>
+
+		{{else if (eq from "tenant")}}
+			<a href="/tenant">
+				Back to Tenant Dashboard
+			</a>
+
+		{{else if (eq from "landlord")}}
+			<a href="/landlord">
+				Back to Landlord Dashboard
+			</a>
+
+		{{else if (eq from "admin")}}
+			<a href="/admin">
+				Back to Admin Controls
+			</a>
+
+		{{else}}
+			<a href="/dashboard">
+				Back to Dashboard
+			</a>
+		{{/if}}
+	</nav>
 
 	{{#if (eq user.userRole "admin")}}
 	<section class="card">
@@ -34,7 +61,10 @@
 	</section>
 	{{/if}}
 
+	<h2>Filter Violations</h2>
+
 	<form method="GET" action="/violations" class="filters-form">
+
 		<div class="filters-grid">
 			<div class="field">
 				<label for="q">Search address / description</label>
@@ -45,26 +75,29 @@
 				<select id="borough" name="borough">
 					<option value="">Any</option>
 					{{#each boroughs}}
-						<option value="{{this}}" {{#if (eq ../filters.borough this)}}selected{{/if}}>{{this}}</option>
+					<option value="{{this}}" {{#if (eq ../filters.borough this)}}selected{{/if}}>{{this}}</option>
 					{{/each}}
 				</select>
 			</div>
 			<div class="field">
 				<label for="violationType">Violation type</label>
-				<input type="text" id="violationType" name="violationType" value="{{filters.violationType}}" placeholder="e.g. Mold" />
+				<input type="text" id="violationType" name="violationType" value="{{filters.violationType}}"
+					placeholder="e.g. Mold" />
 			</div>
 			<div class="field">
 				<label for="violationStatus">Status</label>
 				<select id="violationStatus" name="violationStatus">
 					<option value="">Any</option>
 					{{#each statuses}}
-						<option value="{{this}}" {{#if (eq ../filters.violationStatus this)}}selected{{/if}}>{{this}}</option>
+					<option value="{{this}}" {{#if (eq ../filters.violationStatus this)}}selected{{/if}}>{{this}}
+					</option>
 					{{/each}}
 				</select>
 			</div>
 			<div class="field">
 				<label for="propertyId">Property ID</label>
-				<input type="text" id="propertyId" name="propertyId" value="{{filters.propertyId}}" placeholder="prop-..." />
+				<input type="text" id="propertyId" name="propertyId" value="{{filters.propertyId}}"
+					placeholder="prop-..." />
 			</div>
 			<div class="field">
 				<label for="days">Due within (days)</label>
@@ -73,20 +106,41 @@
 			<div class="field">
 				<label for="sort">Sort by</label>
 				<select id="sort" name="sort">
-					<option value="updatedAt" {{#if (eq filters.sort "updatedAt")}}selected{{/if}}>Last updated</option>
-					<option value="originalCertifyByDate" {{#if (eq filters.sort "originalCertifyByDate")}}selected{{/if}}>Certify-by date</option>
-					<option value="buildingAddress" {{#if (eq filters.sort "buildingAddress")}}selected{{/if}}>Address</option>
+					<option value="updatedAt" {{#if (eq filters.sort "updatedAt" )}}selected{{/if}}>Last updated
+					</option>
+					<option value="originalCertifyByDate" {{#if (eq filters.sort "originalCertifyByDate"
+						)}}selected{{/if}}>Certify-by date</option>
+					<option value="buildingAddress" {{#if (eq filters.sort "buildingAddress" )}}selected{{/if}}>Address
+					</option>
 				</select>
 			</div>
 			<div class="field">
 				<label for="order">Order</label>
 				<select id="order" name="order">
-					<option value="desc" {{#if (eq filters.order "desc")}}selected{{/if}}>Newest first</option>
-					<option value="asc" {{#if (eq filters.order "asc")}}selected{{/if}}>Oldest first</option>
+					<option value="desc" {{#if (eq filters.order "desc" )}}selected{{/if}}>Newest first</option>
+					<option value="asc" {{#if (eq filters.order "asc" )}}selected{{/if}}>Oldest first</option>
 				</select>
 			</div>
 		</div>
-		<button type="submit">Apply filters</button>
+		<div class="actions-row">
+
+			<button type="submit">
+				Apply Filters
+			</button>
+
+			<a
+				class="button-link"
+				href="/violations{{#if from}}?from={{from}}{{/if}}"
+				style="
+					background:#e2e8f0;
+					color:#0f172a !important;
+					border:1px solid #cbd5e1;
+				"
+			>
+				Clear Filters
+			</a>
+
+		</div>
 	</form>
 
 		{{#if violations.length}}
@@ -108,10 +162,9 @@
 						<p><strong>Type:</strong> {{violationType}}</p>
 						<p><strong>Description:</strong> {{violationDescription}}</p>
 
-						<a href="/violations/{{_id}}">
+						<a href="/violations/{{_id}}?from={{../from}}&propertyId={{propertyId}}">
 							View Details
 						</a>
-
 					</div>
 
 				{{/each}}
@@ -122,10 +175,6 @@
 			<p>No violations found.</p>
 		{{/if}}
 
-	</section>
-
-	<section class="site-footer">
-		<a href="/dashboard">Back to Dashboard</a>
 	</section>
 
 </main>
