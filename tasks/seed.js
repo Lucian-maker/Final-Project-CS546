@@ -322,6 +322,72 @@ const main = async () => {
 			status: "queued",
 			createdAt: now,
 		},
+		{
+			_id: idWithPrefix("notif"),
+			userId: tenantId,
+			violationId: violation1Id,
+			channel: "email",
+			notificationDetails: {
+				text: "Certify-by date approaching for violation at 123 Maple Road — review remediation status.",
+			},
+			status: "queued",
+			createdAt: now,
+		},
+		{
+			_id: idWithPrefix("notif"),
+			userId: tenantId,
+			violationId: violation2Id,
+			channel: "certified letter",
+			notificationDetails: {
+				text: "Optional certified-letter reminder logged for your records (in-app prototype — no mail sent).",
+			},
+			status: "queued",
+			createdAt: now,
+		},
+		{
+			_id: idWithPrefix("notif"),
+			userId: landlordId,
+			violationId: violation1Id,
+			channel: "email",
+			notificationDetails: {
+				text: "Tenant-visible violation at 123 Maple Road may need status update.",
+			},
+			status: "queued",
+			createdAt: now,
+		},
+		{
+			_id: idWithPrefix("notif"),
+			userId: landlordId,
+			violationId: violation2Id,
+			channel: "sms",
+			notificationDetails: {
+				text: "Violation at 742 Evergreen Terrace — check dashboard for deadlines.",
+			},
+			status: "queued",
+			createdAt: now,
+		},
+		{
+			_id: idWithPrefix("notif"),
+			userId: adminId,
+			violationId: violation1Id,
+			channel: "email",
+			notificationDetails: {
+				text: "Admin digest (prototype): new activity on seeded violations.",
+			},
+			status: "queued",
+			createdAt: now,
+		},
+		{
+			_id: idWithPrefix("notif"),
+			userId: adminId,
+			violationId: violation2Id,
+			channel: "sms",
+			notificationDetails: {
+				text: "Admin reminder: review borough analytics after seed.",
+			},
+			status: "queued",
+			createdAt: now,
+		},
 	]);
 
 	await (
@@ -366,7 +432,7 @@ const main = async () => {
 	console.log("  2 evidence records (note + photo with embedded PNG)");
 	console.log("  1 review");
 	console.log("  2 comments");
-	console.log("  1 notification");
+	console.log("  7 notifications (per-user queued, mixed channels)");
 	console.log("  1 dispute");
 	console.log("  2 attorneys");
 	console.log("");
