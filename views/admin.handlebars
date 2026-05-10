@@ -7,7 +7,17 @@
 			<strong>{{user.firstName}} {{user.lastName}}</strong>
 			({{user.userRole}})
 		</p>
+		<p class="actions-row">
+			<a class="button-link" href="/profile?from=admin">
+				Manage Profile
+			</a>
+		</p>
 	</div>
+
+
+	<nav class="page-back-nav">
+		<a href="/dashboard">Back to Dashboard</a>
+	</nav>
 
 		<div class="dashboard-grid">
 			<a href="/admin/users" class="dashboard-tile admin-tile">
@@ -32,5 +42,4 @@
 			</a>
 		</div>
 
-	<a href="/dashboard" class="back-link">Back to Dashboard</a>
 </main>
