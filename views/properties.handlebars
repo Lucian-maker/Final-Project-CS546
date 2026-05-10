@@ -2,11 +2,16 @@
 
 	<div class="dashboard-header">
 		<h1>Properties</h1>
-
 		<p class="dashboard-subtitle">
-			Browse and search registered properties.
+			Browse, search, and manage registered properties.
 		</p>
 	</div>
+
+	<nav class="page-back-nav">
+	<a href="/dashboard">
+		Back to Dashboard
+	</a>
+	</nav>
 
 	<section>
 
@@ -69,6 +74,7 @@
 						id="city"
 						name="city"
 						value="{{filters.city}}"
+						placeholder = "e.g. Brooklyn"
 					/>
 				</div>
 
@@ -79,6 +85,7 @@
 						id="state"
 						name="state"
 						value="{{filters.state}}"
+						placeholder="e.g. New York"
 					/>
 				</div>
 
@@ -89,6 +96,7 @@
 						id="zipCode"
 						name="zipCode"
 						value="{{filters.zipCode}}"
+						placeholder="e.g. 11201"
 					/>
 				</div>
 
@@ -100,6 +108,7 @@
 						name="minViolations"
 						min="0"
 						value="{{filters.minViolations}}"
+						placeholder = "e.g. 1"
 					/>
 				</div>
 
@@ -111,6 +120,7 @@
 						name="minReviews"
 						min="0"
 						value="{{filters.minReviews}}"
+						placeholder = "e.g. 1"
 					/>
 				</div>
 
@@ -150,9 +160,25 @@
 
 			</div>
 
-			<button type="submit">
-				Apply Filters
-			</button>
+			<div class="actions-row">
+
+				<button type="submit">
+					Apply Filters
+				</button>
+
+				<a
+					class="button-link"
+					href="/properties"
+					style="
+						background:#e2e8f0;
+						color:#0f172a !important;
+						border:1px solid #cbd5e1;
+					"
+				>
+					Clear Filters
+				</a>
+
+			</div>
 
 		</form>
 
@@ -166,20 +192,15 @@
 
 					<div class="card">
 
-						<h3 class="card-title">
-							{{this.address.number}} {{this.address.street}}
-						</h3>
+					<h3 class="card-title">
+						{{this.address.number}} {{this.address.street}},
+						{{this.address.city}},
+						{{this.address.state}} {{this.address.zipCode}}
+					</h3>
 
 						<span class="badge badge-info">
 							Property
 						</span>
-
-						<p>
-							<strong>Location:</strong>
-							{{this.address.city}},
-							{{this.address.state}}
-							{{this.address.zipCode}}
-						</p>
 
 						<p>
 							<strong>Violations:</strong>
@@ -191,7 +212,7 @@
 							{{this.reviews.length}}
 						</p>
 
-						<a href="/properties/{{this._id}}">
+						<a href="/properties/{{this._id}}?from=properties">
 							View Details
 						</a>
 
@@ -205,10 +226,6 @@
 			<p>No properties found.</p>
 		{{/if}}
 
-	</section>
-
-	<section class="site-footer">
-		<a href="/dashboard">Back to Dashboard</a>
 	</section>
 
 </main>

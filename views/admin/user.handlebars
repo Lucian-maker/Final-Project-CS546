@@ -8,6 +8,12 @@
 		</p>
 	</div>
 
+	<nav class="page-back-nav">
+		<a href="/admin/users">
+			Back to User Management
+		</a>
+	</nav>
+
 	<section class="card">
 
 		<h2 class="card-title">
@@ -21,6 +27,35 @@
 		<p><strong>Email:</strong> {{viewedUser.email}}</p>
 		<p><strong>Phone:</strong> {{viewedUser.phoneNumber}}</p>
 		<p><strong>User ID:</strong> {{viewedUser._id}}</p>
+
+		<h3>Secondary Contact</h3>
+
+		<p>
+			<strong>Name:</strong>
+			{{#if viewedUser.secondaryContact.name}}
+				{{viewedUser.secondaryContact.name}}
+			{{else}}
+				None provided
+			{{/if}}
+		</p>
+
+		<p>
+			<strong>Email:</strong>
+			{{#if viewedUser.secondaryContact.email}}
+				{{viewedUser.secondaryContact.email}}
+			{{else}}
+				None provided
+			{{/if}}
+		</p>
+
+		<p>
+			<strong>Phone:</strong>
+			{{#if viewedUser.secondaryContact.phoneNumber}}
+				{{viewedUser.secondaryContact.phoneNumber}}
+			{{else}}
+				None provided
+			{{/if}}
+		</p>
 
 	</section>
 
@@ -65,18 +100,41 @@
 				</select>
 			</div>
 
+			<h2>Secondary Contact</h2>
+
+			<div class="field">
+				<label>Secondary Contact Name</label>
+				<input
+					name="secondaryContactName"
+					value="{{viewedUser.secondaryContact.name}}"
+					placeholder="Optional"
+				/>
+			</div>
+
+			<div class="field">
+				<label>Secondary Contact Email</label>
+				<input
+					name="secondaryContactEmail"
+					value="{{viewedUser.secondaryContact.email}}"
+					placeholder="Optional"
+				/>
+			</div>
+
+			<div class="field">
+				<label>Secondary Contact Phone</label>
+				<input
+					name="secondaryContactPhone"
+					value="{{viewedUser.secondaryContact.phoneNumber}}"
+					placeholder="Optional"
+				/>
+			</div>
+
 			<button type="submit">
 				Update User
 			</button>
 
 		</form>
 
-	</section>
-
-	<section class="site-footer">
-		<a href="/admin/users">
-			Back to User Management
-		</a>
 	</section>
 
 </main>
