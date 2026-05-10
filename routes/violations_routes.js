@@ -90,6 +90,7 @@ router.get("/", async (req, res) => {
 				violationsList = violationsList.filter(
 					(v) =>
 						v.violationStatus !== "Closed" &&
+						v.violationStatus !== "Resolved" &&
 						v.daysRemaining != null &&
 						v.daysRemaining <= days &&
 						(minDays === null || v.daysRemaining >= minDays),

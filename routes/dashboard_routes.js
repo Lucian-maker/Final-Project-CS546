@@ -22,6 +22,7 @@ router.route("/").get(async (req, res) => {
 		allViolations.forEach((v) => {
 			if (
 				v.violationStatus !== "Closed" &&
+				v.violationStatus !== "Resolved" &&
 				v.daysRemaining !== null &&
 				v.daysRemaining !== undefined
 			) {
