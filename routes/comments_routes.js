@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { logDescriptions, logCategories } from "../helpers.js";
+import { logDescriptions, logCategories, formatDateTime } from "../helpers.js";
 import {
 	createComment,
 	likeComment,
@@ -7,19 +7,70 @@ import {
 	editComment,
 	deleteComment,
 } from "../data/comments.js";
+import { comments as commentsCollection, properties, users } from "../config/mongoCollections.js";
 import { requireAuth } from "../middleware.js";
 import { notifyCommentActivity } from "../data/notification_events.js";
 
 const router = Router();
 
 router.route("/").get(async (req, res) => {
-	res.locals.logCategory = logCategories.comments;
-	res.locals.logDescription = logDescriptions.viewComments();
+	try {
+		const sessionUser = req.session && req.session.user;
+		const col = await commentsCollection();
+		const propsCol = await properties();
+		const usersCol = await users();
 
-	return res.render("comments", {
-		title: "Comments",
-		user: req.session && req.session.user,
-	});
+		// Fetch all comments, newest first
+		const allComments = await col.find({}).sort({ createdAt: -1 }).toArray();
+
+		// fills comment with property address and author info
+		const enriched = await Promise.all(
+			allComments.map(async (c) => {
+				const prop = await propsCol.findOne({ _id: c.propertyId });
+				let buildingAddress = c.propertyId;
+				if (prop?.address) {
+					const a = prop.address;
+					buildingAddress = `${a.number} ${a.street}, ${a.city}, ${a.state} ${a.zipCode}`;
+				}
+
+				const author = await usersCol.findOne({ _id: c.userId });
+				const authorName = author
+					? `${author.firstName} ${author.lastName}`
+					: c.userName || "Unknown";
+				const authorRole = author ? author.userRole : "unknown";
+
+				return {
+					...c,
+					buildingAddress,
+					authorName,
+					authorRole,
+					commentText: c.text,
+					createdAtFormatted: c.createdAt
+						? formatDateTime(c.createdAt)
+						: "—",
+					updatedAtFormatted: c.updatedAt
+						? formatDateTime(c.updatedAt)
+						: "—",
+					wasEdited:
+						c.updatedAt &&
+						c.createdAt &&
+						c.updatedAt.getTime() !== c.createdAt.getTime(),
+					isOwn: sessionUser && c.userId === sessionUser._id,
+				};
+			}),
+		);
+
+		res.locals.logCategory = logCategories.comments;
+		res.locals.logDescription = logDescriptions.viewComments();
+
+		return res.render("comments_index", {
+			title: "All Comments",
+			user: sessionUser,
+			comments: enriched,
+		});
+	} catch (e) {
+		return res.status(500).render("error", { error: String(e) });
+	}
 });
 
 router.route("/:propertyId").post(requireAuth, async (req, res) => {
@@ -28,27 +79,43 @@ router.route("/:propertyId").post(requireAuth, async (req, res) => {
 		const userId = req.session.user._id;
 		const userName = `${req.session.user.firstName} ${req.session.user.lastName}`;
 
+		// Validate rating on the server side
+		const parsedRating = Number(rating);
+		if (!rating || isNaN(parsedRating) || parsedRating < 1 || parsedRating > 5) {
+			return res.redirect(
+				`/properties/${req.params.propertyId}?commentError=Rating+must+be+between+1+and+5`,
+			);
+		}
+
+		if (!text || String(text).trim().length === 0) {
+			return res.redirect(
+				`/properties/${req.params.propertyId}?commentError=Comment+text+cannot+be+empty`,
+			);
+		}
+
 		await createComment(
 			req.params.propertyId,
 			userId,
 			userName,
 			text,
-			rating,
+			parsedRating,
 		);
 		void notifyCommentActivity({
 			propertyId: req.params.propertyId,
 			actorUserId: userId,
 			text: "A new property comment was posted.",
-		}).catch(() => {});
+		}).catch(() => { });
 
 		res.locals.logCategory = logCategories.comments;
 		res.locals.logDescription = logDescriptions.createComment(
 			req.params.propertyId,
 		);
 
-		return res.redirect(`/properties/${req.params.propertyId}`);
+		return res.redirect(`/properties/${req.params.propertyId}?commentSuccess=1`);
 	} catch (e) {
-		return res.status(400).render("error", { error: String(e) });
+		return res.redirect(
+			`/properties/${req.params.propertyId}?commentError=${encodeURIComponent(String(e))}`,
+		);
 	}
 });
 
@@ -73,7 +140,7 @@ router
 				propertyId: req.params.propertyId,
 				actorUserId: userId,
 				text: "A reply was added to a property comment.",
-			}).catch(() => {});
+			}).catch(() => { });
 
 			res.locals.logCategory = logCategories.comments;
 			res.locals.logDescription = logDescriptions.replyComment(
@@ -97,7 +164,7 @@ router.route("/like/:commentId").post(requireAuth, async (req, res) => {
 			propertyId,
 			actorUserId: userId,
 			text: "A comment received a like.",
-		}).catch(() => {});
+		}).catch(() => { });
 
 		res.locals.logCategory = logCategories.comments;
 		res.locals.logDescription = logDescriptions.likeComment(
@@ -120,7 +187,7 @@ router.route("/dislike/:commentId").post(requireAuth, async (req, res) => {
 			propertyId,
 			actorUserId: userId,
 			text: "A comment received a dislike.",
-		}).catch(() => {});
+		}).catch(() => { });
 
 		res.locals.logCategory = logCategories.comments;
 		res.locals.logDescription = logDescriptions.dislikeComment(
@@ -143,7 +210,7 @@ router.route("/edit/:commentId").post(requireAuth, async (req, res) => {
 			propertyId,
 			actorUserId: userId,
 			text: "A property comment rating was updated.",
-		}).catch(() => {});
+		}).catch(() => { });
 
 		res.locals.logCategory = logCategories.comments;
 		res.locals.logDescription = logDescriptions.editComment(
@@ -166,7 +233,7 @@ router.route("/delete/:commentId").post(requireAuth, async (req, res) => {
 			propertyId,
 			actorUserId: userId,
 			text: "A property comment was deleted.",
-		}).catch(() => {});
+		}).catch(() => { });
 
 		res.locals.logCategory = logCategories.comments;
 		res.locals.logDescription = logDescriptions.deleteComment(

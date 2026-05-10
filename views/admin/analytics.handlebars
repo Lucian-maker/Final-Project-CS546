@@ -37,6 +37,17 @@
 			<span class="metric-value metric-warning">{{displayValue stats.totalViolations}}</span>
 			<span class="metric-footnote">Total ticket volume</span>
 		</div>
+
+		<div class="metric-card metric-card-hero">
+			<span class="metric-eyebrow">Avg Resolution Time</span>
+			{{#if stats.avgResolutionDays}}
+				<span class="metric-value" style="color:#059669;">{{stats.avgResolutionDays}}<small style="font-size:0.5em;"> days</small></span>
+				<span class="metric-footnote">Across {{displayValue stats.resolvedCount}} resolved violations</span>
+			{{else}}
+				<span class="metric-value muted">—</span>
+				<span class="metric-footnote">No resolved violations yet</span>
+			{{/if}}
+		</div>
 	</div>
 
 	<h2>By Status</h2>

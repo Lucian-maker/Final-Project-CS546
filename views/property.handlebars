@@ -136,23 +136,32 @@
 
 	<h2>Property Discussion</h2>
 	<p class="average-rating" style="font-size:1.1rem; color:#1f5e8c; margin-bottom:1rem;"><strong>Average Rating:</strong> {{averageRating}}</p>
+
+	{{#if commentError}}
+		<div style="background:#fef2f2; border:1px solid #fca5a5; color:#b91c1c; padding:0.75rem 1rem; border-radius:8px; margin-bottom:1rem;">⚠️ {{commentError}}</div>
+	{{/if}}
+	{{#if commentSuccess}}
+		<div style="background:#f0fdf4; border:1px solid #86efac; color:#15803d; padding:0.75rem 1rem; border-radius:8px; margin-bottom:1rem;">✅ Your comment was posted!</div>
+	{{/if}}
+
 	{{#if user}}
-		<form class="comment-form" action="/comments/{{property._id}}" method="POST">
+		<form class="comment-form" action="/comments/{{property._id}}" method="POST" novalidate>
 			<div class="field">
-				<label>Rating (1-5)</label>
-				<select name="rating" required>
-					<option value="5">⭐⭐⭐⭐⭐ (5/5)</option>
-					<option value="4">⭐⭐⭐⭐ (4/5)</option>
-					<option value="3">⭐⭐⭐ (3/5)</option>
-					<option value="2">⭐⭐ (2/5)</option>
-					<option value="1">⭐ (1/5)</option>
+				<label for="rating-select"><strong>Rating</strong> <span style="color:#64748b; font-size:0.85rem;">(required, 1–5 stars)</span></label>
+				<select id="rating-select" name="rating" required style="margin-top:0.25rem;">
+					<option value="" disabled selected>Select a rating…</option>
+					<option value="5">⭐⭐⭐⭐⭐ — 5 / Excellent</option>
+					<option value="4">⭐⭐⭐⭐ — 4 / Good</option>
+					<option value="3">⭐⭐⭐ — 3 / Average</option>
+					<option value="2">⭐⭐ — 2 / Below Average</option>
+					<option value="1">⭐ — 1 / Poor</option>
 				</select>
 			</div>
-			<div class="field">
-				<label>Add a comment</label>
-				<textarea name="text" rows="3" required placeholder="What do you think about this property?"></textarea>
+			<div class="field" style="margin-top:0.75rem;">
+				<label for="comment-text"><strong>Comment</strong></label>
+				<textarea id="comment-text" name="text" rows="3" required placeholder="Share your experience with this property…" style="margin-top:0.25rem;"></textarea>
 			</div>
-			<button type="submit">Post Comment</button>
+			<button type="submit" style="margin-top:0.5rem;">Post Comment</button>
 		</form>
 	{{else}}
 		<p><a href="/signin">Sign in</a> to leave a comment and rating.</p>
