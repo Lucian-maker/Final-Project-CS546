@@ -12,7 +12,7 @@ import { requireAuth, requireRole } from "../middleware.js";
 
 const router = Router();
 
-const renderList = async (res, propertyId, user, extras = {}) => {
+const renderList = async (res, propertyId, user, from, extras = {}) => {
 	const list = await getReviewsByProperty(propertyId);
 	const landlordId = await getLandlordIdForProperty(propertyId);
 	const decorated = list.map((r) => ({
@@ -27,6 +27,7 @@ const renderList = async (res, propertyId, user, extras = {}) => {
 		user,
 		propertyId,
 		landlordId,
+		from,
 		reviews: decorated,
 		canReview:
 			Boolean(user && user.userRole === "tenant") &&
@@ -44,9 +45,19 @@ router
 				req.params.propertyId,
 				"propertyId",
 			);
+
+			const from = req.query.from || null;
+
 			res.locals.logCategory = logCategories.reviews;
-			res.locals.logDescription = logDescriptions.viewPropertyReviews(cleanPropertyId);
-			return await renderList(res, cleanPropertyId, req.session?.user);
+			res.locals.logDescription =
+				logDescriptions.viewPropertyReviews(cleanPropertyId);
+
+			return await renderList(
+				res,
+				cleanPropertyId,
+				req.session?.user,
+				from
+			);
 		} catch (e) {
 			return res.status(400).render("error", {
 				title: "Bad Request",
@@ -65,7 +76,7 @@ router
 			checkScore(body.resolution, "resolution");
 			checkShortText(body.reviewText, "reviewText", 500);
 		} catch (e) {
-			return renderList(res, req.params.propertyId, req.session.user, {
+			return renderList(res, req.params.propertyId, req.session.user, from, {
 				error: String(e),
 				form: body,
 			});
@@ -83,9 +94,13 @@ router
 				body.resolution,
 				body.reviewText,
 			);
-			return res.redirect(`/reviews/${cleanPropertyId}`);
+			const from = req.query.from || req.body.from || "";
+
+			return res.redirect(
+				`/reviews/${cleanPropertyId}?from=${from}`
+			);
 		} catch (e) {
-			return renderList(res, cleanPropertyId, req.session.user, {
+			return renderList(res, cleanPropertyId, req.session.user, from, {
 				error: String(e),
 				form: body,
 			});
