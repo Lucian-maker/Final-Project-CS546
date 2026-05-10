@@ -29,21 +29,77 @@ const SEED_EVIDENCE_PNG_BYTES = Buffer.from(
  */
 const VIOLATION_PHOTO_MAP = [
 	// Mold / moisture
-	{ keywords: ["mold", "mildew", "fungus", "moisture"], url: "https://images.unsplash.com/photo-1584622781867-1f5e0edcf7e4?w=800&q=80", caption: "Black mold growth on bathroom wall" },
+	{
+		keywords: ["mold", "mildew", "fungus", "moisture"],
+		url: "https://images.unsplash.com/photo-1584622781867-1f5e0edcf7e4?w=800&q=80",
+		caption: "Black mold growth on bathroom wall",
+	},
 	// Water / plumbing / leak
-	{ keywords: ["water", "leak", "plumb", "pipe", "flood", "sewage", "drain"], url: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=800&q=80", caption: "Water leak under sink" },
+	{
+		keywords: [
+			"water",
+			"leak",
+			"plumb",
+			"pipe",
+			"flood",
+			"sewage",
+			"drain",
+		],
+		url: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=800&q=80",
+		caption: "Water leak under sink",
+	},
 	// Paint / lead
-	{ keywords: ["paint", "lead", "peel", "chip"], url: "https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=800&q=80", caption: "Peeling paint on apartment wall" },
+	{
+		keywords: ["paint", "lead", "peel", "chip"],
+		url: "https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=800&q=80",
+		caption: "Peeling paint on apartment wall",
+	},
 	// Door / window / lock
-	{ keywords: ["door", "window", "lock", "frame", "entrance", "exit"], url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80", caption: "Damaged door frame" },
+	{
+		keywords: ["door", "window", "lock", "frame", "entrance", "exit"],
+		url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
+		caption: "Damaged door frame",
+	},
 	// Structural / ceiling / wall
-	{ keywords: ["crack", "ceiling", "structural", "wall", "plaster", "floor"], url: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80", caption: "Cracked plaster ceiling" },
+	{
+		keywords: [
+			"crack",
+			"ceiling",
+			"structural",
+			"wall",
+			"plaster",
+			"floor",
+		],
+		url: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80",
+		caption: "Cracked plaster ceiling",
+	},
 	// Heat / HVAC
-	{ keywords: ["heat", "hvac", "boiler", "radiator", "steam", "ventil"], url: "https://images.unsplash.com/photo-1631049552057-403cdb8f0658?w=800&q=80", caption: "Broken heating unit" },
+	{
+		keywords: ["heat", "hvac", "boiler", "radiator", "steam", "ventil"],
+		url: "https://images.unsplash.com/photo-1631049552057-403cdb8f0658?w=800&q=80",
+		caption: "Broken heating unit",
+	},
 	// Pest / infestation
-	{ keywords: ["pest", "roach", "rat", "mice", "rodent", "insect", "vermin", "infestat"], url: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=800&q=80", caption: "Evidence of pest infestation" },
+	{
+		keywords: [
+			"pest",
+			"roach",
+			"rat",
+			"mice",
+			"rodent",
+			"insect",
+			"vermin",
+			"infestat",
+		],
+		url: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=800&q=80",
+		caption: "Evidence of pest infestation",
+	},
 	// Electrical
-	{ keywords: ["electric", "wiring", "outlet", "circuit", "fire"], url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80", caption: "Exposed electrical wiring" },
+	{
+		keywords: ["electric", "wiring", "outlet", "circuit", "fire"],
+		url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
+		caption: "Exposed electrical wiring",
+	},
 ];
 
 const DEFAULT_VIOLATION_PHOTO = {
@@ -54,7 +110,7 @@ const DEFAULT_VIOLATION_PHOTO = {
 const getViolationPhotoUrl = (description = "") => {
 	const lower = description.toLowerCase();
 	for (const entry of VIOLATION_PHOTO_MAP) {
-		if (entry.keywords.some(kw => lower.includes(kw))) {
+		if (entry.keywords.some((kw) => lower.includes(kw))) {
 			return entry;
 		}
 	}
@@ -95,7 +151,9 @@ const seedCredentials = [
 const fetchRealNYCData = async () => {
 	console.log("Fetching real violation data from NYC Open Data (SODA)...");
 	// Get 100 recent open violations
-	const response = await fetch("https://data.cityofnewyork.us/resource/wvxf-dwi5.json?$limit=100&$where=violationstatus='Open'");
+	const response = await fetch(
+		"https://data.cityofnewyork.us/resource/wvxf-dwi5.json?$limit=100&$where=violationstatus='Open'",
+	);
 	const data = await response.json();
 	return data;
 };
@@ -117,14 +175,14 @@ const mapNYCDataToSeed = (nycData, adminId) => {
 					street: row.streetname || "Unknown",
 					city: row.boro || "New York",
 					state: "NY",
-					zipCode: row.zip || "00000"
+					zipCode: row.zip || "00000",
 				},
 				claimedBy: null,
 				violations: [],
 				createdOn: now,
 				updatedOn: now,
 				reviews: [],
-				_tempViolationsData: []
+				_tempViolationsData: [],
 			};
 		}
 		propertiesMap[addressKey]._tempViolationsData.push(row);
@@ -134,7 +192,10 @@ const mapNYCDataToSeed = (nycData, adminId) => {
 	let uniqueAddresses = Object.keys(propertiesMap);
 	for (let i = uniqueAddresses.length - 1; i > 0; i--) {
 		const j = Math.floor(Math.random() * (i + 1));
-		[uniqueAddresses[i], uniqueAddresses[j]] = [uniqueAddresses[j], uniqueAddresses[i]];
+		[uniqueAddresses[i], uniqueAddresses[j]] = [
+			uniqueAddresses[j],
+			uniqueAddresses[i],
+		];
 	}
 	const selectedAddresses = uniqueAddresses.slice(0, 25);
 
@@ -152,7 +213,10 @@ const mapNYCDataToSeed = (nycData, adminId) => {
 			const violId = idWithPrefix("viol");
 			let vType = "General Code Violation";
 			if (row.novdescription) {
-				vType = row.novdescription.length > 40 ? row.novdescription.substring(0, 40) + "..." : row.novdescription;
+				vType =
+					row.novdescription.length > 40
+						? row.novdescription.substring(0, 40) + "..."
+						: row.novdescription;
 			}
 
 			const violation = {
@@ -160,15 +224,19 @@ const mapNYCDataToSeed = (nycData, adminId) => {
 				datasetViolationId: `HPD-${row.violationid}`,
 				propertyId: prop._id,
 				buildingAddress: addressKey,
-				normalizedAddress: `${addressKey} ${row.boro} ny ${row.zip}`.toLowerCase(),
+				normalizedAddress:
+					`${addressKey} ${row.boro} ny ${row.zip}`.toLowerCase(),
 				borough: row.boro || "Unknown",
 				zipCode: row.zip || "00000",
 				violationType: vType,
-				violationDescription: row.novdescription || "No description provided.",
+				violationDescription:
+					row.novdescription || "No description provided.",
 				violationClass: row.class || "B",
 				violationStatus: "Open",
 				originalCertifyByDate: certifyDate,
-				inspectionDate: row.inspectiondate ? new Date(row.inspectiondate) : now,
+				inspectionDate: row.inspectiondate
+					? new Date(row.inspectiondate)
+					: now,
 				repairScheduledAt: null,
 				resolvedAt: null,
 				daysRemaining: daysRemaining,
@@ -180,17 +248,19 @@ const mapNYCDataToSeed = (nycData, adminId) => {
 					currentState: "Open",
 					updatedByUserId: adminId,
 					updatedAt: now,
-					notes: "Imported dynamically from NYC Open Data API."
+					notes: "Imported dynamically from NYC Open Data API.",
 				},
 				statusHistory: [
 					{
 						state: "Open",
 						changedAt: now,
-						changedBy: "system"
-					}
+						changedBy: "system",
+					},
 				],
-				createdAt: row.inspectiondate ? new Date(row.inspectiondate) : now,
-				updatedAt: now
+				createdAt: row.inspectiondate
+					? new Date(row.inspectiondate)
+					: now,
+				updatedAt: now,
 			};
 
 			violationsToInsert.push(violation);
@@ -228,13 +298,15 @@ const main = async () => {
 
 	const now = new Date();
 
-	// Gets the NYC data 
+	// Gets the NYC data
 	const nycData = await fetchRealNYCData();
 	const mappedData = mapNYCDataToSeed(nycData, adminId);
 	const properties = mappedData.properties;
 	const violations = mappedData.violations;
 
-	console.log(`Successfully mapped ${properties.length} properties and ${violations.length} violations.`);
+	console.log(
+		`Successfully mapped ${properties.length} properties and ${violations.length} violations.`,
+	);
 
 	// Insert into the database
 	await (await propertiesCol()).insertMany(properties);
@@ -245,27 +317,36 @@ const main = async () => {
 		await usersCol()
 	).updateOne(
 		{ _id: landlordId },
-		{ $set: { ownedProperties: properties.slice(0, 15).map(p => p._id) } },
+		{
+			$set: {
+				ownedProperties: properties.slice(0, 15).map((p) => p._id),
+			},
+		},
 	);
 
 	await (
 		await propertiesCol()
 	).updateMany(
-		{ _id: { $in: properties.slice(0, 15).map(p => p._id) } },
-		{ $set: { claimedBy: landlordId } }
+		{ _id: { $in: properties.slice(0, 15).map((p) => p._id) } },
+		{ $set: { claimedBy: landlordId } },
 	);
 
 	// Assign first property to tenant saved list
 	const property1Id = properties[0]._id;
 	const violation1Id = violations[0]._id;
-	const violation2Id = violations.length > 1 ? violations[1]._id : violations[0]._id;
+	const violation2Id =
+		violations.length > 1 ? violations[1]._id : violations[0]._id;
 
 	// Assign 5 properties to tenant saved list
 	await (
 		await usersCol()
 	).updateOne(
 		{ _id: tenantId },
-		{ $set: { savedProperties: properties.slice(15, 20).map(p => p._id) } },
+		{
+			$set: {
+				savedProperties: properties.slice(15, 20).map((p) => p._id),
+			},
+		},
 	);
 
 	const evidenceToInsert = [];
@@ -365,6 +446,72 @@ const main = async () => {
 			status: "queued",
 			createdAt: now,
 		},
+		{
+			_id: idWithPrefix("notif"),
+			userId: tenantId,
+			violationId: violation1Id,
+			channel: "email",
+			notificationDetails: {
+				text: "Certify-by date approaching for violation at 123 Maple Road — review remediation status.",
+			},
+			status: "queued",
+			createdAt: now,
+		},
+		{
+			_id: idWithPrefix("notif"),
+			userId: tenantId,
+			violationId: violation2Id,
+			channel: "certified letter",
+			notificationDetails: {
+				text: "Optional certified-letter reminder logged for your records (in-app prototype — no mail sent).",
+			},
+			status: "queued",
+			createdAt: now,
+		},
+		{
+			_id: idWithPrefix("notif"),
+			userId: landlordId,
+			violationId: violation1Id,
+			channel: "email",
+			notificationDetails: {
+				text: "Tenant-visible violation at 123 Maple Road may need status update.",
+			},
+			status: "queued",
+			createdAt: now,
+		},
+		{
+			_id: idWithPrefix("notif"),
+			userId: landlordId,
+			violationId: violation2Id,
+			channel: "sms",
+			notificationDetails: {
+				text: "Violation at 742 Evergreen Terrace — check dashboard for deadlines.",
+			},
+			status: "queued",
+			createdAt: now,
+		},
+		{
+			_id: idWithPrefix("notif"),
+			userId: adminId,
+			violationId: violation1Id,
+			channel: "email",
+			notificationDetails: {
+				text: "Admin digest (prototype): new activity on seeded violations.",
+			},
+			status: "queued",
+			createdAt: now,
+		},
+		{
+			_id: idWithPrefix("notif"),
+			userId: adminId,
+			violationId: violation2Id,
+			channel: "sms",
+			notificationDetails: {
+				text: "Admin reminder: review borough analytics after seed.",
+			},
+			status: "queued",
+			createdAt: now,
+		},
 	]);
 
 	await (
@@ -409,7 +556,7 @@ const main = async () => {
 	console.log("  2 evidence records (note + photo with embedded PNG)");
 	console.log("  1 review");
 	console.log("  2 comments");
-	console.log("  1 notification");
+	console.log("  7 notifications (per-user queued, mixed channels)");
 	console.log("  1 dispute");
 	console.log("  2 attorneys");
 	console.log("");

@@ -17,11 +17,8 @@ router.get("/", async (req, res) => {
 		let ownedProperties = [];
 
 		if (user.savedProperties?.length) {
-
 			const savedResults = await Promise.allSettled(
-				user.savedProperties.map((id) =>
-					getPropertyById(id)
-				)
+				user.savedProperties.map((id) => getPropertyById(id)),
 			);
 
 			savedProperties = savedResults
@@ -30,11 +27,8 @@ router.get("/", async (req, res) => {
 		}
 
 		if (user.ownedProperties?.length) {
-
 			const ownedResults = await Promise.allSettled(
-				user.ownedProperties.map((id) =>
-					getPropertyById(id)
-				)
+				user.ownedProperties.map((id) => getPropertyById(id)),
 			);
 
 			ownedProperties = ownedResults
@@ -52,13 +46,11 @@ router.get("/", async (req, res) => {
 			user,
 			savedProperties,
 			ownedProperties,
-			userScoreInfo
+			userScoreInfo,
 		});
-
 	} catch (e) {
-
 		return res.status(500).render("error", {
-			error: String(e)
+			error: String(e),
 		});
 	}
 });

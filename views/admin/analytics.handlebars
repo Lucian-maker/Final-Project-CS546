@@ -3,7 +3,7 @@
 		<h1>Analytics</h1>
 
 		<p class="dashboard-subtitle">
-			Platform activity metrics.
+			Platform activity metrics and ticket health.
 		</p>
 	</div>
 
@@ -14,77 +14,101 @@
 	</nav>
 
 	<div class="analytics-container">
-		<div class="metric-card">
-			<span class="metric-value">
-				{{stats.totalUsers}}
-			</span>
-
-			<span class="metric-label">
-				Users
-			</span>
+		<div class="metric-card metric-card-hero">
+			<span class="metric-eyebrow">Users</span>
+			<span class="metric-value">{{displayValue stats.totalUsers}}</span>
+			<span class="metric-footnote">Total registered accounts</span>
 		</div>
 
-		<div class="metric-card">
-			<span class="metric-value">
-				{{stats.totalProperties}}
-			</span>
-
-			<span class="metric-label">
-				Properties
-			</span>
+		<div class="metric-card metric-card-hero">
+			<span class="metric-eyebrow">Properties</span>
+			<span class="metric-value">{{displayValue stats.totalProperties}}</span>
+			<span class="metric-footnote">Tracked buildings in platform</span>
 		</div>
 
-		<div class="metric-card">
-			<span class="metric-value">
-				{{stats.totalReviews}}
-			</span>
-
-			<span class="metric-label">
-				Reviews
-			</span>
+		<div class="metric-card metric-card-hero">
+			<span class="metric-eyebrow">Reviews</span>
+			<span class="metric-value">{{displayValue stats.totalReviews}}</span>
+			<span class="metric-footnote">Tenant feedback records</span>
 		</div>
 
-		<div class="metric-card">
-			<span class="metric-value metric-warning">
-				{{stats.totalViolations}}
-			</span>
-
-			<span class="metric-label">
-				Violations
-			</span>
+		<div class="metric-card metric-card-hero">
+			<span class="metric-eyebrow">Violations</span>
+			<span class="metric-value metric-warning">{{displayValue stats.totalViolations}}</span>
+			<span class="metric-footnote">Total ticket volume</span>
 		</div>
+	</div>
+
+	<h2>By Status</h2>
+
+	<div class="analytics-container analytics-kpi-grid">
+		<div class="metric-card metric-card-kpi metric-card-{{statusStats.kpis.closed.tone}}">
+			<span class="metric-eyebrow">Closed</span>
+			<span class="metric-value">{{displayValue statusStats.kpis.closed.count}}</span>
+			<span class="metric-footnote">{{displayPercent statusStats.kpis.closed.pct}} of all tickets</span>
+		</div>
+		<div class="metric-card metric-card-kpi metric-card-{{statusStats.kpis.resolved.tone}}">
+			<span class="metric-eyebrow">Resolved</span>
+			<span class="metric-value">{{displayValue statusStats.kpis.resolved.count}}</span>
+			<span class="metric-footnote">{{displayPercent statusStats.kpis.resolved.pct}} remediated</span>
+		</div>
+		<div class="metric-card metric-card-kpi metric-card-{{statusStats.kpis.disputed.tone}}">
+			<span class="metric-eyebrow">Disputed</span>
+			<span class="metric-value">{{displayValue statusStats.kpis.disputed.count}}</span>
+			<span class="metric-footnote">{{displayPercent statusStats.kpis.disputed.pct}} at risk</span>
+		</div>
+		<div class="metric-card metric-card-kpi metric-card-{{statusStats.kpis.openLike.tone}}">
+			<span class="metric-eyebrow">Open + Scheduled</span>
+			<span class="metric-value">{{displayValue statusStats.kpis.openLike.count}}</span>
+			<span class="metric-footnote">{{displayPercent statusStats.kpis.openLike.pct}} active pipeline</span>
+		</div>
+	</div>
+
+	<div class="status-breakdown-grid">
+		{{#each statusStats.byStatus}}
+			<div class="status-card status-card--{{this.tone}}">
+				<div class="status-card-header">
+					<h3 class="status-card-title">{{this.status}}</h3>
+					<span class="status-card-badge status-card-badge--{{this.tone}}">{{displayPercent this.pct}}</span>
+				</div>
+				<div class="status-stats-row">
+					<div class="status-stat">
+						<div class="status-stat-value">{{displayValue this.count}}</div>
+						<div class="status-stat-label">Tickets</div>
+					</div>
+					<div class="status-stat">
+						<div class="status-stat-value">{{displayValue this.remainingCount}}</div>
+						<div class="status-stat-label">Remaining</div>
+					</div>
+				</div>
+			</div>
+		{{/each}}
 	</div>
 
 	<h2>By Borough</h2>
 
-	<div class="dashboard-grid">
-
+	<div class="status-breakdown-grid">
 		{{#each boroughStats}}
-
-			<div class="card">
-
-				<h3 class="card-title">
-					{{this._id}}
-				</h3>
-
-				<div class="analytics-container">
-
-					<div class="metric-card">
-						<div class="metric-value">
-							{{this.totalViolations}}
-						</div>
-
-						<div class="metric-label">
-							Violations
-						</div>
-					</div>
-
+			<div class="status-card">
+				<div class="status-card-header">
+					<h3 class="status-card-title">{{displayValue this._id "Unspecified"}}</h3>
 				</div>
-
+				<div class="status-stats-row">
+					<div class="status-stat">
+						<div class="status-stat-value">
+							{{displayValue this.totalViolations}}
+						</div>
+						<div class="status-stat-label">Violations</div>
+					</div>
+					<div class="status-stat">
+						<div class="status-stat-value">
+							{{displayPercent this.sharePct}}
+						</div>
+						<div class="status-stat-label">Share of Total</div>
+					</div>
+				</div>
 			</div>
-
 		{{/each}}
-
 	</div>
 
 </main>

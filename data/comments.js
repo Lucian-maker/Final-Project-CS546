@@ -4,19 +4,28 @@ import { checkId, checkString } from "../helpers.js";
 
 // Validation helper for score
 const checkScore = (score, varName) => {
-	if (score === undefined || score === null) throw `You must provide a ${varName}`;
+	if (score === undefined || score === null)
+		throw `You must provide a ${varName}`;
 	const parsed = Number(score);
-	if (typeof parsed !== "number" || isNaN(parsed)) throw `${varName} must be a number`;
+	if (typeof parsed !== "number" || isNaN(parsed))
+		throw `${varName} must be a number`;
 	if (parsed < 1 || parsed > 5) throw `${varName} must be between 1 and 5`;
 	return parsed;
 };
 
-export const createComment = async (propertyId, userId, userName, text, rating, parentCommentId = null) => {
+export const createComment = async (
+	propertyId,
+	userId,
+	userName,
+	text,
+	rating,
+	parentCommentId = null,
+) => {
 	propertyId = checkId(propertyId, "propertyId");
 	userId = checkId(userId, "userId");
 	userName = checkString(userName, "userName");
 	text = checkString(text, "comment text");
-	
+
 	let parsedRating = null;
 	if (parentCommentId === null) {
 		parsedRating = checkScore(rating, "rating");
@@ -37,7 +46,7 @@ export const createComment = async (propertyId, userId, userName, text, rating, 
 		likes: [], // array of userIds who liked it
 		dislikes: [], // array of userIds who disliked it
 		createdAt: new Date(),
-		updatedAt: new Date()
+		updatedAt: new Date(),
 	};
 
 	const commentsCollection = await comments();
@@ -52,13 +61,16 @@ export const createComment = async (propertyId, userId, userName, text, rating, 
 export const getCommentsByProperty = async (propertyId) => {
 	propertyId = checkId(propertyId, "propertyId");
 	const commentsCollection = await comments();
-	const propertyComments = await commentsCollection.find({ propertyId }).sort({ createdAt: 1 }).toArray();
+	const propertyComments = await commentsCollection
+		.find({ propertyId })
+		.sort({ createdAt: 1 })
+		.toArray();
 
 	// Format as a nested thread
 	const commentMap = {};
 	const topLevelComments = [];
 
-	propertyComments.forEach(c => {
+	propertyComments.forEach((c) => {
 		c.replies = [];
 		c.likes = c.likes || [];
 		c.dislikes = c.dislikes || [];
@@ -67,7 +79,7 @@ export const getCommentsByProperty = async (propertyId) => {
 		commentMap[c._id] = c;
 	});
 
-	propertyComments.forEach(c => {
+	propertyComments.forEach((c) => {
 		if (c.parentCommentId) {
 			if (commentMap[c.parentCommentId]) {
 				commentMap[c.parentCommentId].replies.push(c);
@@ -97,15 +109,15 @@ export const likeComment = async (commentId, userId) => {
 		updateObj = { $pull: { likes: userId } };
 	} else {
 		// Like (and remove from dislikes)
-		updateObj = { 
+		updateObj = {
 			$addToSet: { likes: userId },
-			$pull: { dislikes: userId }
+			$pull: { dislikes: userId },
 		};
 	}
 
 	const updateInfo = await commentsCollection.updateOne(
 		{ _id: commentId },
-		updateObj
+		updateObj,
 	);
 
 	if (!updateInfo.acknowledged) throw "Failed to toggle like on comment";
@@ -127,15 +139,15 @@ export const dislikeComment = async (commentId, userId) => {
 		updateObj = { $pull: { dislikes: userId } };
 	} else {
 		// Dislike (and remove from likes)
-		updateObj = { 
+		updateObj = {
 			$addToSet: { dislikes: userId },
-			$pull: { likes: userId }
+			$pull: { likes: userId },
 		};
 	}
 
 	const updateInfo = await commentsCollection.updateOne(
 		{ _id: commentId },
-		updateObj
+		updateObj,
 	);
 
 	if (!updateInfo.acknowledged) throw "Failed to toggle dislike on comment";
@@ -152,11 +164,12 @@ export const editComment = async (commentId, userId, newRating) => {
 	const comment = await commentsCollection.findOne({ _id: commentId });
 	if (!comment) throw "Comment not found";
 	if (comment.userId !== userId) throw "You can only edit your own comments";
-	if (comment.parentCommentId !== null) throw "Cannot edit rating on a nested reply";
+	if (comment.parentCommentId !== null)
+		throw "Cannot edit rating on a nested reply";
 
 	const updateInfo = await commentsCollection.updateOne(
 		{ _id: commentId },
-		{ $set: { rating: newRating, updatedAt: new Date() } }
+		{ $set: { rating: newRating, updatedAt: new Date() } },
 	);
 
 	if (!updateInfo.acknowledged) throw "Failed to edit comment rating";
@@ -171,7 +184,8 @@ export const deleteComment = async (commentId, userId) => {
 	const commentsCollection = await comments();
 	const comment = await commentsCollection.findOne({ _id: commentId });
 	if (!comment) throw "Comment not found";
-	if (comment.userId !== userId) throw "You can only delete your own comments";
+	if (comment.userId !== userId)
+		throw "You can only delete your own comments";
 
 	// Delete the comment itself
 	const deleteInfo = await commentsCollection.deleteOne({ _id: commentId });

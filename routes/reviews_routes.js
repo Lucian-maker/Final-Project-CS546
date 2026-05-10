@@ -7,7 +7,13 @@ import {
 	softDeleteReview,
 	getLandlordIdForProperty,
 } from "../data/reviews.js";
-import { checkId, checkScore, checkShortText, logDescriptions, logCategories } from "../helpers.js";
+import {
+	checkId,
+	checkScore,
+	checkShortText,
+	logDescriptions,
+	logCategories,
+} from "../helpers.js";
 import { requireAuth, requireRole } from "../middleware.js";
 
 const router = Router();
@@ -56,7 +62,7 @@ router
 				res,
 				cleanPropertyId,
 				req.session?.user,
-				from
+				from,
 			);
 		} catch (e) {
 			return res.status(400).render("error", {
@@ -76,15 +82,22 @@ router
 			checkScore(body.resolution, "resolution");
 			checkShortText(body.reviewText, "reviewText", 500);
 		} catch (e) {
-			return renderList(res, req.params.propertyId, req.session.user, from, {
-				error: String(e),
-				form: body,
-			});
+			return renderList(
+				res,
+				req.params.propertyId,
+				req.session.user,
+				from,
+				{
+					error: String(e),
+					form: body,
+				},
+			);
 		}
 
 		try {
 			res.locals.logCategory = logCategories.reviews;
-			res.locals.logDescription = logDescriptions.createReview(cleanPropertyId);
+			res.locals.logDescription =
+				logDescriptions.createReview(cleanPropertyId);
 			await createReview(
 				cleanPropertyId,
 				req.session.user._id,
@@ -96,9 +109,7 @@ router
 			);
 			const from = req.query.from || req.body.from || "";
 
-			return res.redirect(
-				`/reviews/${cleanPropertyId}?from=${from}`
-			);
+			return res.redirect(`/reviews/${cleanPropertyId}?from=${from}`);
 		} catch (e) {
 			return renderList(res, cleanPropertyId, req.session.user, from, {
 				error: String(e),
@@ -112,7 +123,9 @@ router.route("/:reviewId/edit").post(requireAuth, async (req, res) => {
 	try {
 		const existing = await getReviewById(req.params.reviewId);
 		res.locals.logCategory = logCategories.reviews;
-		res.locals.logDescription = logDescriptions.updateReview(req.params.reviewId);
+		res.locals.logDescription = logDescriptions.updateReview(
+			req.params.reviewId,
+		);
 		await updateReview(
 			req.params.reviewId,
 			req.session.user._id,
@@ -134,7 +147,9 @@ router.route("/:reviewId/delete").post(requireAuth, async (req, res) => {
 	try {
 		const existing = await getReviewById(req.params.reviewId);
 		res.locals.logCategory = logCategories.reviews;
-		res.locals.logDescription = logDescriptions.deleteReview(req.params.reviewId);
+		res.locals.logDescription = logDescriptions.deleteReview(
+			req.params.reviewId,
+		);
 		await softDeleteReview(req.params.reviewId, req.session.user._id);
 		return res.redirect(`/reviews/${existing.propertyId}`);
 	} catch (e) {

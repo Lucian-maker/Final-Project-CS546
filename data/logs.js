@@ -6,9 +6,8 @@ export const createLog = async (
 	res,
 	user = null,
 	description = null,
-	category = "general"
+	category = "general",
 ) => {
-
 	const logCollection = await logs();
 
 	const newLog = {
@@ -25,12 +24,12 @@ export const createLog = async (
 					userId: user._id,
 					role: user.userRole,
 					name: `${user.firstName} ${user.lastName}`,
-			  }
+				}
 			: {
 					userId: null,
 					role: "guest",
 					name: "Guest",
-			  },
+				},
 
 		timestamp: new Date(),
 	};
@@ -42,15 +41,10 @@ export const createLog = async (
 export const getAllLogs = async () => {
 	const logCollection = await logs();
 
-	return await logCollection
-		.find({})
-		.sort({ timestamp: -1 })
-		.toArray();
+	return await logCollection.find({}).sort({ timestamp: -1 }).toArray();
 };
 
-
 export const searchLogs = async (filters) => {
-
 	const logsCollection = await logs();
 
 	const query = {};
@@ -60,21 +54,21 @@ export const searchLogs = async (filters) => {
 			{
 				description: {
 					$regex: filters.search,
-					$options: "i"
-				}
+					$options: "i",
+				},
 			},
 			{
 				"user.name": {
 					$regex: filters.search,
-					$options: "i"
-				}
+					$options: "i",
+				},
 			},
 			{
 				category: {
 					$regex: filters.search,
-					$options: "i"
-				}
-			}
+					$options: "i",
+				},
+			},
 		];
 	}
 

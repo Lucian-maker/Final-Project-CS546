@@ -58,7 +58,9 @@ router.route("/api/:id").patch(async (req, res) => {
 		const updated = await updateAttorney(req.params.id, req.body);
 
 		res.locals.logCategory = logCategories.attorneys;
-		res.locals.logDescription = logDescriptions.updateAttorney(req.params.id);
+		res.locals.logDescription = logDescriptions.updateAttorney(
+			req.params.id,
+		);
 		return res.json(updated);
 	} catch (e) {
 		if (e.toString().includes("No attorney found")) {
@@ -73,7 +75,9 @@ router.route("/api/:id").delete(async (req, res) => {
 	try {
 		const deleted = await removeAttorney(req.params.id);
 		res.locals.logCategory = logCategories.attorneys;
-		res.locals.logDescription = logDescriptions.deleteAttorney(req.params.id);
+		res.locals.logDescription = logDescriptions.deleteAttorney(
+			req.params.id,
+		);
 		return res.json(deleted);
 	} catch (e) {
 		if (e.toString().includes("No attorney found")) {

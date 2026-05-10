@@ -73,24 +73,15 @@ export const getViolations = async (filters = {}) => {
 		filters._restrictedPropertyIds &&
 		filters._restrictedPropertyIds.length > 0
 	) {
-
-		const normalizedRestricted =
-			filters._restrictedPropertyIds.map(String);
+		const normalizedRestricted = filters._restrictedPropertyIds.map(String);
 
 		if (query.propertyId) {
-
-			if (
-				!normalizedRestricted.includes(
-					String(query.propertyId)
-				)
-			) {
+			if (!normalizedRestricted.includes(String(query.propertyId))) {
 				return [];
 			}
-
 		} else {
-
 			query.propertyId = {
-				$in: normalizedRestricted
+				$in: normalizedRestricted,
 			};
 		}
 	}
@@ -271,11 +262,14 @@ export const createViolation = async (data) => {
 	const property = await propertyCollection.findOne({ _id: propertyId });
 
 	if (!property) throw "Invalid propertyId";
-    const addr = property.address;
-    const buildingAddress = `${addr.number} ${addr.street}, ${addr.city}, ${addr.state} ${addr.zipCode}`;
+	const addr = property.address;
+	const buildingAddress = `${addr.number} ${addr.street}, ${addr.city}, ${addr.state} ${addr.zipCode}`;
 
 	const violationType = checkString(data.violationType, "type");
-	const violationDescription = checkString(data.violationDescription, "description");
+	const violationDescription = checkString(
+		data.violationDescription,
+		"description",
+	);
 
 	const newViolation = {
 		_id: `viol-${uuidv4()}`,
@@ -322,7 +316,7 @@ export const createViolation = async (data) => {
 
 	await propertyCollection.updateOne(
 		{ _id: propertyId },
-		{ $push: { violations: newViolation._id } }
+		{ $push: { violations: newViolation._id } },
 	);
 
 	return getViolationById(newViolation._id);

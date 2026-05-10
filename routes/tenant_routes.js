@@ -15,11 +15,8 @@ router.get("/", async (req, res) => {
 		let savedProperties = [];
 
 		if (user.savedProperties?.length) {
-
 			const propertyResults = await Promise.allSettled(
-				user.savedProperties.map((id) =>
-					getPropertyById(id)
-				)
+				user.savedProperties.map((id) => getPropertyById(id)),
 			);
 
 			savedProperties = propertyResults
@@ -29,8 +26,7 @@ router.get("/", async (req, res) => {
 
 		res.locals.logCategory = logCategories.dashboard;
 
-		res.locals.logDescription =
-			"Viewed tenant dashboard";
+		res.locals.logDescription = "Viewed tenant dashboard";
 
 		const userScoreInfo = await computeTenantReviewAverage(user._id);
 
@@ -38,13 +34,11 @@ router.get("/", async (req, res) => {
 			title: "Tenant Dashboard",
 			user,
 			savedProperties,
-			userScoreInfo
+			userScoreInfo,
 		});
-
 	} catch (e) {
-
 		return res.status(500).render("error", {
-			error: String(e)
+			error: String(e),
 		});
 	}
 });
