@@ -1,9 +1,13 @@
-import { properties, comments, reviews, users } from "../config/mongoCollections.js";
+import {
+	properties,
+	comments,
+	reviews,
+	users,
+} from "../config/mongoCollections.js";
 import { v4 as uuidv4 } from "uuid";
 import { checkString, checkId, checkAddress } from "../helpers.js";
 
-const escapeRegex = (s) =>
-	s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 export const getAllProperties = async () => {
 	const propCollection = await properties();
@@ -62,7 +66,6 @@ export const getProperties = async (filters = {}) => {
 		];
 	}
 
-
 	if (filters.city) {
 		query["address.city"] = checkString(filters.city, "city");
 	}
@@ -97,20 +100,25 @@ export const getProperties = async (filters = {}) => {
 	const order = filters.order === "asc" ? 1 : -1;
 	const sort = { [sortField]: order };
 
-	let results = await propCollection
-		.find(query)
-		.sort(sort)
-		.toArray();
+	let results = await propCollection.find(query).sort(sort).toArray();
 
-	if (filters.minViolations !== undefined && filters.minViolations !== "" && filters.minViolations !== null) {
+	if (
+		filters.minViolations !== undefined &&
+		filters.minViolations !== "" &&
+		filters.minViolations !== null
+	) {
 		results = results.filter(
-			(p) => p.violations.length >= Number(filters.minViolations)
+			(p) => p.violations.length >= Number(filters.minViolations),
 		);
 	}
 
-	if (filters.minReviews !== undefined && filters.minReviews !== "" && filters.minReviews !== null) {
+	if (
+		filters.minReviews !== undefined &&
+		filters.minReviews !== "" &&
+		filters.minReviews !== null
+	) {
 		results = results.filter(
-			(p) => p.reviews.length >= Number(filters.minReviews)
+			(p) => p.reviews.length >= Number(filters.minReviews),
 		);
 	}
 
@@ -143,12 +151,15 @@ export const getCommunityInsights = async () => {
 			.toArray();
 
 		const ratedComments = propertyComments.filter(
-			(c) => c.rating !== null && c.rating !== undefined
+			(c) => c.rating !== null && c.rating !== undefined,
 		);
-		
+
 		let displayRating = null;
 		if (ratedComments.length > 0) {
-			const sum = ratedComments.reduce((acc, c) => acc + Number(c.rating), 0);
+			const sum = ratedComments.reduce(
+				(acc, c) => acc + Number(c.rating),
+				0,
+			);
 			displayRating = Math.round((sum / ratedComments.length) * 10) / 10;
 		}
 
@@ -160,7 +171,7 @@ export const getCommunityInsights = async () => {
 			zipCode: property.address.zipCode,
 			commentCount: propertyComments.length,
 			reviewCount: ratedComments.length,
-			displayRating
+			displayRating,
 		});
 	}
 
@@ -179,7 +190,7 @@ export const getCommunityInsights = async () => {
 	return {
 		highestRated,
 		mostReviewed,
-		mostCommented
+		mostCommented,
 	};
 };
 
@@ -207,7 +218,7 @@ export const claimProperty = async (propertyId, userId) => {
 				claimedBy: userId,
 				updatedOn: new Date(),
 			},
-		}
+		},
 	);
 
 	await userCol.updateOne(
@@ -216,7 +227,7 @@ export const claimProperty = async (propertyId, userId) => {
 			$addToSet: {
 				ownedProperties: propertyId,
 			},
-		}
+		},
 	);
 
 	return true;
@@ -246,7 +257,7 @@ export const unclaimProperty = async (propertyId, userId) => {
 				claimedBy: null,
 				updatedOn: new Date(),
 			},
-		}
+		},
 	);
 
 	await userCol.updateOne(
@@ -255,7 +266,7 @@ export const unclaimProperty = async (propertyId, userId) => {
 			$pull: {
 				ownedProperties: propertyId,
 			},
-		}
+		},
 	);
 
 	return true;

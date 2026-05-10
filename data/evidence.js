@@ -143,7 +143,7 @@ export const listEvidenceForSessionUser = async (sessionUser, filters = {}) => {
 	const dbUser = await loadUser(sessionUser._id);
 	const eCol = await evidence();
 	const query = { isDeleted: false };
-	
+
 	if (filters.violationId) {
 		const vid = checkId(filters.violationId, "violationId");
 		query.violationId = vid;
@@ -156,7 +156,10 @@ export const listEvidenceForSessionUser = async (sessionUser, filters = {}) => {
 	}
 
 	if (filters.evidenceType) {
-		const type = checkString(filters.evidenceType, "evidenceType").toLowerCase();
+		const type = checkString(
+			filters.evidenceType,
+			"evidenceType",
+		).toLowerCase();
 
 		if (!EVIDENCE_TYPES.includes(type)) {
 			throw `evidenceType must be one of: ${EVIDENCE_TYPES.join(", ")}`;

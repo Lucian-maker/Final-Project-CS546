@@ -33,6 +33,13 @@
 
 </div>
 
+	<div class="dashboard-search">
+		<form action="/violations" method="GET" class="search-form">
+			<input type="text" name="search" placeholder="Search violations by address, type, status..." required>
+			<button type="submit" class="btn-search">Search</button>
+		</form>
+	</div>
+
 	<h2 style="margin-bottom:0.5rem;">Active Violations</h2>
 
 	<div class="analytics-container">
@@ -65,7 +72,16 @@
 			<span class="tile-icon">📁</span>
 			<span class="tile-text">Evidence Vault</span>
 		</a>
-		<a href="/notifications" class="dashboard-tile">
+		<a href="/reviews" class="dashboard-tile">
+			<span class="tile-icon">⭐</span>
+			<span class="tile-text">Reviews</span>
+		</a>
+		<a href="/comments" class="dashboard-tile">
+			<span class="tile-icon">💬</span>
+			<span class="tile-text">Comments</span>
+		</a>
+		<a href="/notifications" class="dashboard-tile" id="dashboard-notif-tile">
+			<span class="dashboard-notif-badge notif-badge" hidden aria-live="polite">0</span>
 			<span class="tile-icon">🔔</span>
 			<span class="tile-text">Notifications</span>
 		</a>
@@ -111,4 +127,6 @@
 		</section>
 	{{/if}}
 
+
+	<script src="/public/js/dashboard_notif_badge.js" defer></script>
 </main>

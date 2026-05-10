@@ -121,14 +121,11 @@ export const updateUserById = async (id, updateData) => {
 	const updateObject = {
 		$set: {
 			...updateData,
-			updatedAt: new Date()
-		}
+			updatedAt: new Date(),
+		},
 	};
 
-	const result = await collection.updateOne(
-		{ _id: id },
-		updateObject
-	);
+	const result = await collection.updateOne({ _id: id }, updateObject);
 
 	if (result.modifiedCount === 0) {
 		throw "User update failed";
@@ -147,15 +144,15 @@ export const updateProfileById = async (id, updateData) => {
 
 	const secondaryName = checkOptionalName(
 		updateData.secondaryContactName,
-		"secondaryContactName"
+		"secondaryContactName",
 	);
 	const secondaryEmail = checkOptionalEmail(
 		updateData.secondaryContactEmail,
-		"secondaryContactEmail"
+		"secondaryContactEmail",
 	);
 	const secondaryPhone = checkOptionalPhone(
 		updateData.secondaryContactPhone,
-		"secondaryContactPhone"
+		"secondaryContactPhone",
 	);
 
 	const collection = await users();
@@ -184,10 +181,7 @@ export const updateProfileById = async (id, updateData) => {
 		},
 	};
 
-	const result = await collection.updateOne(
-		{ _id: id },
-		updateObject
-	);
+	const result = await collection.updateOne({ _id: id }, updateObject);
 
 	if (result.matchedCount === 0) {
 		throw "User update failed";
@@ -203,9 +197,9 @@ export const saveProperty = async (userId, propertyId) => {
 		{ _id: userId },
 		{
 			$addToSet: {
-				savedProperties: propertyId
-			}
-		}
+				savedProperties: propertyId,
+			},
+		},
 	);
 
 	return true;
@@ -218,9 +212,9 @@ export const unsaveProperty = async (userId, propertyId) => {
 		{ _id: userId },
 		{
 			$pull: {
-				savedProperties: propertyId
-			}
-		}
+				savedProperties: propertyId,
+			},
+		},
 	);
 
 	return true;
