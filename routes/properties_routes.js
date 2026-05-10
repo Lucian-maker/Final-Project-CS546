@@ -35,6 +35,16 @@ router.get("/", async (req, res) => {
 				req.query.minReviews !== ""
 					? Number(req.query.minReviews)
 					: null,
+			minTrustScore:
+				req.query.minTrustScore !== undefined &&
+				req.query.minTrustScore !== ""
+					? Number(req.query.minTrustScore)
+					: null,
+			maxAvgResolution:
+				req.query.maxAvgResolution !== undefined &&
+				req.query.maxAvgResolution !== ""
+					? Number(req.query.maxAvgResolution)
+					: null,
 			sort: req.query.sort || "createdOn",
 			order: req.query.order || "desc",
 		};
@@ -116,6 +126,8 @@ router.get("/:id", async (req, res) => {
 			from,
 			comments,
 			averageRating,
+			commentError: req.query.commentError || null,
+			commentSuccess: req.query.commentSuccess ? true : null,
 		});
 	} catch (e) {
 		return res.status(404).render("error", {

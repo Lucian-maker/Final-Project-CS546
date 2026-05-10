@@ -125,6 +125,32 @@
 				</div>
 
 				<div class="field">
+					<label for="minTrustScore">Min Trust Score</label>
+					<input
+						type="number"
+						id="minTrustScore"
+						name="minTrustScore"
+						min="1"
+						max="5"
+						step="0.1"
+						value="{{filters.minTrustScore}}"
+						placeholder="e.g. 3.5"
+					/>
+				</div>
+
+				<div class="field">
+					<label for="maxAvgResolution">Max Avg Resolution (days)</label>
+					<input
+						type="number"
+						id="maxAvgResolution"
+						name="maxAvgResolution"
+						min="0"
+						value="{{filters.maxAvgResolution}}"
+						placeholder="e.g. 30"
+					/>
+				</div>
+
+				<div class="field">
 					<label for="sort">Sort By</label>
 					<select id="sort" name="sort">
 						<option value="createdOn" {{#if (eq filters.sort "createdOn")}}selected{{/if}}>
@@ -211,6 +237,20 @@
 							<strong>Reviews:</strong>
 							{{this.reviews.length}}
 						</p>
+
+						{{#if this.trustScore}}
+							<p>
+								<strong>Trust Score:</strong>
+								<span style="color:#059669; font-weight:600;">{{this.trustScore}} / 5.0</span>
+							</p>
+						{{/if}}
+
+						{{#if this.avgResolutionDays}}
+							<p>
+								<strong>Avg Resolution:</strong>
+								{{this.avgResolutionDays}} days
+							</p>
+						{{/if}}
 
 						<a href="/properties/{{this._id}}?from=properties">
 							View Details
