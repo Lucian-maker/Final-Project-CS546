@@ -216,10 +216,10 @@ router.get("/analytics", async (req, res) => {
 					pct:
 						totalViolations > 0
 							? Math.round(
-									((statusCountMap.Closed || 0) /
-										totalViolations) *
-										1000,
-								) / 10
+								((statusCountMap.Closed || 0) /
+									totalViolations) *
+								1000,
+							) / 10
 							: 0,
 					tone: "success",
 				},
@@ -228,10 +228,10 @@ router.get("/analytics", async (req, res) => {
 					pct:
 						totalViolations > 0
 							? Math.round(
-									((statusCountMap.Resolved || 0) /
-										totalViolations) *
-										1000,
-								) / 10
+								((statusCountMap.Resolved || 0) /
+									totalViolations) *
+								1000,
+							) / 10
 							: 0,
 					tone: "success",
 				},
@@ -240,10 +240,10 @@ router.get("/analytics", async (req, res) => {
 					pct:
 						totalViolations > 0
 							? Math.round(
-									((statusCountMap.Disputed || 0) /
-										totalViolations) *
-										1000,
-								) / 10
+								((statusCountMap.Disputed || 0) /
+									totalViolations) *
+								1000,
+							) / 10
 							: 0,
 					tone: "danger",
 				},
@@ -254,12 +254,12 @@ router.get("/analytics", async (req, res) => {
 					pct:
 						totalViolations > 0
 							? Math.round(
-									(((statusCountMap.Open || 0) +
-										(statusCountMap["Repair Scheduled"] ||
-											0)) /
-										totalViolations) *
-										1000,
-								) / 10
+								(((statusCountMap.Open || 0) +
+									(statusCountMap["Repair Scheduled"] ||
+										0)) /
+									totalViolations) *
+								1000,
+							) / 10
 							: 0,
 					tone: "warning",
 				},
@@ -271,10 +271,34 @@ router.get("/analytics", async (req, res) => {
 			sharePct:
 				totalViolations > 0
 					? Math.round(
-							(row.totalViolations / totalViolations) * 1000,
-						) / 10
+						(row.totalViolations / totalViolations) * 1000,
+					) / 10
 					: 0,
 		}));
+
+		// Gets avg resolution time
+		const resolvedViolations = await violationsCollection
+			.find({ resolvedAt: { $ne: null } })
+			.toArray();
+		let avgResolutionDays = null;
+		if (resolvedViolations.length > 0) {
+			let totalDays = 0;
+			let count = 0;
+			for (const v of resolvedViolations) {
+				const start = v.createdAt || v.inspectionDate;
+				const end = v.resolvedAt;
+				if (start && end) {
+					const diffMs =
+						new Date(end).getTime() - new Date(start).getTime();
+					totalDays += Math.max(0, diffMs / 86400000);
+					count++;
+				}
+			}
+			if (count > 0) {
+				avgResolutionDays =
+					Math.round((totalDays / count) * 10) / 10;
+			}
+		}
 
 		res.locals.logCategory = logCategories.admin;
 		res.locals.logDescription = logDescriptions.adminAnalytics();
@@ -286,6 +310,8 @@ router.get("/analytics", async (req, res) => {
 				totalProperties,
 				totalReviews,
 				totalViolations,
+				avgResolutionDays,
+				resolvedCount: resolvedViolations.length,
 			},
 			statusStats,
 			boroughStats,

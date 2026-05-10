@@ -157,6 +157,69 @@ export const createTicket = async (data, sessionUser) => {
 	return newTicket;
 };
 
+export const editTicket = async (ticketId, sessionUser, updates) => {
+	const cleanId = checkId(ticketId, "ticketId");
+	const dbUser = await loadUser(sessionUser?._id);
+	if (!dbUser) throw "User not found";
+
+	const ticket = await getTicketById(cleanId);
+
+	// Only the submitter, the assigned landlord, or admin can edit
+	const isSubmitter = ticket.submittedById === dbUser._id;
+	const isAssigned = ticket.assignedToId && ticket.assignedToId === dbUser._id;
+	const isAdmin = dbUser.userRole === "admin";
+	if (!isSubmitter && !isAssigned && !isAdmin) {
+		throw "You do not have permission to edit this ticket";
+	}
+
+	// Only allow editing open tickets
+	if (ticket.status !== "open") {
+		throw "Only open tickets can be edited";
+	}
+
+	const allowedFields = {};
+	if (updates.description !== undefined) {
+		allowedFields.description = checkShortText(updates.description, "description", 1000);
+	}
+	if (updates.priority !== undefined) {
+		const p = checkString(updates.priority, "priority").toLowerCase();
+		if (!TICKET_PRIORITIES.includes(p)) throw `priority must be one of: ${TICKET_PRIORITIES.join(", ")}`;
+		allowedFields.priority = p;
+	}
+	if (updates.category !== undefined) {
+		const c = checkString(updates.category, "category").toLowerCase();
+		if (!TICKET_CATEGORIES.includes(c)) throw `category must be one of: ${TICKET_CATEGORIES.join(", ")}`;
+		allowedFields.category = c;
+	}
+
+	allowedFields.updatedAt = new Date();
+
+	const collection = await tickets();
+	const result = await collection.updateOne({ _id: cleanId }, { $set: allowedFields });
+	if (!result.matchedCount) throw "Could not edit ticket";
+	return getTicketById(cleanId);
+};
+
+export const deleteTicket = async (ticketId, sessionUser) => {
+	const cleanId = checkId(ticketId, "ticketId");
+	const dbUser = await loadUser(sessionUser?._id);
+	if (!dbUser) throw "User not found";
+
+	const ticket = await getTicketById(cleanId);
+
+	// Only the submitter or admin can delete
+	const isSubmitter = ticket.submittedById === dbUser._id;
+	const isAdmin = dbUser.userRole === "admin";
+	if (!isSubmitter && !isAdmin) {
+		throw "You do not have permission to delete this ticket";
+	}
+
+	const collection = await tickets();
+	const result = await collection.deleteOne({ _id: cleanId });
+	if (!result.deletedCount) throw "Could not delete ticket";
+	return { deleted: true };
+};
+
 export const getAllTicketsForUser = async (sessionUser) => {
 	if (!sessionUser) {
 		return [];

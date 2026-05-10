@@ -3,6 +3,8 @@ import {
 	allowedNextTicketStatuses,
 	assertUserCanViewTicket,
 	createTicket,
+	editTicket,
+	deleteTicket,
 	getAllTicketsForUser,
 	TICKET_CATEGORIES,
 	TICKET_PRIORITIES,
@@ -202,6 +204,10 @@ router
 			res.locals.logCategory = logCategories.tickets;
 			res.locals.logDescription = logDescriptions.viewTicket(cleanId);
 
+			const isSubmitter = ticket.submittedById === dbUser._id;
+			const isAdmin = dbUser.userRole === "admin";
+			const canEdit = (isSubmitter || isAdmin) && ticket.status === "open";
+
 			return res.render("ticket", {
 				title: `Ticket — ${ticket.category}`,
 				user: sessionUser,
@@ -216,6 +222,9 @@ router
 				priorities: TICKET_PRIORITIES,
 				statusMessage: req.query.updated ? "Ticket updated." : null,
 				error: null,
+				canEdit,
+				editCategories: TICKET_CATEGORIES,
+				editPriorities: TICKET_PRIORITIES,
 			});
 		} catch (e) {
 			const msg = String(e);
@@ -260,5 +269,50 @@ router
 			});
 		}
 	});
+
+// Edit ticket description/priority/category (submitter or admin only)
+router.post("/:id/edit", async (req, res) => {
+	try {
+		const sessionUser = req.session && req.session.user;
+		if (!sessionUser) return res.redirect("/signin");
+
+		const cleanId = req.params.id;
+		await editTicket(cleanId, sessionUser, {
+			description: req.body?.description,
+			priority: req.body?.priority,
+			category: req.body?.category,
+		});
+
+		res.locals.logCategory = logCategories.dashboard;
+		res.locals.logDescription = `Edited ticket ${cleanId}`;
+
+		return res.redirect(`/tickets/${cleanId}?updated=1`);
+	} catch (e) {
+		return res.status(400).render("error", {
+			title: "Error",
+			error: String(e),
+		});
+	}
+});
+
+// Delete ticket (submitter or admin only)
+router.post("/:id/delete", async (req, res) => {
+	try {
+		const sessionUser = req.session && req.session.user;
+		if (!sessionUser) return res.redirect("/signin");
+
+		await deleteTicket(req.params.id, sessionUser);
+
+		res.locals.logCategory = logCategories.dashboard;
+		res.locals.logDescription = `Deleted ticket ${req.params.id}`;
+
+		return res.redirect("/tickets");
+	} catch (e) {
+		return res.status(400).render("error", {
+			title: "Error",
+			error: String(e),
+		});
+	}
+});
 
 export default router;
