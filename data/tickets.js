@@ -67,20 +67,12 @@ const userCanSee = (dbUser, ticket) => {
 };
 
 const userCanUpdate = (dbUser, ticket) => {
-	if (!dbUser) {
-		return false;
-	}
-	if (dbUser.userRole === "admin") {
-		return true;
-	}
+	if (!dbUser || !ticket) return false;
+	if (dbUser.userRole === "admin") return true;
+	if (ticket.submittedById === dbUser._id) return true;
+	if (ticket.assignedToId === dbUser._id) return true;
 	if (dbUser.userRole === "landlord") {
-		if (ticket.assignedToId && ticket.assignedToId === dbUser._id) {
-			return true;
-		}
-		const owned = dbUser.ownedProperties || [];
-		if (owned.includes(ticket.propertyId)) {
-			return true;
-		}
+		return (dbUser.ownedProperties || []).includes(ticket.propertyId);
 	}
 	return false;
 };
@@ -122,12 +114,7 @@ export const createTicket = async (data, sessionUser) => {
 		throw "User not found";
 	}
 
-	if (dbUser.userRole === "tenant") {
-		const saved = dbUser.savedProperties || [];
-		if (!saved.includes(propertyId)) {
-			throw "Tenants can only open tickets on saved properties";
-		}
-	}
+
 
 	let assignedToId = null;
 	if (data.assignedToId !== undefined && data.assignedToId !== null && data.assignedToId !== "") {
@@ -282,6 +269,7 @@ export const assertUserCanViewTicket = async (sessionUser, ticketId) => {
 	if (!userCanSee(dbUser, ticket)) {
 		throw "You do not have permission to view this ticket";
 	}
+
 	return { dbUser, ticket };
 };
 
@@ -299,18 +287,11 @@ export const updateTicketStatus = async (ticketId, sessionUser, payload) => {
 	const ticket = await getTicketById(cleanId);
 
 	if (!userCanUpdate(dbUser, ticket)) {
-		throw "Only the assigned landlord or an admin can update a ticket";
+		throw "You must be signed in to update a ticket";
 	}
 
 	if (ticket.status === newStatus) {
 		throw `Ticket is already marked as "${newStatus}"`;
-	}
-
-	if (dbUser.userRole !== "admin") {
-		const allowed = allowedTransitions(ticket.status);
-		if (!allowed.includes(newStatus)) {
-			throw `Cannot move ticket from "${ticket.status}" to "${newStatus}"`;
-		}
 	}
 
 	const now = new Date();
@@ -337,12 +318,49 @@ export const updateTicketStatus = async (ticketId, sessionUser, payload) => {
 	return getTicketById(cleanId);
 };
 
+export const updateTicketPriority = async (ticketId, sessionUser, payload) => {
+	const cleanId = checkId(ticketId, "ticketId");
+	const newPriority = checkEnum(payload?.priority, "priority", TICKET_PRIORITIES);
+
+	const dbUser = await loadUser(sessionUser?._id);
+	const ticket = await getTicketById(cleanId);
+
+	if (!userCanUpdate(dbUser, ticket)) {
+		throw "You do not have permission to update this ticket";
+	}
+
+	if (ticket.priority === newPriority) {
+		throw `Ticket is already marked as "${newPriority}" priority`;
+	}
+
+	const now = new Date();
+	const collection = await tickets();
+
+	const result = await collection.updateOne(
+		{ _id: cleanId },
+		{
+			$set: {
+				priority: newPriority,
+				updatedAt: now,
+			},
+			$push: {
+				statusHistory: {
+					state: ticket.status,
+					changedAt: now,
+					changedBy: dbUser._id,
+					notes: `Priority changed from ${ticket.priority} to ${newPriority}.`,
+				},
+			},
+		},
+	);
+
+	if (!result.matchedCount) {
+		throw "Could not update ticket priority";
+	}
+
+	return getTicketById(cleanId);
+};
+
 export const allowedNextTicketStatuses = (role, currentStatus) => {
-	if (role === "admin") {
-		return TICKET_STATUSES.filter((s) => s !== currentStatus);
-	}
-	if (role === "landlord") {
-		return allowedTransitions(currentStatus);
-	}
-	return [];
+	return TICKET_STATUSES.filter((s) => s !== currentStatus);
 };
