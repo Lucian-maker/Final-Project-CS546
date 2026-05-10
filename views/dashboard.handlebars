@@ -13,24 +13,24 @@
 
 	<div class="analytics-container">
 		{{#if userScoreInfo}}
-			<div class="metric-card" style="background:#e0f2fe; border-color:#bae6fd;">
+			<a href="/reviews" class="metric-card" style="background:#e0f2fe; border-color:#bae6fd; text-decoration:none;">
 				<span class="metric-value" style="color:#0369a1;">
 					{{#if userScoreInfo.score}}{{userScoreInfo.score}}⭐{{else}}N/A{{/if}}
 				</span>
-				<span class="metric-label" style="text-transform: capitalize;">Avg {{user.userRole}} Rating ({{userScoreInfo.count}})</span>
-			</div>
+				<span class="metric-label" style="text-transform: capitalize;">Avg {{user.userRole}} Rating ({{userScoreInfo.count}} reviews)</span>
+			</a>
 		{{/if}}
-		<a href="/violations?days=30" class="metric-card">
+		<a href="/violations?minDays=16&days=30" class="metric-card">
 			<span class="metric-value">{{violations30Days}}</span>
-			<span class="metric-label">Due in ≤ 30 Days</span>
+			<span class="metric-label">Due in 16–30 Days</span>
 		</a>
-		<a href="/violations?days=15" class="metric-card">
+		<a href="/violations?minDays=8&days=15" class="metric-card">
 			<span class="metric-value metric-warning">{{violations15Days}}</span>
-			<span class="metric-label">Due in ≤ 15 Days</span>
+			<span class="metric-label">Due in 8–15 Days</span>
 		</a>
 		<a href="/violations?days=7" class="metric-card">
 			<span class="metric-value metric-danger">{{violations7Days}}</span>
-			<span class="metric-label">Due in ≤ 7 Days</span>
+			<span class="metric-label">Due in ≤ 7 Days (Critical)</span>
 		</a>
 	</div>
 	
