@@ -127,6 +127,7 @@ export const getProperties = async (filters = {}) => {
 	// Gets Trust Score & Avg Resolution Time
 	const reviewsCollection = await reviews();
 	const violCollection = await violationsCol();
+	const commentsCollection = await comments();
 
 	// Cache landlord scores
 	const landlordScoreCache = {};
@@ -153,6 +154,26 @@ export const getProperties = async (filters = {}) => {
 					}
 				}
 				trustScore = landlordScoreCache[p.claimedBy];
+			}
+
+			// Property Rating from comment ratings tied directly to this property
+			let propertyRating = null;
+
+			const propertyComments = await commentsCollection
+				.find({ propertyId: p._id })
+				.toArray();
+
+			const ratedComments = propertyComments.filter(
+				(c) => c.rating !== null && c.rating !== undefined,
+			);
+
+			if (ratedComments.length > 0) {
+				const sum = ratedComments.reduce(
+					(acc, c) => acc + Number(c.rating),
+					0,
+				);
+
+				propertyRating = roundOne(sum / ratedComments.length);
 			}
 
 			// Avg Resolution Time from violations on this property
@@ -182,19 +203,20 @@ export const getProperties = async (filters = {}) => {
 				}
 			}
 
-			return { ...p, trustScore, avgResolutionDays };
+			return { ...p, trustScore, propertyRating, avgResolutionDays };
 		}),
 	);
 
-	// Apply trust score filter
+
+	//Apply property rating filter
 	if (
-		filters.minTrustScore !== undefined &&
-		filters.minTrustScore !== "" &&
-		filters.minTrustScore !== null
+		filters.minPropertyRating !== undefined &&
+		filters.minPropertyRating !== "" &&
+		filters.minPropertyRating !== null
 	) {
-		const min = Number(filters.minTrustScore);
+		const min = Number(filters.minPropertyRating);
 		results = results.filter(
-			(p) => p.trustScore !== null && p.trustScore >= min,
+			(p) => p.propertyRating !== null && p.propertyRating >= min,
 		);
 	}
 
