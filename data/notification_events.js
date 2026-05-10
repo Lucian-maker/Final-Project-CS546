@@ -6,9 +6,11 @@ const CHANNEL = "email";
 
 const toUniqueIds = (ids) => [...new Set(ids.filter(Boolean).map(String))];
 
-const withoutActor = (ids, actorUserId) => {
+/** Remove actor from recipients unless they are an admin (admins always get alerts). */
+const withoutActor = (ids, actorUserId, adminIdSet) => {
 	if (!actorUserId) return ids;
 	const actor = String(actorUserId);
+	if (adminIdSet.has(actor)) return ids;
 	return ids.filter((id) => String(id) !== actor);
 };
 
@@ -89,9 +91,11 @@ export const resolveRelevantPartiesForProperty = async (
 ) => {
 	const { landlordIds, tenantIds } = await getUsersByPropertyRole(propertyId);
 	const adminIds = await getAdminUserIds();
+	const adminIdSet = new Set(adminIds);
 	return withoutActor(
 		toUniqueIds([...landlordIds, ...tenantIds, ...adminIds]),
 		actorUserId,
+		adminIdSet,
 	);
 };
 
