@@ -12,6 +12,14 @@
 	</div>
 
 	<div class="analytics-container">
+		{{#if userScoreInfo}}
+			<div class="metric-card" style="background:#e0f2fe; border-color:#bae6fd;">
+				<span class="metric-value" style="color:#0369a1;">
+					{{#if userScoreInfo.score}}{{userScoreInfo.score}}⭐{{else}}N/A{{/if}}
+				</span>
+				<span class="metric-label" style="text-transform: capitalize;">Avg {{user.userRole}} Rating ({{userScoreInfo.count}})</span>
+			</div>
+		{{/if}}
 		<a href="/violations?days=30" class="metric-card">
 			<span class="metric-value">{{violations30Days}}</span>
 			<span class="metric-label">Due in ≤ 30 Days</span>
