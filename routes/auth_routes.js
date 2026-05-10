@@ -8,7 +8,7 @@ import {
 	checkUserRole,
 	PUBLIC_USER_ROLES,
 	logDescriptions,
-	logCategories
+	logCategories,
 } from "../helpers.js";
 import { roleHome } from "../middleware.js";
 
@@ -35,7 +35,6 @@ const renderSigninError = (res, status, errorMessage, body = {}) => {
 };
 
 router.route("/").get(async (req, res) => {
-
 	const role = req.session?.user?.userRole;
 
 	res.locals.logCategory = logCategories.auth;
@@ -51,7 +50,6 @@ router.route("/").get(async (req, res) => {
 router
 	.route("/register")
 	.get(async (req, res) => {
-
 		res.locals.logCategory = logCategories.auth;
 		res.locals.logDescription = logDescriptions.viewRegister();
 		return res.render("register", {
@@ -128,6 +126,12 @@ router
 				phoneNumber: user.phoneNumber,
 				userRole: user.userRole,
 			};
+			res.cookie("NYCHComUser", JSON.stringify(req.session.user), {
+				httpOnly: true,
+				sameSite: "lax",
+				signed: true,
+				maxAge: 1000 * 60 * 60 * 24 * 7,
+			});
 
 			res.locals.logCategory = logCategories.auth;
 			res.locals.logDescription = logDescriptions.login(user.email);
@@ -144,12 +148,12 @@ router
 	});
 
 router.route("/signout").get(async (req, res) => {
-
 	res.locals.logCategory = logCategories.auth;
 	res.locals.logDescription = logDescriptions.logout();
 
 	req.session.destroy(() => {
 		res.clearCookie("NYCHComAuthState");
+		res.clearCookie("NYCHComUser");
 		return res.render("signout", { title: "Signed Out" });
 	});
 });

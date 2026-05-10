@@ -2,23 +2,24 @@ import { Router } from "express";
 import * as usersData from "../data/users.js";
 import * as propertiesData from "../data/properties.js";
 import * as violationsData from "../data/violations.js";
+import { VIOLATION_STATUSES } from "../data/violations.js";
 import { getAllLogs, searchLogs } from "../data/logs.js";
 import { logDescriptions, logCategories } from "../helpers.js";
-import { users,
+import {
+	users,
 	properties,
 	violations,
-	reviews
+	reviews,
 } from "../config/mongoCollections.js";
 
 const router = Router();
-
 
 router.get("/", async (req, res) => {
 	res.locals.logCategory = logCategories.admin;
 	res.locals.logDescription = logDescriptions.adminDashboard();
 	return res.render("admin", {
 		title: "Admin Controls",
-		user: req.session.user
+		user: req.session.user,
 	});
 });
 
@@ -46,7 +47,7 @@ router.get("/users", async (req, res) => {
 			title: "User Management",
 			users,
 			search,
-			user: req.session.user
+			user: req.session.user,
 		});
 	} catch (e) {
 		return res.status(500).render("error", { error: e });
@@ -58,16 +59,18 @@ router.get("/users/:id", async (req, res) => {
 		const user = await usersData.getUserById(req.params.id);
 
 		res.locals.logCategory = logCategories.admin;
-		res.locals.logDescription = logDescriptions.adminViewUser(req.params.id);
+		res.locals.logDescription = logDescriptions.adminViewUser(
+			req.params.id,
+		);
 
 		return res.render("admin/user", {
 			title: "User Detail",
 			viewedUser: user,
-			user: req.session.user
+			user: req.session.user,
 		});
 	} catch (e) {
 		return res.status(404).render("error", {
-			error: "User not found"
+			error: "User not found",
 		});
 	}
 });
@@ -81,11 +84,13 @@ router.post("/users/:id/update", async (req, res) => {
 			lastName,
 			email,
 			phoneNumber,
-			userRole
+			userRole,
 		});
 
 		res.locals.logCategory = logCategories.admin;
-		res.locals.logDescription = logDescriptions.adminUpdateUser(req.params.id);
+		res.locals.logDescription = logDescriptions.adminUpdateUser(
+			req.params.id,
+		);
 
 		return res.redirect(`/admin/users/${req.params.id}`);
 	} catch (e) {
@@ -105,18 +110,125 @@ router.get("/analytics", async (req, res) => {
 		const totalReviews = await reviewsCollection.countDocuments();
 		const totalViolations = await violationsCollection.countDocuments();
 
-		const boroughStats =
-			await violationsCollection.aggregate([
+		const boroughRows = await violationsCollection
+			.aggregate([
 				{
 					$group: {
 						_id: "$borough",
-						totalViolations: { $sum: 1 }
-					}
+						totalViolations: { $sum: 1 },
+					},
 				},
 				{
-					$sort: { totalViolations: -1 }
-				}
-			]).toArray();
+					$sort: { totalViolations: -1 },
+				},
+			])
+			.toArray();
+
+		const statusRows = await violationsCollection
+			.aggregate([
+				{
+					$group: {
+						_id: "$violationStatus",
+						count: { $sum: 1 },
+					},
+				},
+			])
+			.toArray();
+
+		const statusCountMap = {};
+		for (const row of statusRows) {
+			if (!row || typeof row._id !== "string") continue;
+			statusCountMap[row._id] = row.count || 0;
+		}
+
+		const statusTone = (status) => {
+			if (status === "Closed" || status === "Resolved") return "success";
+			if (status === "Disputed") return "danger";
+			return "warning";
+		};
+
+		const byStatus = VIOLATION_STATUSES.map((status) => {
+			const count = statusCountMap[status] || 0;
+			const pct =
+				totalViolations > 0
+					? Math.round((count / totalViolations) * 1000) / 10
+					: 0;
+			return {
+				status,
+				count,
+				pct,
+				remainingCount: Math.max(0, totalViolations - count),
+				tone: statusTone(status),
+			};
+		});
+
+		const statusStats = {
+			byStatus,
+			kpis: {
+				closed: {
+					count: statusCountMap.Closed || 0,
+					pct:
+						totalViolations > 0
+							? Math.round(
+									((statusCountMap.Closed || 0) /
+										totalViolations) *
+										1000,
+								) / 10
+							: 0,
+					tone: "success",
+				},
+				resolved: {
+					count: statusCountMap.Resolved || 0,
+					pct:
+						totalViolations > 0
+							? Math.round(
+									((statusCountMap.Resolved || 0) /
+										totalViolations) *
+										1000,
+								) / 10
+							: 0,
+					tone: "success",
+				},
+				disputed: {
+					count: statusCountMap.Disputed || 0,
+					pct:
+						totalViolations > 0
+							? Math.round(
+									((statusCountMap.Disputed || 0) /
+										totalViolations) *
+										1000,
+								) / 10
+							: 0,
+					tone: "danger",
+				},
+				openLike: {
+					count:
+						(statusCountMap.Open || 0) +
+						(statusCountMap["Repair Scheduled"] || 0),
+					pct:
+						totalViolations > 0
+							? Math.round(
+									(((statusCountMap.Open || 0) +
+										(statusCountMap["Repair Scheduled"] ||
+											0)) /
+										totalViolations) *
+										1000,
+								) / 10
+							: 0,
+					tone: "warning",
+				},
+			},
+		};
+
+		const boroughStats = boroughRows.map((row) => ({
+			...row,
+			sharePct:
+				totalViolations > 0
+					? Math.round(
+							(row.totalViolations / totalViolations) * 1000,
+						) / 10
+					: 0,
+		}));
 
 		res.locals.logCategory = logCategories.admin;
 		res.locals.logDescription = logDescriptions.adminAnalytics();
@@ -127,10 +239,11 @@ router.get("/analytics", async (req, res) => {
 				totalUsers,
 				totalProperties,
 				totalReviews,
-				totalViolations
+				totalViolations,
 			},
+			statusStats,
 			boroughStats,
-			user: req.session.user
+			user: req.session.user,
 		});
 	} catch (e) {
 		return res.status(500).render("error", { error: e });
@@ -145,7 +258,7 @@ router.get("/logs", async (req, res) => {
 			category: req.query.category || "",
 			fromDate: req.query.fromDate || "",
 			toDate: req.query.toDate || "",
-			sort: req.query.sort || "newest"
+			sort: req.query.sort || "newest",
 		};
 
 		const logs = await searchLogs(filters);
@@ -175,17 +288,15 @@ router.get("/logs", async (req, res) => {
 				"comments",
 				"notifications",
 				"disputes",
-				"dashboard"
+				"dashboard",
 			],
 
-			user: req.session.user
-			
+			user: req.session.user,
 		});
-
 	} catch (e) {
 		return res.status(500).render("error", {
 			title: "Error",
-			error: e
+			error: e,
 		});
 	}
 });
