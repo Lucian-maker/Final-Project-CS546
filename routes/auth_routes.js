@@ -8,7 +8,7 @@ import {
 	checkUserRole,
 	PUBLIC_USER_ROLES,
 	logDescriptions,
-	logCategories
+	logCategories,
 } from "../helpers.js";
 import { roleHome } from "../middleware.js";
 
@@ -35,23 +35,23 @@ const renderSigninError = (res, status, errorMessage, body = {}) => {
 };
 
 router.route("/").get(async (req, res) => {
-
-	const role = req.session?.user?.userRole;
-
 	res.locals.logCategory = logCategories.auth;
 	res.locals.logDescription = logDescriptions.home();
 
+	if (req.session?.user) {
+		return res.redirect(roleHome());
+	}
+
 	return res.render("home", {
 		title: "NYCHCom - NYC Housing Compliance",
-		loggedIn: Boolean(role),
-		isAdmin: role === "admin",
+		loggedIn: false,
+		isAdmin: false,
 	});
 });
 
 router
 	.route("/register")
 	.get(async (req, res) => {
-
 		res.locals.logCategory = logCategories.auth;
 		res.locals.logDescription = logDescriptions.viewRegister();
 		return res.render("register", {
@@ -144,7 +144,6 @@ router
 	});
 
 router.route("/signout").get(async (req, res) => {
-
 	res.locals.logCategory = logCategories.auth;
 	res.locals.logDescription = logDescriptions.logout();
 
