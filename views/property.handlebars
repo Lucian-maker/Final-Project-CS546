@@ -1,5 +1,10 @@
 <main class="page">
-	<h1>Property Detail</h1>
+	<div class="dashboard-header">
+		<h1>Property Details</h1>
+		<p class="dashboard-subtitle">
+			View property information, related violations, evidence, reviews, and discussion.
+		</p>
+	</div>
 
 	<nav class="page-back-nav">
 		{{#if (eq from "tenant")}}
@@ -261,9 +266,18 @@
 				{{/if}}
 			</div>
 		{{else}}
-			<p class="no-comments">No comments yet. Be the first to share your thoughts!</p>
+			<section class="card">
+				<h2>No comments yet</h2>
+
+				<p class="muted">
+					Be the first to share your thoughts about this property.
+				</p>
+
+				<p class="muted">
+					Comments can help tenants, landlords, and administrators understand issues, experiences, and property conditions.
+				</p>
+			</section>
 		{{/each}}
 	</div>
 
-	<a href="/properties" style="display: block; margin-top: 2rem;">Back to Properties</a>
 </main>

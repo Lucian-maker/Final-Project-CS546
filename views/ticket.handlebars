@@ -1,6 +1,8 @@
 <main class="page ticket-detail">
-	<h1>Ticket detail</h1>
-	<p><a href="/tickets">Back to tickets</a></p>
+	<h1>Ticket Details</h1>
+	<nav class="page-back-nav">
+		<a href="/tickets">Back to Tickets</a>
+	</nav>
 
 	{{#if statusMessage}}
 		<p class="success-banner">{{statusMessage}}</p>
@@ -97,38 +99,24 @@
 		<p class="muted">No status transitions are available for your role from the current state.</p>
 	{{/if}}
 
-	{{#if canEdit}}
-		<section class="status-update" style="margin-top:1.5rem;">
-			<h2>Edit Ticket</h2>
-			<form method="POST" action="/tickets/{{ticket._id}}/edit">
-				<div class="field">
-					<label for="edit-category">Category</label>
-					<select id="edit-category" name="category">
-						{{#each editCategories}}
-							<option value="{{this}}" {{#if (eq this ../ticket.category)}}selected{{/if}}>{{this}}</option>
-						{{/each}}
-					</select>
-				</div>
-				<div class="field">
-					<label for="edit-priority">Priority</label>
-					<select id="edit-priority" name="priority">
-						{{#each editPriorities}}
-							<option value="{{this}}" {{#if (eq this ../ticket.priority)}}selected{{/if}}>{{this}}</option>
-						{{/each}}
-					</select>
-				</div>
-				<div class="field">
-					<label for="edit-description">Description</label>
-					<textarea id="edit-description" name="description" rows="3" maxlength="1000">{{ticket.description}}</textarea>
-				</div>
-				<button type="submit">Save Changes</button>
-			</form>
-		</section>
+	
+	<section class="status-update">
+		<h2>Update priority</h2>
 
-		<section style="margin-top:1rem;">
-			<form method="POST" action="/tickets/{{ticket._id}}/delete" onsubmit="return confirm('Are you sure you want to delete this ticket? This cannot be undone.');">
-				<button type="submit" style="background:#dc2626; color:white; border:none; padding:0.5rem 1.2rem; border-radius:6px; cursor:pointer;">🗑 Delete Ticket</button>
-			</form>
-		</section>
-	{{/if}}
+		<form method="POST" action="/tickets/{{ticket._id}}/priority">
+			<div class="field">
+				<label for="priority">Priority</label>
+				<select id="priority" name="priority" required>
+					{{#each priorities}}
+						<option value="{{this}}" {{#if (eq ../ticket.priority this)}}selected{{/if}}>
+							{{this}}
+						</option>
+					{{/each}}
+				</select>
+			</div>
+
+			<button type="submit">Update priority</button>
+		</form>
+	</section>
+	
 </main>

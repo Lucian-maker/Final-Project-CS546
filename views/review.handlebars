@@ -1,12 +1,20 @@
-<main class="page review-detail">
-	<h1>Review detail</h1>
-	<p><a href="/reviews/{{review.propertyId}}">Back to reviews for this property</a></p>
+<main class="page">
+	<div class="dashboard-header">
+		<h1>Review detail</h1>
+		<p class="dashboard-subtitle">
+			Scores, participants, and full text for this listing review.
+		</p>
+	</div>
+
+	<nav class="page-back-nav">
+		<a href="/reviews/{{review.propertyId}}">Back to reviews for this property</a>
+	</nav>
 
 	{{#if error}}
 		<p class="error">{{error}}</p>
 	{{/if}}
 
-	<section class="review-summary">
+	<section class="card review-summary">
 		<h2><span class="score-badge">{{review.overallScore}} / 5</span></h2>
 		<dl class="detail-grid">
 			<dt>Review ID</dt>
@@ -48,7 +56,7 @@
 		</dl>
 	</section>
 
-	<section class="review-body">
+	<section class="card review-body">
 		<h2>Review</h2>
 		<blockquote>{{review.reviewText}}</blockquote>
 	</section>
@@ -59,7 +67,7 @@
 	</p>
 
 	{{#if isOwnReview}}
-		<section class="status-update">
+		<section class="card">
 			<h2>Manage your review</h2>
 			<details class="review-edit-toggle">
 				<summary class="review-edit-toggle__summary">Edit</summary>

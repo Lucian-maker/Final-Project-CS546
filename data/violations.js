@@ -179,6 +179,10 @@ export const getViolationsForSessionUser = async (
 	sessionUser,
 	queryFilters = {},
 ) => {
+	if (!sessionUser?._id) {
+		throw "You must be signed in to view violations";
+	}
+
 	const dbUser = await loadUserForAuth(sessionUser._id);
 	const filters = { ...queryFilters };
 	delete filters._restrictedPropertyIds;
@@ -354,6 +358,7 @@ async function loadUserForAuth(userId) {
 	return user;
 }
 
+// Property-scoped access: admins bypass; landlords need ownership; tenants need to have saved the property.
 function assertCanActOnViolation(dbUser, violation) {
 	if (!dbUser) {
 		throw `You must be signed in to access this violation`;
@@ -365,17 +370,21 @@ function assertCanActOnViolation(dbUser, violation) {
 
 	if (dbUser.userRole === "admin") return;
 
-	const owned = dbUser.ownedProperties || [];
-	const saved = dbUser.savedProperties || [];
+	const propertyId = String(violation.propertyId);
 
-	if (
-		!owned.includes(violation.propertyId) &&
-		!saved.includes(violation.propertyId)
-	) {
-		throw `You do not have access to this violation`;
+	if (dbUser.userRole === "landlord") {
+		const owned = (dbUser.ownedProperties || []).map(String);
+		if (owned.includes(propertyId)) return;
+		throw `You do not have permission to act on this violation`;
 	}
 
-	return;
+	if (dbUser.userRole === "tenant") {
+		const saved = (dbUser.savedProperties || []).map(String);
+		if (saved.includes(propertyId)) return;
+		throw `You do not have permission to act on this violation`;
+	}
+
+	throw `You do not have permission to act on this violation`;
 }
 
 /**
@@ -385,6 +394,10 @@ export const assertUserCanAccessViolation = async (
 	sessionUser,
 	violationId,
 ) => {
+
+	if (!sessionUser?._id) {
+		throw "You must be signed in to access this violation";
+	}
 	const cleanId = checkId(violationId, "violationId");
 	const dbUser = await loadUserForAuth(sessionUser._id);
 	const col = await violations();
@@ -396,12 +409,28 @@ export const assertUserCanAccessViolation = async (
 	return { dbUser, violation };
 };
 
+// Mirrors the per-role dropdown options in routes/violations_routes.js so direct POSTs cannot bypass the UI.
 function assertTransitionAllowed(role, currentStatus, newStatus) {
 	if (!VIOLATION_STATUSES.includes(newStatus)) {
 		throw `Invalid violation status`;
 	}
 
-	return;
+	let allowed = [];
+	if (role === "admin") {
+		allowed = [...VIOLATION_STATUSES];
+	} else if (role === "landlord") {
+		if (currentStatus === "Open")
+			allowed = ["Repair Scheduled", "Resolved"];
+		else if (currentStatus === "Repair Scheduled") allowed = ["Resolved"];
+	} else if (role === "tenant") {
+		if (currentStatus === "Open" || currentStatus === "Repair Scheduled") {
+			allowed = ["Disputed"];
+		}
+	}
+
+	if (!allowed.includes(newStatus)) {
+		throw `Role "${role}" cannot move violation from "${currentStatus}" to "${newStatus}"`;
+	}
 }
 
 /**

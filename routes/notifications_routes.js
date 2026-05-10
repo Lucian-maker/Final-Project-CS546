@@ -11,6 +11,7 @@ import {
 } from "../data/notifications.js";
 
 import { logDescriptions, logCategories } from "../helpers.js";
+import { adminGuard } from "../middleware.js";
 
 const router = Router();
 
@@ -28,6 +29,10 @@ router.route("/api/in-app").get(async (req, res) => {
 			text: n.notificationDetails?.text ?? "",
 			violationId: n.violationId,
 		}));
+
+		res.locals.logCategory = logCategories.notifications;
+		res.locals.logDescription = logDescriptions.viewNotifications();
+
 		return res.json({ unreadCount, recentQueued, queuedIds });
 	} catch (e) {
 		return res.status(500).json({ error: e.toString() });
@@ -85,7 +90,7 @@ router.route("/api").get(async (req, res) => {
 });
 
 // Creates a new notification .
-router.route("/api").post(async (req, res) => {
+router.route("/api").post(adminGuard, async (req, res) => {
 	try {
 		const created = await createNotification(req.body);
 		res.locals.logCategory = logCategories.notifications;
@@ -116,7 +121,7 @@ router.route("/api/:id").get(async (req, res) => {
 });
 
 // Updates the notification by the id #.
-router.route("/api/:id").patch(async (req, res) => {
+router.route("/api/:id").patch(adminGuard, async (req, res) => {
 	try {
 		const updated = await updateNotification(req.params.id, req.body);
 		res.locals.logCategory = logCategories.notifications;
@@ -133,7 +138,7 @@ router.route("/api/:id").patch(async (req, res) => {
 });
 
 // Deletes the notification by the id #.
-router.route("/api/:id").delete(async (req, res) => {
+router.route("/api/:id").delete(adminGuard, async (req, res) => {
 	try {
 		const deleted = await removeNotification(req.params.id);
 		res.locals.logCategory = logCategories.notifications;
@@ -162,12 +167,28 @@ router.route("/").get(async (req, res) => {
 					? String(notification._id).trim()
 					: "",
 		}));
+
+		const unreadNotifications = notificationsView.filter(
+			(n) => n.status === "queued",
+		);
+
+		const readNotifications = notificationsView.filter(
+			(n) => n.status !== "queued",
+		);
+
+		const hasUnread = unreadNotifications.length > 0;
+		const hasRead = readNotifications.length > 0;
+
 		const hasQueued = notificationsView.some((n) => n.status === "queued");
 		res.locals.logCategory = logCategories.notifications;
 		res.locals.logDescription = logDescriptions.viewNotifications();
 		return res.render("notifications", {
 			title: "Notifications",
 			notifications: notificationsView,
+			unreadNotifications,
+			readNotifications,
+			hasUnread, 
+			hasRead,
 			hasQueued,
 			user: req.session && req.session.user,
 		});

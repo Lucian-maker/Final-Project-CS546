@@ -8,6 +8,7 @@ import {
 } from "../data/attorneys.js";
 
 import { logDescriptions, logCategories } from "../helpers.js";
+import { adminGuard } from "../middleware.js";
 
 const router = Router();
 
@@ -24,7 +25,7 @@ router.route("/api").get(async (req, res) => {
 });
 
 // Creates a new attorney .
-router.route("/api").post(async (req, res) => {
+router.route("/api").post(adminGuard, async (req, res) => {
 	try {
 		const created = await createAttorney(req.body);
 		res.locals.logCategory = logCategories.attorneys;
@@ -53,7 +54,7 @@ router.route("/api/:id").get(async (req, res) => {
 });
 
 // Updates the attorney by the id #.
-router.route("/api/:id").patch(async (req, res) => {
+router.route("/api/:id").patch(adminGuard, async (req, res) => {
 	try {
 		const updated = await updateAttorney(req.params.id, req.body);
 
@@ -71,7 +72,7 @@ router.route("/api/:id").patch(async (req, res) => {
 });
 
 // Deletes the attorney by the id #.
-router.route("/api/:id").delete(async (req, res) => {
+router.route("/api/:id").delete(adminGuard, async (req, res) => {
 	try {
 		const deleted = await removeAttorney(req.params.id);
 		res.locals.logCategory = logCategories.attorneys;
