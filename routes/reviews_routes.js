@@ -7,12 +7,18 @@ import {
 	softDeleteReview,
 	getLandlordIdForProperty,
 } from "../data/reviews.js";
-import { checkId, checkScore, checkShortText } from "../helpers.js";
+import {
+	checkId,
+	checkScore,
+	checkShortText,
+	logDescriptions,
+	logCategories,
+} from "../helpers.js";
 import { requireAuth, requireRole } from "../middleware.js";
 
 const router = Router();
 
-const renderList = async (res, propertyId, user, extras = {}) => {
+const renderList = async (res, propertyId, user, from, extras = {}) => {
 	const list = await getReviewsByProperty(propertyId);
 	const landlordId = await getLandlordIdForProperty(propertyId);
 	const decorated = list.map((r) => ({
@@ -27,6 +33,7 @@ const renderList = async (res, propertyId, user, extras = {}) => {
 		user,
 		propertyId,
 		landlordId,
+		from,
 		reviews: decorated,
 		canReview:
 			Boolean(user && user.userRole === "tenant") &&
@@ -44,7 +51,19 @@ router
 				req.params.propertyId,
 				"propertyId",
 			);
-			return await renderList(res, cleanPropertyId, req.session?.user);
+
+			const from = req.query.from || null;
+
+			res.locals.logCategory = logCategories.reviews;
+			res.locals.logDescription =
+				logDescriptions.viewPropertyReviews(cleanPropertyId);
+
+			return await renderList(
+				res,
+				cleanPropertyId,
+				req.session?.user,
+				from,
+			);
 		} catch (e) {
 			return res.status(400).render("error", {
 				title: "Bad Request",
@@ -63,13 +82,22 @@ router
 			checkScore(body.resolution, "resolution");
 			checkShortText(body.reviewText, "reviewText", 500);
 		} catch (e) {
-			return renderList(res, req.params.propertyId, req.session.user, {
-				error: String(e),
-				form: body,
-			});
+			return renderList(
+				res,
+				req.params.propertyId,
+				req.session.user,
+				from,
+				{
+					error: String(e),
+					form: body,
+				},
+			);
 		}
 
 		try {
+			res.locals.logCategory = logCategories.reviews;
+			res.locals.logDescription =
+				logDescriptions.createReview(cleanPropertyId);
 			await createReview(
 				cleanPropertyId,
 				req.session.user._id,
@@ -79,9 +107,11 @@ router
 				body.resolution,
 				body.reviewText,
 			);
-			return res.redirect(`/reviews/${cleanPropertyId}`);
+			const from = req.query.from || req.body.from || "";
+
+			return res.redirect(`/reviews/${cleanPropertyId}?from=${from}`);
 		} catch (e) {
-			return renderList(res, cleanPropertyId, req.session.user, {
+			return renderList(res, cleanPropertyId, req.session.user, from, {
 				error: String(e),
 				form: body,
 			});
@@ -92,6 +122,10 @@ router.route("/:reviewId/edit").post(requireAuth, async (req, res) => {
 	const body = req.body || {};
 	try {
 		const existing = await getReviewById(req.params.reviewId);
+		res.locals.logCategory = logCategories.reviews;
+		res.locals.logDescription = logDescriptions.updateReview(
+			req.params.reviewId,
+		);
 		await updateReview(
 			req.params.reviewId,
 			req.session.user._id,
@@ -112,6 +146,10 @@ router.route("/:reviewId/edit").post(requireAuth, async (req, res) => {
 router.route("/:reviewId/delete").post(requireAuth, async (req, res) => {
 	try {
 		const existing = await getReviewById(req.params.reviewId);
+		res.locals.logCategory = logCategories.reviews;
+		res.locals.logDescription = logDescriptions.deleteReview(
+			req.params.reviewId,
+		);
 		await softDeleteReview(req.params.reviewId, req.session.user._id);
 		return res.redirect(`/reviews/${existing.propertyId}`);
 	} catch (e) {

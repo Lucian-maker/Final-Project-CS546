@@ -1,17 +1,260 @@
 <main class="page">
 	<h1>Property Detail</h1>
 
+	<nav class="page-back-nav">
+		{{#if (eq from "tenant")}}
+			<a href="/tenant">Back to Tenant Dashboard</a>
+
+		{{else if (eq from "landlord")}}
+			<a href="/landlord">Back to Landlord Dashboard</a>
+
+		{{else if (eq from "admin")}}
+			<a href="/admin">Back to Admin Controls</a>
+
+		{{else}}
+			<a href="/properties">Back to Properties</a>
+		{{/if}}
+	</nav>
+
+	<section>
+		<h2>Property Information</h2>
+
+		<p>
+			<strong>Address:</strong>
+			{{property.address.number}} {{property.address.street}},
+			{{property.address.city}},
+			{{property.address.state}} {{property.address.zipCode}}
+		</p>
+
+		<p>
+			<strong>Property ID:</strong>
+			{{property._id}}
+		</p>
+	</section>
+
+	<div class="actions-row">
+
+		{{#if (eq user.userRole "landlord")}}
+
+			{{#if isOwner}}
+
+				<form
+					action="/properties/{{property._id}}/unclaim?from={{from}}"
+					method="POST"
+					class="inline-form"
+				>
+					<input type="hidden" name="from" value="{{from}}" />
+					<button type="submit" class="btn-danger">
+						Unclaim Property
+					</button>
+				</form>
+
+			{{else if claimedByOther}}
+
+				<button disabled class="btn-disabled">
+					This property is already claimed.
+				</button>
+
+			{{else}}
+
+				<form
+					action="/properties/{{property._id}}/claim?from={{from}}"
+					method="POST"
+					class="inline-form"
+				>
+					<input type="hidden" name="from" value="{{from}}" />
+					<button type="submit">
+						Claim Property
+					</button>
+				</form>
+
+			{{/if}}
+
+		{{/if}}
+
+		{{#if isSaved}}
+
+			<form
+				action="/properties/{{property._id}}/unsave?from={{from}}"
+				method="POST"
+				class="inline-form"
+			>
+				<input type="hidden" name="from" value="{{from}}" />
+				<button type="submit" class="btn-danger">
+					Unsave
+				</button>
+			</form>
+
+		{{else}}
+
+			<form
+				action="/properties/{{property._id}}/save?from={{from}}"
+				method="POST"
+				class="inline-form"
+			>
+				<input type="hidden" name="from" value="{{from}}" />
+				<button type="submit">
+					Save Property
+				</button>
+			</form>
+
+		{{/if}}
+
+	</div>
+
 	<p>
-		<strong>Address:</strong>
-		{{property.address.number}} {{property.address.street}},
-		{{property.address.city}},
-		{{property.address.state}} {{property.address.zipCode}}
+		<a href="/violations?propertyId={{property._id}}&from={{from}}">
+			View violations for this property
+		</a>
+		·
+		<a href="/evidence?propertyId={{property._id}}&from={{from}}">
+			Evidence for this property
+		</a>
+		·
+		<a href="/reviews/{{property._id}}?from={{from}}">
+			Reviews
+		</a>
 	</p>
 
-	<p><strong>Property ID:</strong> {{property._id}}</p>
+	{{#if property.violations.length}}
 
-	<p><strong># of Violations:</strong> {{property.violations.length}}</p>
-	<p><strong># of Reviews:</strong> {{property.reviews.length}}</p>
+		<h2>Violations on file</h2>
 
-	<a href="/properties">Back to Properties</a>
+		<ul>
+			{{#each property.violations}}
+				<li>
+					<a href="/violations/{{this}}?from={{../from}}&propertyId={{../property._id}}">
+						{{this}}
+					</a>
+				</li>
+			{{/each}}
+		</ul>
+
+	{{/if}}
+
+	<hr class="divider">
+
+	<h2>Property Discussion</h2>
+	<p class="average-rating" style="font-size:1.1rem; color:#1f5e8c; margin-bottom:1rem;"><strong>Average Rating:</strong> {{averageRating}}</p>
+	{{#if user}}
+		<form class="comment-form" action="/comments/{{property._id}}" method="POST">
+			<div class="field">
+				<label>Rating (1-5)</label>
+				<select name="rating" required>
+					<option value="5">⭐⭐⭐⭐⭐ (5/5)</option>
+					<option value="4">⭐⭐⭐⭐ (4/5)</option>
+					<option value="3">⭐⭐⭐ (3/5)</option>
+					<option value="2">⭐⭐ (2/5)</option>
+					<option value="1">⭐ (1/5)</option>
+				</select>
+			</div>
+			<div class="field">
+				<label>Add a comment</label>
+				<textarea name="text" rows="3" required placeholder="What do you think about this property?"></textarea>
+			</div>
+			<button type="submit">Post Comment</button>
+		</form>
+	{{else}}
+		<p><a href="/signin">Sign in</a> to leave a comment and rating.</p>
+	{{/if}}
+
+	<div class="comment-thread">
+		{{#each comments}}
+			<div class="comment-card">
+				<div class="comment-header">
+					<strong>{{this.userName}}</strong>
+					{{#if this.rating}}
+						<span class="comment-rating">Rating: {{this.rating}}/5</span>
+					{{/if}}
+				</div>
+				<p class="comment-body">{{this.text}}</p>
+				<div class="comment-actions">
+					<form action="/comments/like/{{this._id}}" method="POST" class="inline-form">
+						<input type="hidden" name="propertyId" value="{{../property._id}}">
+						<button type="submit" class="btn-like {{#if this.hasLiked}}liked{{/if}}">
+							👍 {{this.likeCount}}
+						</button>
+					</form>
+					<form action="/comments/dislike/{{this._id}}" method="POST" class="inline-form">
+						<input type="hidden" name="propertyId" value="{{../property._id}}">
+						<button type="submit" class="btn-dislike {{#if this.hasDisliked}}disliked{{/if}}">
+							👎 {{this.dislikeCount}}
+						</button>
+					</form>
+					{{#if ../user}}
+					<details class="reply-details">
+						<summary class="reply-summary">Reply</summary>
+						<form action="/comments/{{../property._id}}/reply/{{this._id}}" method="POST" class="reply-form">
+							<textarea name="text" rows="2" required placeholder="Write a reply..."></textarea>
+							<button type="submit" class="btn-reply-submit">Post Reply</button>
+						</form>
+					</details>
+					{{/if}}
+					
+					{{#if this.isAuthor}}
+					<details class="reply-details">
+						<summary class="reply-summary" style="color:#d97706;">Edit Rating</summary>
+						<form action="/comments/edit/{{this._id}}" method="POST" class="reply-form">
+							<input type="hidden" name="propertyId" value="{{../property._id}}">
+							<select name="rating" required>
+								<option value="5">⭐⭐⭐⭐⭐ (5/5)</option>
+								<option value="4">⭐⭐⭐⭐ (4/5)</option>
+								<option value="3">⭐⭐⭐ (3/5)</option>
+								<option value="2">⭐⭐ (2/5)</option>
+								<option value="1">⭐ (1/5)</option>
+							</select>
+							<button type="submit" class="btn-reply-submit">Update Rating</button>
+						</form>
+					</details>
+					<form action="/comments/delete/{{this._id}}" method="POST" class="inline-form" onsubmit="return confirm('Delete this comment?');">
+						<input type="hidden" name="propertyId" value="{{../property._id}}">
+						<button type="submit" class="btn-dislike" style="color:#dc2626; border-color:#dc2626;">
+							🗑️ Delete
+						</button>
+					</form>
+					{{/if}}
+				</div>
+
+				{{#if this.replies.length}}
+					<div class="nested-replies">
+						{{#each this.replies}}
+							<div class="comment-card nested-reply">
+								<div class="comment-header">
+									<strong>{{this.userName}}</strong>
+								</div>
+								<p class="comment-body">{{this.text}}</p>
+								<div class="comment-actions">
+									<form action="/comments/like/{{this._id}}" method="POST" class="inline-form">
+										<input type="hidden" name="propertyId" value="{{../../property._id}}">
+										<button type="submit" class="btn-like {{#if this.hasLiked}}liked{{/if}}">
+											👍 {{this.likeCount}}
+										</button>
+									</form>
+									<form action="/comments/dislike/{{this._id}}" method="POST" class="inline-form">
+										<input type="hidden" name="propertyId" value="{{../../property._id}}">
+										<button type="submit" class="btn-dislike {{#if this.hasDisliked}}disliked{{/if}}">
+											👎 {{this.dislikeCount}}
+										</button>
+									</form>
+
+									{{#if this.isAuthor}}
+									<form action="/comments/delete/{{this._id}}" method="POST" class="inline-form" onsubmit="return confirm('Delete this reply?');">
+										<input type="hidden" name="propertyId" value="{{../../property._id}}">
+										<button type="submit" class="btn-dislike" style="color:#dc2626; border-color:#dc2626; margin-left:0.5rem;">
+											🗑️
+										</button>
+									</form>
+									{{/if}}
+								</div>
+							</div>
+						{{/each}}
+					</div>
+				{{/if}}
+			</div>
+		{{else}}
+			<p class="no-comments">No comments yet. Be the first to share your thoughts!</p>
+		{{/each}}
+	</div>
+
+	<a href="/properties" style="display: block; margin-top: 2rem;">Back to Properties</a>
 </main>

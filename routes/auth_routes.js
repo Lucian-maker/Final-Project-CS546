@@ -7,6 +7,8 @@ import {
 	checkPhone,
 	checkUserRole,
 	PUBLIC_USER_ROLES,
+	logDescriptions,
+	logCategories,
 } from "../helpers.js";
 import { roleHome } from "../middleware.js";
 
@@ -34,16 +36,26 @@ const renderSigninError = (res, status, errorMessage, body = {}) => {
 
 router.route("/").get(async (req, res) => {
 	const role = req.session?.user?.userRole;
+
+	res.locals.logCategory = logCategories.auth;
+	res.locals.logDescription = logDescriptions.home();
+
+	if (req.session?.user) {
+		return res.redirect(roleHome());
+	}
+
 	return res.render("home", {
 		title: "NYCHCom - NYC Housing Compliance",
-		loggedIn: Boolean(role),
-		isAdmin: role === "admin",
+		loggedIn: false,
+		isAdmin: false,
 	});
 });
 
 router
 	.route("/register")
 	.get(async (req, res) => {
+		res.locals.logCategory = logCategories.auth;
+		res.locals.logDescription = logDescriptions.viewRegister();
 		return res.render("register", {
 			title: "Register",
 			userRole: "tenant",
@@ -81,6 +93,10 @@ router
 				cleanPhone,
 				cleanUserRole,
 			);
+
+			res.locals.logCategory = logCategories.auth;
+			res.locals.logDescription = logDescriptions.register(cleanEmail);
+
 			return res.redirect("/signin");
 		} catch (e) {
 			return renderRegisterError(res, 400, String(e), body);
@@ -90,6 +106,8 @@ router
 router
 	.route("/signin")
 	.get(async (req, res) => {
+		res.locals.logCategory = logCategories.auth;
+		res.locals.logDescription = logDescriptions.viewSignIn();
 		return res.render("signin", { title: "Sign In" });
 	})
 	.post(async (req, res) => {
@@ -112,6 +130,16 @@ router
 				phoneNumber: user.phoneNumber,
 				userRole: user.userRole,
 			};
+			res.cookie("NYCHComUser", JSON.stringify(req.session.user), {
+				httpOnly: true,
+				sameSite: "lax",
+				signed: true,
+				maxAge: 1000 * 60 * 60 * 24 * 7,
+			});
+
+			res.locals.logCategory = logCategories.auth;
+			res.locals.logDescription = logDescriptions.login(user.email);
+
 			return res.redirect(roleHome(user.userRole));
 		} catch {
 			return renderSigninError(
@@ -124,8 +152,12 @@ router
 	});
 
 router.route("/signout").get(async (req, res) => {
+	res.locals.logCategory = logCategories.auth;
+	res.locals.logDescription = logDescriptions.logout();
+
 	req.session.destroy(() => {
 		res.clearCookie("NYCHComAuthState");
+		res.clearCookie("NYCHComUser");
 		return res.render("signout", { title: "Signed Out" });
 	});
 });

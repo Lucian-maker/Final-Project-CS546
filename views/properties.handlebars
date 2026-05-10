@@ -1,31 +1,231 @@
 <main class="page">
-	<h1>Properties</h1>
 
-	<form method="GET" action="/properties">
-		<input
-			type="text"
-			name="search"
-			placeholder="Search by address..."
-			value="{{search}}"
-		/>
-		<button type="submit">Search</button>
-	</form>
+	<div class="dashboard-header">
+		<h1>Properties</h1>
+		<p class="dashboard-subtitle">
+			Browse, search, and manage registered properties.
+		</p>
+	</div>
 
-	{{#if properties.length}}
-		<ul>
-			{{#each properties}}
-				<li>
-					<a href="/properties/{{this._id}}">
+	<nav class="page-back-nav">
+	<a href="/dashboard">
+		Back to Dashboard
+	</a>
+	</nav>
+
+	<section>
+
+	{{#if (eq user.userRole "admin")}}
+	<section class="card">
+		<h2>Create Property</h2>
+
+		<form method="POST" action="/properties/create">
+		
+			<div class="field">
+				<label>Street Address</label>
+				<input name="streetAddress" required />
+			</div>
+
+			<div class="field">
+				<label>City</label>
+				<input name="city" required />
+			</div>
+
+			<div class="field">
+				<label>State</label>
+				<input name="state" required />
+			</div>
+
+			<div class="field">
+				<label>Zip Code</label>
+				<input name="zipCode" required />
+			</div>
+
+			<button type="submit">
+				Create Property
+			</button>
+		</form>
+	</section>
+	{{/if}}
+
+	<section>
+
+		<h2>Filter Properties</h2>
+
+		<form method="GET" action="/properties" class="filters-form">
+
+			<div class="filters-grid">
+
+				<div class="field">
+					<label for="search">Search</label>
+					<input
+						type="text"
+						id="search"
+						name="search"
+						value="{{filters.search}}"
+						placeholder="Address, city, zip..."
+					/>
+				</div>
+
+				<div class="field">
+					<label for="city">City</label>
+					<input
+						type="text"
+						id="city"
+						name="city"
+						value="{{filters.city}}"
+						placeholder = "e.g. Brooklyn"
+					/>
+				</div>
+
+				<div class="field">
+					<label for="state">State</label>
+					<input
+						type="text"
+						id="state"
+						name="state"
+						value="{{filters.state}}"
+						placeholder="e.g. New York"
+					/>
+				</div>
+
+				<div class="field">
+					<label for="zipCode">Zip Code</label>
+					<input
+						type="text"
+						id="zipCode"
+						name="zipCode"
+						value="{{filters.zipCode}}"
+						placeholder="e.g. 11201"
+					/>
+				</div>
+
+				<div class="field">
+					<label for="minViolations">Min Violations</label>
+					<input
+						type="number"
+						id="minViolations"
+						name="minViolations"
+						min="0"
+						value="{{filters.minViolations}}"
+						placeholder = "e.g. 1"
+					/>
+				</div>
+
+				<div class="field">
+					<label for="minReviews">Min Reviews</label>
+					<input
+						type="number"
+						id="minReviews"
+						name="minReviews"
+						min="0"
+						value="{{filters.minReviews}}"
+						placeholder = "e.g. 1"
+					/>
+				</div>
+
+				<div class="field">
+					<label for="sort">Sort By</label>
+					<select id="sort" name="sort">
+						<option value="createdOn" {{#if (eq filters.sort "createdOn")}}selected{{/if}}>
+							Date Created
+						</option>
+
+						<option value="updatedOn" {{#if (eq filters.sort "updatedOn")}}selected{{/if}}>
+							Last Updated
+						</option>
+
+						<option value="address.street" {{#if (eq filters.sort "address.street")}}selected{{/if}}>
+							Street
+						</option>
+
+						<option value="address.city" {{#if (eq filters.sort "address.city")}}selected{{/if}}>
+							City
+						</option>
+					</select>
+				</div>
+
+				<div class="field">
+					<label for="order">Order</label>
+					<select id="order" name="order">
+						<option value="desc" {{#if (eq filters.order "desc")}}selected{{/if}}>
+							Newest First
+						</option>
+
+						<option value="asc" {{#if (eq filters.order "asc")}}selected{{/if}}>
+							Oldest First
+						</option>
+					</select>
+				</div>
+
+			</div>
+
+			<div class="actions-row">
+
+				<button type="submit">
+					Apply Filters
+				</button>
+
+				<a
+					class="button-link"
+					href="/properties"
+					style="
+						background:#e2e8f0;
+						color:#0f172a !important;
+						border:1px solid #cbd5e1;
+					"
+				>
+					Clear Filters
+				</a>
+
+			</div>
+
+		</form>
+
+		<h2>All Properties</h2>
+
+		{{#if properties.length}}
+
+			<div class="card-grid">
+
+				{{#each properties}}
+
+					<div class="card">
+
+					<h3 class="card-title">
 						{{this.address.number}} {{this.address.street}},
 						{{this.address.city}},
 						{{this.address.state}} {{this.address.zipCode}}
-					</a>
-				</li>
-			{{/each}}
-		</ul>
-	{{else}}
-		<p>No properties found.</p>
-	{{/if}}
+					</h3>
 
-	<a href="/dashboard">Back to Dashboard</a>
+						<span class="badge badge-info">
+							Property
+						</span>
+
+						<p>
+							<strong>Violations:</strong>
+							{{this.violations.length}}
+						</p>
+
+						<p>
+							<strong>Reviews:</strong>
+							{{this.reviews.length}}
+						</p>
+
+						<a href="/properties/{{this._id}}?from=properties">
+							View Details
+						</a>
+
+					</div>
+
+				{{/each}}
+
+			</div>
+
+		{{else}}
+			<p>No properties found.</p>
+		{{/if}}
+
+	</section>
+
 </main>

@@ -1,0 +1,85 @@
+<main class="page">
+
+	<div class="dashboard-header">
+		<h1>User Management</h1>
+
+		<p class="dashboard-subtitle">
+			View, search, and manage registered users.
+		</p>
+	</div>
+
+	<nav class="page-back-nav">
+		<a href="/admin">
+			Back to Admin Controls
+		</a>
+	</nav>
+
+	<section>
+
+		<h2>Search Users</h2>
+
+		<form action="/admin/users" method="GET" class="search-form">
+
+			<input
+				type="text"
+				name="search"
+				placeholder="Search by name, email, or role..."
+				value="{{search}}"
+			/>
+
+			<button type="submit" class="btn-search">
+				Search
+			</button>
+
+		</form>
+
+		<h2>All Users</h2>
+
+		{{#if users.length}}
+
+			<div class="card-grid">
+
+				{{#each users}}
+
+					<div class="card">
+
+						<h3 class="card-title">
+							<a href="/admin/users/{{_id}}">
+								{{firstName}} {{lastName}}
+							</a>
+						</h3>
+
+						<span class="badge badge-info">
+							{{userRole}}
+						</span>
+
+						<p>
+							<strong>Email:</strong>
+							{{email}}
+						</p>
+
+						<p>
+							<strong>Phone:</strong>
+							{{phoneNumber}}
+						</p>
+
+						<p>
+							<strong>User ID:</strong>
+							{{_id}}
+						</p>
+
+					</div>
+
+				{{/each}}
+
+			</div>
+
+		{{else}}
+
+			<p>No users found.</p>
+
+		{{/if}}
+
+	</section>
+
+</main>

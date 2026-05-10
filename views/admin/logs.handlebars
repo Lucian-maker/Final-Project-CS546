@@ -1,0 +1,181 @@
+<main class="page">
+
+	<div class="dashboard-header">
+		<h1>System Logs</h1>
+
+		<p class="dashboard-subtitle">
+			Filter and review platform activity.
+		</p>
+	</div>
+
+	<section class="logs-topbar">
+
+		<nav class="page-back-nav">
+			<a href="/admin">
+				Back to Admin Controls
+			</a>
+		</nav>
+
+		<a
+			class="button-link"
+			href="/admin/logs/export?search={{search}}&role={{role}}&category={{category}}&fromDate={{fromDate}}&toDate={{toDate}}&sort={{sort}}"
+		>
+			Export to PDF
+		</a>
+
+	</section>
+
+	<section>
+
+		<h2>Filter Logs</h2>
+
+		<form method="GET" action="/admin/logs" class="filters-form">
+
+			<div class="filters-grid">
+
+				<div class="field">
+					<label for="search">Search</label>
+					<input
+						type="text"
+						id="search"
+						name="search"
+						placeholder="Descriptions, users, categories..."
+						value="{{search}}"
+					/>
+				</div>
+
+				<div class="field">
+					<label for="role">Role</label>
+					<select name="role" id="role">
+						<option value="">All Roles</option>
+						<option value="admin" {{#if (eq role "admin")}}selected{{/if}}>Admin</option>
+						<option value="tenant" {{#if (eq role "tenant")}}selected{{/if}}>Tenant</option>
+						<option value="landlord" {{#if (eq role "landlord")}}selected{{/if}}>Landlord</option>
+						<option value="guest" {{#if (eq role "guest")}}selected{{/if}}>Guest</option>
+					</select>
+				</div>
+
+				<div class="field">
+					<label for="category">Category</label>
+					<select name="category" id="category">
+						<option value="">All Categories</option>
+
+						{{#each categories}}
+							<option value="{{this}}" {{#if (eq ../category this)}}selected{{/if}}>
+								{{this}}
+							</option>
+						{{/each}}
+
+					</select>
+				</div>
+
+				<div class="field">
+					<label for="fromDate">From Date</label>
+					<input
+						type="date"
+						name="fromDate"
+						id="fromDate"
+						value="{{fromDate}}"
+					/>
+				</div>
+
+				<div class="field">
+					<label for="toDate">To Date</label>
+					<input
+						type="date"
+						name="toDate"
+						id="toDate"
+						value="{{toDate}}"
+					/>
+				</div>
+
+				<div class="field">
+					<label for="sort">Sort</label>
+					<select name="sort" id="sort">
+						<option value="newest" {{#if (eq sort "newest")}}selected{{/if}}>
+							Newest First
+						</option>
+
+						<option value="oldest" {{#if (eq sort "oldest")}}selected{{/if}}>
+							Oldest First
+						</option>
+					</select>
+				</div>
+
+			</div>
+
+			<div class="actions-row">
+
+				<button type="submit">
+					Apply Filters
+				</button>
+
+				<a
+					class="button-link"
+					href="/admin/logs"
+					style="
+						background:#e2e8f0;
+						color:#0f172a !important;
+						border:1px solid #cbd5e1;
+					"
+				>
+					Clear Filters
+				</a>
+
+			</div>
+
+		</form>
+
+	</section>
+
+	<section>
+
+		<h2>System Activity</h2>
+
+		{{#if logs.length}}
+
+			<table>
+
+				<thead>
+
+					<tr>
+						<th>User</th>
+						<th>Role</th>
+						<th>Category</th>
+						<th>Description</th>
+						<th>Status</th>
+						<th>Timestamp</th>
+					</tr>
+
+				</thead>
+
+				<tbody>
+
+					{{#each logs}}
+
+						<tr>
+
+							<td>{{this.user.name}}</td>
+							<td>{{this.user.role}}</td>
+							<td>{{this.category}}</td>
+							<td>{{this.description}}</td>
+							<td>{{this.status}}</td>
+							<td>{{this.timestamp}}</td>
+
+						</tr>
+
+					{{/each}}
+
+				</tbody>
+
+			</table>
+
+		{{else}}
+
+			<p>No logs found.</p>
+
+		{{/if}}
+
+	</section>
+
+</main>

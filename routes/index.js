@@ -9,6 +9,9 @@ import notificationsRoutes from "./notifications_routes.js";
 import disputesRoutes from "./disputes_routes.js";
 import attorneysRoutes from "./attorneys_routes.js";
 import adminRoutes from "./admin_routes.js";
+import tenantRoutes from "./tenant_routes.js";
+import landlordRoutes from "./landlord_routes.js";
+import profileRoutes from "./profile_routes.js";
 
 const constructorMethod = (app) => {
 	app.use("/", authRoutes);
@@ -22,8 +25,14 @@ const constructorMethod = (app) => {
 	app.use("/disputes", disputesRoutes);
 	app.use("/attorneys", attorneysRoutes);
 	app.use("/admin", adminRoutes);
+	app.use("/tenant", tenantRoutes);
+	app.use("/landlord", landlordRoutes);
+	app.use("/profile", profileRoutes);
 
 	app.use((req, res) => {
+		res.locals.logCategory = "general";
+		res.locals.logDescription = `Page not found: ${req.method} ${req.originalUrl}`;
+
 		return res.status(404).render("error", {
 			title: "Not Found",
 			error: "Page not found",
