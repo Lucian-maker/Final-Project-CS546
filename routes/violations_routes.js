@@ -5,10 +5,11 @@ import {
 	createViolation,
 	getViolationById,
 	getViolations,
+	getViolationsForSessionUser,
 	updateViolationRemediation,
 } from "../data/violations.js";
 
-import { logDescriptions, logCategories, checkId } from "../helpers.js";
+import { logDescriptions, logCategories } from "../helpers.js";
 import { formatDateTime } from "../helpers.js";
 
 const router = Router();
@@ -46,8 +47,23 @@ function decorateViolationForView(v) {
 	};
 }
 
-function allowedNextStatuses(current) {
-	return VIOLATION_STATUSES.filter((status) => status !== current);
+function allowedNextStatuses(role, current) {
+	if (role === "admin") return [...VIOLATION_STATUSES];
+
+	if (role === "landlord") {
+		if (current === "Open") return ["Repair Scheduled", "Resolved"];
+		if (current === "Repair Scheduled") return ["Resolved"];
+		return [];
+	}
+
+	if (role === "tenant") {
+		if (current === "Open" || current === "Repair Scheduled") {
+			return ["Disputed"];
+		}
+		return [];
+	}
+
+	return [];
 }
 
 router.get("/", async (req, res) => {
@@ -70,7 +86,10 @@ router.get("/", async (req, res) => {
 			order: req.query.order || "desc",
 		};
 
-		let violationsList = await getViolations(filters);
+		let violationsList = await getViolationsForSessionUser(
+			req.session.user,
+			filters,
+		);
 
 		if (req.query.days) {
 			const days = parseInt(req.query.days, 10);
@@ -135,9 +154,13 @@ router
 	.route("/:id")
 	.get(async (req, res) => {
 		try {
+			await assertUserCanAccessViolation(req.session.user, req.params.id);
 			const violation = await getViolationById(req.params.id);
 
-			const allowed = allowedNextStatuses(violation.violationStatus);
+			const allowed = allowedNextStatuses(
+				req.session.user.userRole,
+				violation.violationStatus,
+			);
 
 			const from = req.query.from || null;
 			const propertyId = req.query.propertyId || null;
@@ -203,7 +226,10 @@ router
 
 				const violation = await getViolationById(req.params.id);
 
-				const allowed = allowedNextStatuses(violation.violationStatus);
+				const allowed = allowedNextStatuses(
+					req.session.user.userRole,
+					violation.violationStatus,
+				);
 
 				return res.status(400).render("violation", {
 					title: `Violation — ${violation.buildingAddress}`,
