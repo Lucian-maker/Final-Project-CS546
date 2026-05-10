@@ -385,6 +385,7 @@ export const logDescriptions = {
 	updateDispute: (id) => `Updated dispute ${id}`,
 	deleteDispute: (id) => `Deleted dispute ${id}`,
 	viewDisputes: () => `Viewed disputes`,
+	viewDispute: (id) => `Viewed dispute ${id}`,
 
 	viewEvidenceVault: () => `Viewed evidence vault`,
 	uploadEvidence: (id) => `Uploaded evidence ${id}`,
@@ -422,6 +423,12 @@ export const logDescriptions = {
 	deleteComment: (id) => `Deleted comment ${id}`,
 	viewTenantDashboard: () => `Viewed tenant dashboard`,
 	viewLandlordDashboard: () => `Viewed landlord dashboard`,
+	
+	viewTickets: () => `Viewed tickets list`,
+	viewTicket: (id) => `Viewed ticket ${id}`,
+	createTicket: (id) => `Created ticket ${id}`,
+	updateTicketStatus: (id) => `Updated ticket status ${id}`,
+	updateTicketPriority: (id) => `Updated ticket priority ${id}`,
 
 	viewProfile: (id) => `Viewed profile ${id}`,
 	updateProfile: (id) => `Updated profile ${id}`,
@@ -439,4 +446,5 @@ export const logCategories = {
 	notifications: "notifications",
 	attorneys: "attorneys",
 	dashboard: "dashboard",
+	tickets: "tickets",
 };

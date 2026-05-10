@@ -532,6 +532,11 @@ nav.home-nav a:hover {
 	align-items: center;
 }
 
+.ticket-preview {
+	max-height: 4.5rem;
+	overflow: hidden;
+}
+
 .btn-danger {
 	background: #d62828;
 	border: 1px solid #d62828;
