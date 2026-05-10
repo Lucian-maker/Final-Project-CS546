@@ -1,5 +1,16 @@
 <main class="page">
-	<h1>Notifications</h1>
+	<div class="dashboard-header">
+		<h1>Notifications</h1>
+		<p class="dashboard-subtitle">
+			View alerts and reminders.
+		</p>
+	</div>
+
+	<nav class="page-back-nav">
+		<a href="/dashboard">
+			Back to Dashboard
+		</a>
+	</nav>
 	{{#if notifications}}
 		<ul class="card-grid">
 			{{#each notifications}}
@@ -13,5 +24,4 @@
 	{{else}}
 		<p>No new notifications.</p>
 	{{/if}}
-	<a href="/dashboard">Back to Dashboard</a>
 </main>
