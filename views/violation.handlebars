@@ -108,4 +108,20 @@
 	{{else}}
 		<p class="muted">No status transitions are available for your role from the current state.</p>
 	{{/if}}
+
+	{{#unless (eq user.userRole "admin")}}
+		<section class="status-update">
+			<h2>File a dispute</h2>
+			<p class="muted">
+				Open a dispute record for admin review. The violation status is unaffected; admins resolve disputes from the disputes page.
+			</p>
+			<form method="POST" action="/violations/{{violation._id}}/dispute">
+				<div class="field">
+					<label for="disputeNotes">Details</label>
+					<textarea id="disputeNotes" name="notes" rows="3" maxlength="2000" placeholder="Explain the dispute (e.g. repair was incomplete)"></textarea>
+				</div>
+				<button type="submit">File dispute</button>
+			</form>
+		</section>
+	{{/unless}}
 </main>

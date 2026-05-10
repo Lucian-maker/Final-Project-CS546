@@ -46,6 +46,7 @@ router
 				req.body,
 			);
 
+			// Carry savedProperties/ownedProperties forward so role-scoped lookups
 			req.session.user = {
 				_id: updatedUser._id,
 				firstName: updatedUser.firstName,
@@ -53,6 +54,13 @@ router
 				email: updatedUser.email,
 				phoneNumber: updatedUser.phoneNumber,
 				userRole: updatedUser.userRole,
+				savedProperties: updatedUser.savedProperties || [],
+				ownedProperties: updatedUser.ownedProperties || [],
+				secondaryContact: updatedUser.secondaryContact || {
+					name: "",
+					email: "",
+					phoneNumber: "",
+				},
 			};
 
 			res.locals.logCategory = logCategories.auth;

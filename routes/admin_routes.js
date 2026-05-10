@@ -139,6 +139,37 @@ router.get("/analytics", async (req, res) => {
 			])
 			.toArray();
 
+		// Avg resolution time across closed violations
+		const resolutionRows = await violationsCollection
+			.aggregate([
+				{
+					$match: {
+						resolvedAt: { $ne: null },
+						createdAt: { $ne: null },
+					},
+				},
+				{
+					$group: {
+						_id: null,
+						avgMs: {
+							$avg: { $subtract: ["$resolvedAt", "$createdAt"] },
+						},
+						count: { $sum: 1 },
+					},
+				},
+			])
+			.toArray();
+
+		const avgResolutionRow = resolutionRows[0] || { avgMs: null, count: 0 };
+		const avgResolutionDays =
+			avgResolutionRow.avgMs && avgResolutionRow.count
+				? Math.round((avgResolutionRow.avgMs / 86400000) * 10) / 10
+				: null;
+		const resolutionStats = {
+			avgDays: avgResolutionDays,
+			sampleSize: avgResolutionRow.count || 0,
+		};
+
 		const statusRows = await violationsCollection
 			.aggregate([
 				{
@@ -284,6 +315,7 @@ router.get("/analytics", async (req, res) => {
 			},
 			statusStats,
 			boroughStats,
+			resolutionStats,
 			user: req.session.user,
 		});
 	} catch (e) {
@@ -329,6 +361,7 @@ router.get("/logs", async (req, res) => {
 				"comments",
 				"notifications",
 				"disputes",
+				"tickets",
 				"dashboard",
 			],
 

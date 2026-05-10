@@ -38,6 +38,10 @@ const decorateDispute = (d) => ({
 router.route("/api").get(async (req, res) => {
 	try {
 		const disputes = await getAllDisputes();
+
+		res.locals.logCategory = logCategories.disputes;
+		res.locals.logDescription = logDescriptions.viewDisputes();
+
 		return res.json(disputes);
 	} catch (e) {
 		return res.status(500).json({ error: e.toString() });
@@ -45,7 +49,7 @@ router.route("/api").get(async (req, res) => {
 });
 
 // Creates a new dispute .
-router.route("/api").post(async (req, res) => {
+router.route("/api").post(adminGuard, async (req, res) => {
 	try {
 		const created = await createDispute(req.body);
 		void notifyDisputeCreated({
@@ -53,7 +57,7 @@ router.route("/api").post(async (req, res) => {
 			actorUserId: req.session?.user?._id ?? null,
 		}).catch(() => {});
 		res.locals.logCategory = logCategories.disputes;
-		res.locals.logDescription = `Created dispute ${created._id}`;
+		res.locals.logDescription = logDescriptions.createDispute(created._id);
 		return res.status(201).json(created);
 	} catch (e) {
 		return res.status(400).json({ error: e.toString() });
@@ -64,6 +68,10 @@ router.route("/api").post(async (req, res) => {
 router.route("/api/:id").get(async (req, res) => {
 	try {
 		const item = await getDisputeById(req.params.id);
+
+		res.locals.logCategory = logCategories.disputes;
+		res.locals.logDescription = logDescriptions.viewDispute(req.params.id);
+
 		return res.json(item);
 	} catch (e) {
 		if (e.toString().includes("No dispute found")) {
@@ -74,7 +82,7 @@ router.route("/api/:id").get(async (req, res) => {
 });
 
 // Updates the dispute by the id #.
-router.route("/api/:id").patch(async (req, res) => {
+router.route("/api/:id").patch(adminGuard, async (req, res) => {
 	try {
 		const updated = await updateDispute(req.params.id, req.body);
 		void notifyDisputeUpdated({
@@ -83,7 +91,7 @@ router.route("/api/:id").patch(async (req, res) => {
 			newStatus: updated.status,
 		}).catch(() => {});
 		res.locals.logCategory = logCategories.disputes;
-		res.locals.logDescription = `Updated dispute ${req.params.id}`;
+		res.locals.logDescription = logDescriptions.updateDispute(req.params.id);
 		return res.json(updated);
 	} catch (e) {
 		if (e.toString().includes("No dispute found")) {
@@ -94,9 +102,13 @@ router.route("/api/:id").patch(async (req, res) => {
 });
 
 // Deletes the dispute by the id #.
-router.route("/api/:id").delete(async (req, res) => {
+router.route("/api/:id").delete(adminGuard, async (req, res) => {
 	try {
 		const deleted = await removeDispute(req.params.id);
+
+		res.locals.logCategory = logCategories.disputes;
+		res.locals.logDescription = logDescriptions.deleteDispute(req.params.id);
+
 		return res.json(deleted);
 	} catch (e) {
 		if (e.toString().includes("No dispute found")) {
@@ -111,7 +123,7 @@ router.route("/").get(async (req, res) => {
 	try {
 		const disputesList = await getAllDisputes();
 		const decorated = disputesList.map(decorateDispute);
-		res.locals.logCategory = logCategories.dashboard;
+		res.locals.logCategory = logCategories.disputes;
 		res.locals.logDescription = logDescriptions.viewDisputes();
 		return res.render("disputes", {
 			title: "Disputes",
@@ -145,7 +157,7 @@ router.route("/:id").get(async (req, res) => {
 		);
 
 		res.locals.logCategory = logCategories.disputes;
-		res.locals.logDescription = `Viewed dispute ${cleanId}`;
+		res.locals.logDescription = logDescriptions.viewDispute(cleanId);
 
 		return res.render("dispute", {
 			title: `Dispute — ${dispute.eventType}`,

@@ -1,60 +1,146 @@
 <main class="page">
 	<div class="dashboard-header">
 		<h1>Tickets</h1>
-		<p class="dashboard-subtitle">Maintenance and repair requests scoped to you.</p>
+		<p class="dashboard-subtitle">
+			Create and track maintenance or repair requests.
+		</p>
 	</div>
+	<nav class="page-back-nav">
+		<a href="/dashboard">
+			Back to Dashboard
+		</a>
+	</nav>
 
 	{{#if canCreate}}
 		<section class="card">
 			<h2>Open a ticket</h2>
+			<p class="muted">
+				Submit a ticket for a property issue. Include the property ID, issue type, priority, and a short description.
+			</p>
+
+			{{#if error}}
+				<p class="error">{{error}}</p>
+			{{/if}}
+
 			<form method="POST" action="/tickets/create">
 				<div class="field">
 					<label for="propertyId">Property ID</label>
-					<input id="propertyId" name="propertyId" required />
+						<input
+							id="propertyId"
+							name="propertyId"
+							required
+							placeholder="prop-..."
+							value="{{formData.propertyId}}"
+						/>
 				</div>
+
 				<div class="field">
 					<label for="category">Category</label>
 					<select id="category" name="category" required>
-						{{#each categories}}
-							<option value="{{this}}">{{this}}</option>
-						{{/each}}
+						<option value="">Select a category</option>
+							{{#each categories}}
+								<option value="{{this}}" {{#if (eq ../formData.category this)}}selected{{/if}}>
+									{{this}}
+								</option>
+							{{/each}}
 					</select>
 				</div>
+
 				<div class="field">
 					<label for="priority">Priority</label>
 					<select id="priority" name="priority" required>
-						{{#each priorities}}
-							<option value="{{this}}">{{this}}</option>
-						{{/each}}
+						<option value="">Select a priority</option>
+							{{#each priorities}}
+								<option value="{{this}}" {{#if (eq ../formData.priority this)}}selected{{/if}}>
+									{{this}}
+								</option>
+							{{/each}}
 					</select>
 				</div>
+
 				<div class="field">
 					<label for="description">Description</label>
-					<textarea id="description" name="description" rows="3" maxlength="1000" required></textarea>
+					<textarea
+						id="description"
+						name="description"
+						rows="4"
+						maxlength="1000"
+						required
+						placeholder="E.g. Kitchen sink has been leaking for three days."
+					>{{formData.description}}</textarea>
 				</div>
-				<button type="submit">Submit ticket</button>
+
+				<button type="submit">Submit Ticket</button>
 			</form>
 		</section>
 	{{/if}}
 
-	{{#if tickets.length}}
-		<div class="card-grid">
-			{{#each tickets}}
-				<div class="card">
-					<h3 class="card-title">{{category}} · {{status}}</h3>
-					<span class="badge {{priorityBadgeClass}}">{{priority}}</span>
-					<p><strong>Property:</strong> <code>{{propertyId}}</code></p>
-					<p><strong>Description:</strong> {{description}}</p>
-					<p><small>Updated {{updatedAtFormatted}}</small></p>
-					<a href="/tickets/{{_id}}">View Details</a>
+	<section>
+		<h2>My Tickets</h2>
+
+		{{#if myTickets.length}}
+			<div class="card-grid">
+				{{#each myTickets}}
+					<div class="card">
+						<h3 class="card-title">{{category}} · {{status}}</h3>
+						<span class="badge {{priorityBadgeClass}}">{{priority}}</span>
+						<p><strong>Property:</strong> <code>{{propertyId}}</code></p>
+						<p><strong>Description:</strong> {{description}}</p>
+						<p><small>Updated {{updatedAtFormatted}}</small></p>
+						<a class="button-link" href="/tickets/{{_id}}">View Details</a>
+					</div>
+				{{/each}}
+			</div>
+		{{else}}
+			<section class="card">
+				<h2>No tickets yet</h2>
+
+				<p class="muted">
+					You have not created any tickets yet.
+				</p>
+
+				<p class="muted">
+					Submitted tickets will appear here so you can track their status and updates.
+				</p>
+			</section>
+		{{/if}}
+	</section>
+
+	{{#if isAdmin}}
+		<section>
+			<h2>All Tickets</h2>
+
+			{{#if allTickets.length}}
+				<div class="card-grid">
+					{{#each allTickets}}
+						<div class="card">
+							<h3 class="card-title">{{category}} · {{status}}</h3>
+							<span class="badge {{priorityBadgeClass}}">{{priority}}</span>
+							<p><strong>Property:</strong> <code>{{propertyId}}</code></p>
+							<p><strong>Submitted by:</strong> <code>{{submittedById}}</code></p>
+							<p class="ticket-preview">
+								<strong>Description:</strong>
+								{{description}}
+							</p>
+							<p><small>Updated {{updatedAtFormatted}}</small></p>
+							<a class="button-link" href="/tickets/{{_id}}">View Details</a>
+						</div>
+					{{/each}}
 				</div>
-			{{/each}}
-		</div>
-	{{else}}
-		<p>No tickets visible to you.</p>
+			{{else}}
+				<section class="card">
+					<h2>No tickets found</h2>
+
+					<p class="muted">
+						No tickets exist yet.
+					</p>
+
+					<p class="muted">
+						Once users submit tickets, admins will see every ticket here.
+					</p>
+				</section>
+			{{/if}}
+		</section>
 	{{/if}}
 
-	<section class="site-footer">
-		<a href="/dashboard">Back to Dashboard</a>
-	</section>
 </main>
