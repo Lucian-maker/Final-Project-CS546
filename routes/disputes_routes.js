@@ -8,6 +8,11 @@ import {
 } from "../data/disputes.js";
 import { users } from "../config/mongoCollections.js";
 import {
+	notifyDisputeCreated,
+	notifyDisputeUpdated,
+} from "../data/notification_events.js";
+
+import {
 	checkId,
 	formatDateTime,
 	logCategories,
@@ -43,6 +48,12 @@ router.route("/api").get(async (req, res) => {
 router.route("/api").post(async (req, res) => {
 	try {
 		const created = await createDispute(req.body);
+		void notifyDisputeCreated({
+			disputeId: created._id,
+			actorUserId: req.session?.user?._id ?? null,
+		}).catch(() => {});
+		res.locals.logCategory = logCategories.disputes;
+		res.locals.logDescription = `Created dispute ${created._id}`;
 		return res.status(201).json(created);
 	} catch (e) {
 		return res.status(400).json({ error: e.toString() });
@@ -66,6 +77,13 @@ router.route("/api/:id").get(async (req, res) => {
 router.route("/api/:id").patch(async (req, res) => {
 	try {
 		const updated = await updateDispute(req.params.id, req.body);
+		void notifyDisputeUpdated({
+			disputeId: req.params.id,
+			actorUserId: req.session?.user?._id ?? null,
+			newStatus: updated.status,
+		}).catch(() => {});
+		res.locals.logCategory = logCategories.disputes;
+		res.locals.logDescription = `Updated dispute ${req.params.id}`;
 		return res.json(updated);
 	} catch (e) {
 		if (e.toString().includes("No dispute found")) {
@@ -122,7 +140,9 @@ router.route("/:id").get(async (req, res) => {
 		}
 
 		const sessionUser = req.session && req.session.user;
-		const canManage = Boolean(sessionUser && sessionUser.userRole === "admin");
+		const canManage = Boolean(
+			sessionUser && sessionUser.userRole === "admin",
+		);
 
 		res.locals.logCategory = logCategories.disputes;
 		res.locals.logDescription = `Viewed dispute ${cleanId}`;

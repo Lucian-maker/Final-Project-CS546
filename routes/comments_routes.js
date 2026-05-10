@@ -8,6 +8,7 @@ import {
 	deleteComment,
 } from "../data/comments.js";
 import { requireAuth } from "../middleware.js";
+import { notifyCommentActivity } from "../data/notification_events.js";
 
 const router = Router();
 
@@ -34,6 +35,11 @@ router.route("/:propertyId").post(requireAuth, async (req, res) => {
 			text,
 			rating,
 		);
+		void notifyCommentActivity({
+			propertyId: req.params.propertyId,
+			actorUserId: userId,
+			text: "A new property comment was posted.",
+		}).catch(() => {});
 
 		res.locals.logCategory = logCategories.comments;
 		res.locals.logDescription = logDescriptions.createComment(
@@ -63,6 +69,11 @@ router
 				null,
 				req.params.commentId,
 			);
+			void notifyCommentActivity({
+				propertyId: req.params.propertyId,
+				actorUserId: userId,
+				text: "A reply was added to a property comment.",
+			}).catch(() => {});
 
 			res.locals.logCategory = logCategories.comments;
 			res.locals.logDescription = logDescriptions.replyComment(
@@ -82,6 +93,11 @@ router.route("/like/:commentId").post(requireAuth, async (req, res) => {
 		const userId = req.session.user._id;
 
 		await likeComment(req.params.commentId, userId);
+		void notifyCommentActivity({
+			propertyId,
+			actorUserId: userId,
+			text: "A comment received a like.",
+		}).catch(() => {});
 
 		res.locals.logCategory = logCategories.comments;
 		res.locals.logDescription = logDescriptions.likeComment(
@@ -100,6 +116,11 @@ router.route("/dislike/:commentId").post(requireAuth, async (req, res) => {
 		const userId = req.session.user._id;
 
 		await dislikeComment(req.params.commentId, userId);
+		void notifyCommentActivity({
+			propertyId,
+			actorUserId: userId,
+			text: "A comment received a dislike.",
+		}).catch(() => {});
 
 		res.locals.logCategory = logCategories.comments;
 		res.locals.logDescription = logDescriptions.dislikeComment(
@@ -118,6 +139,11 @@ router.route("/edit/:commentId").post(requireAuth, async (req, res) => {
 		const userId = req.session.user._id;
 
 		await editComment(req.params.commentId, userId, rating);
+		void notifyCommentActivity({
+			propertyId,
+			actorUserId: userId,
+			text: "A property comment rating was updated.",
+		}).catch(() => {});
 
 		res.locals.logCategory = logCategories.comments;
 		res.locals.logDescription = logDescriptions.editComment(
@@ -136,6 +162,11 @@ router.route("/delete/:commentId").post(requireAuth, async (req, res) => {
 		const userId = req.session.user._id;
 
 		await deleteComment(req.params.commentId, userId);
+		void notifyCommentActivity({
+			propertyId,
+			actorUserId: userId,
+			text: "A property comment was deleted.",
+		}).catch(() => {});
 
 		res.locals.logCategory = logCategories.comments;
 		res.locals.logDescription = logDescriptions.deleteComment(
