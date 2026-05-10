@@ -40,10 +40,14 @@ router.route("/").get(async (req, res) => {
 	res.locals.logCategory = logCategories.auth;
 	res.locals.logDescription = logDescriptions.home();
 
+	if (req.session?.user) {
+		return res.redirect(roleHome());
+	}
+
 	return res.render("home", {
 		title: "NYCHCom - NYC Housing Compliance",
-		loggedIn: Boolean(role),
-		isAdmin: role === "admin",
+		loggedIn: false,
+		isAdmin: false,
 	});
 });
 

@@ -11,24 +11,34 @@
 	</head>
 	<body>
 		<header class="site-header">
-			<div class="header-content">
-				<a href="/" class="brand-logo">NYCHCom</a>
-				<nav class="header-nav">
-					{{#if user}}
+		<div class="header-content">
+			<a href="/" class="brand-logo">NYCHCom</a>
+
+			<nav class="header-nav">
+				{{#if user}}
 						<a href="/notifications" class="header-notifications">
 							Notifications
 							<span id="notif-badge" class="notif-badge" hidden aria-live="polite">0</span>
 						</a>
-						<a href="/signout" class="header-signout">Sign Out</a>
-					{{/if}}
-				</nav>
-			</div>
-		</header>
+					<a href="/dashboard" class="header-dashboard">
+						Dashboard
+					</a>
+
+					<a href="/signout" class="header-signout">
+						Sign Out
+					</a>
+				{{/if}}
+			</nav>
+		</div>
+	</header>
 		<div id="toast-stack" class="toast-stack" aria-live="polite"></div>
-		{{{body}}}
-		<script src="/public/js/form_validate.js"></script>
+
+	{{{body}}}
+
+	<script src="/public/js/form_validate.js"></script>
 		{{#if user}}
 			<script src="/public/js/in_app_notifications.js" defer></script>
 		{{/if}}
+
 	</body>
 </html>

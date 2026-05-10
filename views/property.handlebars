@@ -1,6 +1,21 @@
 <main class="page">
 	<h1>Property Detail</h1>
 
+	<nav class="page-back-nav">
+		{{#if (eq from "tenant")}}
+			<a href="/tenant">Back to Tenant Dashboard</a>
+
+		{{else if (eq from "landlord")}}
+			<a href="/landlord">Back to Landlord Dashboard</a>
+
+		{{else if (eq from "admin")}}
+			<a href="/admin">Back to Admin Controls</a>
+
+		{{else}}
+			<a href="/properties">Back to Properties</a>
+		{{/if}}
+	</nav>
+
 	<section>
 		<h2>Property Information</h2>
 
@@ -11,24 +26,110 @@
 			{{property.address.state}} {{property.address.zipCode}}
 		</p>
 
-		<p><strong>Property ID:</strong> {{property._id}}</p>
+		<p>
+			<strong>Property ID:</strong>
+			{{property._id}}
+		</p>
 	</section>
 
+	<div class="actions-row">
+
+		{{#if (eq user.userRole "landlord")}}
+
+			{{#if isOwner}}
+
+				<form
+					action="/properties/{{property._id}}/unclaim?from={{from}}"
+					method="POST"
+					class="inline-form"
+				>
+					<input type="hidden" name="from" value="{{from}}" />
+					<button type="submit" class="btn-danger">
+						Unclaim Property
+					</button>
+				</form>
+
+			{{else if claimedByOther}}
+
+				<button disabled class="btn-disabled">
+					This property is already claimed.
+				</button>
+
+			{{else}}
+
+				<form
+					action="/properties/{{property._id}}/claim?from={{from}}"
+					method="POST"
+					class="inline-form"
+				>
+					<input type="hidden" name="from" value="{{from}}" />
+					<button type="submit">
+						Claim Property
+					</button>
+				</form>
+
+			{{/if}}
+
+		{{/if}}
+
+		{{#if isSaved}}
+
+			<form
+				action="/properties/{{property._id}}/unsave?from={{from}}"
+				method="POST"
+				class="inline-form"
+			>
+				<input type="hidden" name="from" value="{{from}}" />
+				<button type="submit" class="btn-danger">
+					Unsave
+				</button>
+			</form>
+
+		{{else}}
+
+			<form
+				action="/properties/{{property._id}}/save?from={{from}}"
+				method="POST"
+				class="inline-form"
+			>
+				<input type="hidden" name="from" value="{{from}}" />
+				<button type="submit">
+					Save Property
+				</button>
+			</form>
+
+		{{/if}}
+
+	</div>
+
 	<p>
-		<a href="/violations?propertyId={{property._id}}">View violations for this property</a>
+		<a href="/violations?propertyId={{property._id}}&from={{from}}">
+			View violations for this property
+		</a>
 		·
-		<a href="/evidence?propertyId={{property._id}}">Evidence for this property</a>
+		<a href="/evidence?propertyId={{property._id}}&from={{from}}">
+			Evidence for this property
+		</a>
 		·
-		<a href="/reviews/{{property._id}}">Reviews</a>
+		<a href="/reviews/{{property._id}}?from={{from}}">
+			Reviews
+		</a>
 	</p>
 
 	{{#if property.violations.length}}
+
 		<h2>Violations on file</h2>
+
 		<ul>
 			{{#each property.violations}}
-				<li><a href="/violations/{{this}}">{{this}}</a></li>
+				<li>
+					<a href="/violations/{{this}}?from={{../from}}&propertyId={{../property._id}}">
+						{{this}}
+					</a>
+				</li>
 			{{/each}}
 		</ul>
+
 	{{/if}}
 
 	<hr class="divider">

@@ -9,6 +9,9 @@ import {
 	checkUserRole,
 	checkId,
 	PUBLIC_USER_ROLES,
+	checkOptionalEmail,
+	checkOptionalName,
+	checkOptionalPhone,
 } from "../helpers.js";
 
 const SALT_ROUNDS = 16;
@@ -51,6 +54,11 @@ export const createUser = async (
 		ownedProperties: [],
 		savedProperties: [],
 		createdAt: new Date(),
+		secondaryContact: {
+			name: "",
+			email: "",
+			phoneNumber: "",
+		},
 	};
 
 	const insertResult = await collection.insertOne(newUser);
@@ -113,18 +121,101 @@ export const updateUserById = async (id, updateData) => {
 	const updateObject = {
 		$set: {
 			...updateData,
-			updatedAt: new Date()
-		}
+			updatedAt: new Date(),
+		},
 	};
 
-	const result = await collection.updateOne(
-		{ _id: id },
-		updateObject
-	);
+	const result = await collection.updateOne({ _id: id }, updateObject);
 
 	if (result.modifiedCount === 0) {
 		throw "User update failed";
 	}
 
 	return await collection.findOne({ _id: id });
+};
+
+export const updateProfileById = async (id, updateData) => {
+	id = checkId(id, "userId");
+
+	const cleanFirstName = checkName(updateData.firstName, "firstName");
+	const cleanLastName = checkName(updateData.lastName, "lastName");
+	const cleanEmail = checkEmail(updateData.email);
+	const cleanPhone = checkPhone(updateData.phoneNumber);
+
+	const secondaryName = checkOptionalName(
+		updateData.secondaryContactName,
+		"secondaryContactName",
+	);
+	const secondaryEmail = checkOptionalEmail(
+		updateData.secondaryContactEmail,
+		"secondaryContactEmail",
+	);
+	const secondaryPhone = checkOptionalPhone(
+		updateData.secondaryContactPhone,
+		"secondaryContactPhone",
+	);
+
+	const collection = await users();
+
+	const existing = await collection.findOne({
+		email: cleanEmail,
+		_id: { $ne: id },
+	});
+
+	if (existing) {
+		throw `There is already a user with email "${cleanEmail}"`;
+	}
+
+	const updateObject = {
+		$set: {
+			firstName: cleanFirstName,
+			lastName: cleanLastName,
+			email: cleanEmail,
+			phoneNumber: cleanPhone,
+			secondaryContact: {
+				name: secondaryName,
+				email: secondaryEmail,
+				phoneNumber: secondaryPhone,
+			},
+			updatedAt: new Date(),
+		},
+	};
+
+	const result = await collection.updateOne({ _id: id }, updateObject);
+
+	if (result.matchedCount === 0) {
+		throw "User update failed";
+	}
+
+	return await collection.findOne({ _id: id });
+};
+
+export const saveProperty = async (userId, propertyId) => {
+	const usersCollection = await users();
+
+	await usersCollection.updateOne(
+		{ _id: userId },
+		{
+			$addToSet: {
+				savedProperties: propertyId,
+			},
+		},
+	);
+
+	return true;
+};
+
+export const unsaveProperty = async (userId, propertyId) => {
+	const usersCollection = await users();
+
+	await usersCollection.updateOne(
+		{ _id: userId },
+		{
+			$pull: {
+				savedProperties: propertyId,
+			},
+		},
+	);
+
+	return true;
 };
