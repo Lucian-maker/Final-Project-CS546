@@ -11,6 +11,7 @@ import {
 
 import { logDescriptions, logCategories } from "../helpers.js";
 import { formatDateTime } from "../helpers.js";
+import { notifyViolationStatusUpdated } from "../data/notification_events.js";
 
 const router = Router();
 
@@ -199,11 +200,19 @@ router
 	.post(async (req, res) => {
 		try {
 			const body = req.body || {};
+			const existing = await getViolationById(req.params.id);
 
 			await updateViolationRemediation(req.params.id, req.session.user, {
 				newStatus: body.newStatus,
 				notes: body.notes,
 			});
+
+			void notifyViolationStatusUpdated({
+				violationId: req.params.id,
+				actorUserId: req.session.user._id,
+				oldStatus: existing.violationStatus,
+				newStatus: body.newStatus,
+			}).catch(() => {});
 
 			res.locals.logCategory = logCategories.violations;
 			res.locals.logDescription = logDescriptions.updateViolationStatus(
