@@ -11,6 +11,7 @@ import { getCommentsByProperty } from "../data/comments.js";
 import { saveProperty, unsaveProperty, getUserById } from "../data/users.js";
 
 import { logDescriptions, logCategories } from "../helpers.js";
+import { adminGuard, requireRole } from "../middleware.js";
 
 const router = Router();
 
@@ -176,7 +177,7 @@ router.post("/:id/unsave", async (req, res) => {
 	}
 });
 
-router.post("/:id/claim", async (req, res) => {
+router.post("/:id/claim", requireRole("landlord"), async (req, res) => {
 	try {
 		await claimProperty(req.params.id, req.session.user._id);
 
@@ -210,7 +211,7 @@ router.post("/:id/unclaim", async (req, res) => {
 	}
 });
 
-router.post("/create", async (req, res) => {
+router.post("/create", adminGuard, async (req, res) => {
 	try {
 		const { streetAddress, city, state, zipCode } = req.body;
 
