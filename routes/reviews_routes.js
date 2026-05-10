@@ -11,6 +11,7 @@ import {
 import {
 	properties as propertiesCollection,
 	users,
+	comments
 } from "../config/mongoCollections.js";
 import {
 	checkId,
@@ -25,6 +26,31 @@ import { notifyReviewActivity } from "../data/notification_events.js";
 
 const router = Router();
 
+const roundOne = (n) => Math.round(n * 10) / 10;
+
+const getPropertyRating = async (propertyId) => {
+	const commentsCollection = await comments();
+
+	const propertyComments = await commentsCollection
+		.find({ propertyId })
+		.toArray();
+
+	const ratedComments = propertyComments.filter(
+		(c) => c.rating !== null && c.rating !== undefined,
+	);
+
+	if (ratedComments.length === 0) {
+		return null;
+	}
+
+	const sum = ratedComments.reduce(
+		(acc, c) => acc + Number(c.rating),
+		0,
+	);
+
+	return roundOne(sum / ratedComments.length);
+};
+
 // Top-level reviews listing scoped to the signed-in user's role.
 router.route("/").get(async (req, res) => {
 	try {
@@ -33,18 +59,24 @@ router.route("/").get(async (req, res) => {
 
 		const propsCol = await propertiesCollection();
 		const usersCol = await users();
+
 		const decorated = await Promise.all(
 			list.map(async (r) => {
 				const property = await propsCol.findOne({ _id: r.propertyId });
+
 				let buildingAddress = r.propertyId;
 				if (property?.address) {
 					const a = property.address;
 					buildingAddress = `${a.number} ${a.street}, ${a.city}, ${a.state} ${a.zipCode}`;
 				}
+
 				const reviewer = await usersCol.findOne({ _id: r.reviewerId });
+				const propertyRating = await getPropertyRating(r.propertyId);
+
 				return {
 					...r,
 					buildingAddress,
+					propertyRating,
 					reviewerName: reviewer
 						? `${reviewer.firstName} ${reviewer.lastName}`
 						: r.reviewerId,
