@@ -335,6 +335,7 @@ router.get("/logs", async (req, res) => {
 				"comments",
 				"notifications",
 				"disputes",
+				"tickets",
 				"dashboard",
 			],
 
