@@ -6,6 +6,7 @@ import {
 	claimProperty,
 	unclaimProperty,
 } from "../data/properties.js";
+import { getCommentsByProperty } from "../data/comments.js";
 
 import {
 	saveProperty,
