@@ -1,13 +1,25 @@
 <main class="page violation-detail">
-	<h1>Violation detail</h1>
-	<p><a href="/violations">Back to violations</a></p>
+	<h1>Violation details</h1>
 
-	{{#if statusMessage}}
-		<p class="success-banner">{{statusMessage}}</p>
-	{{/if}}
-	{{#if error}}
-		<p class="error">{{error}}</p>
-	{{/if}}
+	<nav class="page-back-nav">
+		{{#if propertyId}}
+			<a href="/properties/{{propertyId}}?from={{from}}">
+				Back to Property
+			</a>
+
+		{{else if (eq from "tenant")}}
+			<a href="/tenant">Back to Tenant Dashboard</a>
+
+		{{else if (eq from "landlord")}}
+			<a href="/landlord">Back to Landlord Dashboard</a>
+
+		{{else if (eq from "admin")}}
+			<a href="/admin">Back to Admin Controls</a>
+
+		{{else}}
+			<a href="/violations">Back to Violations</a>
+		{{/if}}
+	</nav>
 
 	<section class="violation-summary">
 		<h2>{{violation.buildingAddress}}</h2>
@@ -16,7 +28,7 @@
 			<dd><code>{{violation._id}}</code></dd>
 			<dt>Property ID</dt>
 			<dd>
-				<a href="/properties/{{violation.propertyId}}">{{violation.propertyId}}</a>
+				<a href="/properties/{{violation.propertyId}}?from={{from}}">{{violation.propertyId}}</a>
 			</dd>
 			<dt>Borough</dt>
 			<dd>{{violation.borough}}</dd>
@@ -45,6 +57,10 @@
 		</dl>
 	</section>
 
+	<p class="actions-row">
+		<a class="button-link" href="/evidence?violationId={{violation._id}}&propertyId={{violation.propertyId}}&from={{from}}">Evidence for this violation</a>
+	</p>
+
 	<section class="violation-remediation">
 		<h2>Remediation</h2>
 		<p><strong>Current state:</strong> {{violation.remediationStatus.currentState}}</p>
@@ -68,10 +84,6 @@
 			<p>No history entries.</p>
 		{{/if}}
 	</section>
-
-	<p class="actions-row">
-		<a class="button-link" href="/evidence?violationId={{violation._id}}">Evidence for this violation</a>
-	</p>
 
 	{{#if allowedNextStatuses.length}}
 		<section class="status-update">
