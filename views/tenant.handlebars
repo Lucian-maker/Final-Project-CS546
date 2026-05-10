@@ -1,0 +1,58 @@
+<main class="page">
+
+	<div class="dashboard-header">
+		<h1>Tenant Dashboard</h1>
+
+		<p class="dashboard-subtitle">
+			Welcome,
+			<strong>{{user.firstName}} {{user.lastName}}</strong>
+		</p>
+
+		<p class="actions-row">
+			<a class="button-link" href="/profile?from=tenant">
+				Manage Profile
+			</a>
+		</p>
+	</div>
+
+	<nav class="page-back-nav">
+		<a href="/dashboard">Back to Dashboard</a>
+	</nav>
+
+	<h2>Saved Properties</h2>
+
+	{{#if savedProperties.length}}
+
+		<ul class="card-grid">
+
+			{{#each savedProperties}}
+				<li class="card">
+					<h3 class="card-title">
+						{{this.address.number}} {{this.address.street}},
+						{{this.address.city}},
+						{{this.address.state}} {{this.address.zipCode}}
+					</h3>
+
+					<p>
+						<strong>Property ID:</strong>
+						<code>{{this._id}}</code>
+					</p>
+
+					<a
+						href="/properties/{{this._id}}?from=tenant"
+						class="button-link"
+					>
+						View Property
+					</a>
+				</li>
+			{{/each}}
+
+		</ul>
+
+	{{else}}
+
+		<p>No saved properties yet.</p>
+
+	{{/if}}
+
+</main>

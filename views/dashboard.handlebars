@@ -67,5 +67,22 @@
 				<span class="tile-text">Admin Controls</span>
 			</a>
 		{{/if}}
+		{{#if (eq user.userRole "tenant")}}
+			<a href="/tenant" class="dashboard-tile">
+				<span class="tile-icon">🏠</span>
+				<span class="tile-text">
+					Tenant Dashboard
+				</span>
+			</a>
+		{{/if}}
+
+	{{#if (eq user.userRole "landlord")}}
+		<a href="/landlord" class="dashboard-tile">
+			<span class="tile-icon">🏘️</span>
+			<span class="tile-text">
+				Landlord Dashboard
+			</span>
+		</a>
+	{{/if}}
 	</div>
 </main>

@@ -3,7 +3,15 @@ import {
 	getProperties,
 	getPropertyById,
 	createProperty,
+	claimProperty,
+	unclaimProperty,
 } from "../data/properties.js";
+
+import {
+	saveProperty,
+	unsaveProperty,
+	getUserById,
+} from "../data/users.js";
 
 import { logDescriptions, logCategories } from "../helpers.js";
 
@@ -34,7 +42,7 @@ router.get("/", async (req, res) => {
 			order: req.query.order || "desc",
 		};
 
-		let properties = await getProperties(filters);
+		const properties = await getProperties(filters);
 
 		return res.render("properties", {
 			title: "Properties",
@@ -49,9 +57,26 @@ router.get("/", async (req, res) => {
 	}
 });
 
+
 router.get("/:id", async (req, res) => {
 	try {
+		const freshUser = await getUserById(req.session.user._id);
 		const property = await getPropertyById(req.params.id);
+
+		const from = req.query.from || null;
+
+		const isSaved =
+			freshUser.savedProperties?.some(
+				(id) => String(id) === String(property._id)
+			);
+
+		const isOwner =
+			property.claimedBy &&
+			String(property.claimedBy) === String(freshUser._id);
+
+		const claimedByOther =
+			property.claimedBy &&
+			String(property.claimedBy) !== String(freshUser._id);
 
 		res.locals.logCategory = logCategories.properties;
 		res.locals.logDescription =
@@ -60,12 +85,98 @@ router.get("/:id", async (req, res) => {
 		return res.render("property", {
 			title: "Property Detail",
 			property,
-			user: req.session?.user,
+			user: freshUser,
+			isSaved,
+			isOwner,
+			claimedByOther,
+			from,
 		});
 	} catch (e) {
 		return res.status(404).render("error", {
 			error: "Property not found",
 		});
+	}
+});
+
+router.post("/:id/save", async (req, res) => {
+	try {
+		await saveProperty(req.session.user._id, req.params.id);
+
+		res.locals.logCategory = logCategories.properties;
+		res.locals.logDescription =
+			logDescriptions.saveProperty(req.params.id);
+
+		req.session.user.savedProperties =
+			req.session.user.savedProperties || [];
+
+		req.session.user.savedProperties.push(req.params.id);
+
+		const from = req.query.from || req.body.from || "properties";
+
+		return res.redirect(
+			`/properties/${req.params.id}?from=${from}`
+		);
+	} catch (e) {
+		return res.status(500).render("error", { error: e });
+	}
+});
+
+router.post("/:id/unsave", async (req, res) => {
+	try {
+		await unsaveProperty(req.session.user._id, req.params.id);
+
+		res.locals.logCategory = logCategories.properties;
+		res.locals.logDescription =
+			logDescriptions.unsaveProperty(req.params.id);
+
+		req.session.user.savedProperties =
+			(req.session.user.savedProperties || []).filter(
+				(id) => String(id) !== String(req.params.id)
+			);
+
+		const from = req.query.from || req.body.from || "properties";
+
+		return res.redirect(
+			`/properties/${req.params.id}?from=${from}`
+		);
+	} catch (e) {
+		return res.status(500).render("error", { error: e });
+	}
+});
+
+router.post("/:id/claim", async (req, res) => {
+	try {
+		await claimProperty(req.params.id, req.session.user._id);
+
+		res.locals.logCategory = logCategories.properties;
+		res.locals.logDescription =
+			logDescriptions.claimProperty(req.params.id);
+
+		const from = req.query.from || req.body.from || "properties";
+
+		return res.redirect(
+			`/properties/${req.params.id}?from=${from}`
+		);
+	} catch (e) {
+		return res.status(400).render("error", { error: String(e) });
+	}
+});
+
+router.post("/:id/unclaim", async (req, res) => {
+	try {
+		await unclaimProperty(req.params.id, req.session.user._id);
+
+		res.locals.logCategory = logCategories.properties;
+		res.locals.logDescription =
+			logDescriptions.unclaimProperty(req.params.id);
+
+		const from = req.query.from || req.body.from || "properties";
+
+		return res.redirect(
+			`/properties/${req.params.id}?from=${from}`
+		);
+	} catch (e) {
+		return res.status(400).render("error", { error: String(e) });
 	}
 });
 

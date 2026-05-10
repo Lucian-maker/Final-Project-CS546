@@ -86,6 +86,7 @@ const main = async () => {
 	const properties = [
 		{
 			_id: property1Id,
+			claimedBy: null,
 			address: {
 				number: "123",
 				street: "Maple Road",
@@ -100,6 +101,7 @@ const main = async () => {
 		},
 		{
 			_id: property2Id,
+			claimedBy: null,
 			address: {
 				number: "742",
 				street: "Evergreen Terrace",
@@ -119,13 +121,13 @@ const main = async () => {
 		await usersCol()
 	).updateOne(
 		{ _id: landlordId },
-		{ $set: { ownedProperties: [property1Id, property2Id] } },
+		{ $set: { ownedProperties: [] } },
 	);
 	await (
 		await usersCol()
 	).updateOne(
 		{ _id: tenantId },
-		{ $set: { savedProperties: [property1Id] } },
+		{ $set: { savedProperties: [] } },
 	);
 
 	const violations = [
