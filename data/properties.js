@@ -145,16 +145,11 @@ export const getCommunityInsights = async () => {
 		const ratedComments = propertyComments.filter(
 			(c) => c.rating !== null && c.rating !== undefined
 		);
-
-		const allRatings = [
-			...propertyReviews.map((r) => Number(r.overallScore)),
-			...ratedComments.map((c) => Number(c.rating))
-		];
-
+		
 		let displayRating = null;
-		if (allRatings.length > 0) {
-			const sum = allRatings.reduce((acc, score) => acc + score, 0);
-			displayRating = Math.round((sum / allRatings.length) * 10) / 10;
+		if (ratedComments.length > 0) {
+			const sum = ratedComments.reduce((acc, c) => acc + Number(c.rating), 0);
+			displayRating = Math.round((sum / ratedComments.length) * 10) / 10;
 		}
 
 		insights.push({
