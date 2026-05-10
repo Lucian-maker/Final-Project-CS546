@@ -11,15 +11,15 @@ export const logRequest = (req, res, next) => {
 			: "Guest";
 
 		console.log(
-			`[${timestamp}] ${req.method} ${req.originalUrl} ${res.statusCode} (${who})`
+			`[${timestamp}] ${req.method} ${req.originalUrl} ${res.statusCode} (${who})`,
 		);
-		
+
 		createLog(
 			req,
 			res,
 			req.session?.user || null,
 			res.locals.logDescription || null,
-			res.locals.logCategory || "general"
+			res.locals.logCategory || "general",
 		).catch(console.error);
 	});
 
@@ -35,8 +35,21 @@ export const guestOnly = (req, res, next) => {
 	return next();
 };
 
+/** JSON fetch must get JSON back — redirect to signin returns HTML and breaks res.json(). */
+const wantsJsonErrorBody = (req) =>
+	Boolean(
+		req.is("application/json") ||
+		String(req.get("Accept") || "").includes("application/json"),
+	);
+
 export const requireAuth = (req, res, next) => {
 	if (!req.session?.user) {
+		if (wantsJsonErrorBody(req)) {
+			return res.status(401).json({
+				ok: false,
+				error: "Sign in required",
+			});
+		}
 		return res.redirect("/signin");
 	}
 	return next();

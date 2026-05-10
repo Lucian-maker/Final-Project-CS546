@@ -1,17 +1,44 @@
-<main class="page">
+<main class="page" id="notifications-page">
 	<h1>Notifications</h1>
-	{{#if notifications}}
-		<ul class="card-grid">
-			{{#each notifications}}
-				<li class="card">
-					<span class="badge badge-warning">{{this.channel}} - {{this.status}}</span>
-					<p>{{this.notificationDetails.text}}</p>
-					<p style="margin-top: auto; padding-top: 1rem;"><small style="color: #64748b;">{{this.createdAt}}</small></p>
-				</li>
-			{{/each}}
-		</ul>
-	{{else}}
-		<p>No new notifications.</p>
-	{{/if}}
+
+	<button
+		type="button"
+		id="js-notif-mark-all"
+		class="btn-notif-clear notif-clear-form"
+		{{#unless hasQueued}}hidden{{/unless}}
+	>
+		Mark all read
+	</button>
+
+	<ul id="notification-card-list" class="card-grid">
+		{{#each notifications}}
+			<li class="card notif-card" data-notification-id="{{this.stringId}}">
+				<span class="badge badge-warning">{{this.channel}} — {{this.status}}</span>
+				<p>{{this.notificationDetails.text}}</p>
+				<p class="notif-meta">
+					<a href="/violations/{{this.violationId}}">Violation {{this.violationId}}</a>
+					· <small>{{this.createdAt}}</small>
+				</p>
+				{{#if (eq this.status "queued")}}
+					<button
+						type="button"
+						class="btn-notif-dismiss js-notif-mark-one"
+						data-notification-id="{{this.stringId}}"
+					>
+						Mark read
+					</button>
+				{{/if}}
+			</li>
+		{{/each}}
+	</ul>
+
+	<p id="notifications-empty-msg" {{#if notifications.length}}hidden{{/if}}>
+		No notifications yet.
+	</p>
+
+	<p id="notifications-error-msg" class="error" hidden></p>
+
 	<a href="/dashboard">Back to Dashboard</a>
+
+	<script src="/public/js/notifications_page.js" defer></script>
 </main>

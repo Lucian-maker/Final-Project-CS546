@@ -25,6 +25,12 @@ app.use(
 	}),
 );
 
+// Current user for templates (`{{#if user}}`), or null if signed out.
+app.use((req, res, next) => {
+	res.locals.user = req.session?.user ?? null;
+	next();
+});
+
 app.engine(
 	"handlebars",
 	exphbs.engine({
