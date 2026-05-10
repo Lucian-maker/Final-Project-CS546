@@ -73,7 +73,7 @@ router
 
 		try {
 			res.locals.logCategory = logCategories.reviews;
-			res.locals.logDescription = logsDescription.createReview(cleanPropertyId);
+			res.locals.logDescription = logDescriptions.createReview(cleanPropertyId);
 			await createReview(
 				cleanPropertyId,
 				req.session.user._id,
@@ -97,7 +97,7 @@ router.route("/:reviewId/edit").post(requireAuth, async (req, res) => {
 	try {
 		const existing = await getReviewById(req.params.reviewId);
 		res.locals.logCategory = logCategories.reviews;
-		res.locals.logDescription = logDescriptions.edi(req.params.reviewId);
+		res.locals.logDescription = logDescriptions.updateReview(req.params.reviewId);
 		await updateReview(
 			req.params.reviewId,
 			req.session.user._id,
