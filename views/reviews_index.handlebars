@@ -1,32 +1,46 @@
-<main class="page reviews-page">
-	<h1>Reviews</h1>
-	<p><a href="/dashboard">Back to Dashboard</a></p>
+<main class="page">
+	<div class="dashboard-header">
+		<h1>Reviews</h1>
+		<p class="dashboard-subtitle">
+			All reviews visible to your account, with links to properties and full detail.
+		</p>
+	</div>
+
+	<nav class="page-back-nav">
+		<a href="/dashboard">Back to Dashboard</a>
+	</nav>
 
 	<section class="review-list">
 		<h2>All visible reviews ({{reviews.length}})</h2>
 		{{#if reviews.length}}
-			{{#each reviews}}
-				<article class="review-card">
-					<header class="review-card__header">
-						<span class="score-badge">{{overallScore}} / 5</span>
-						<span class="review-card__meta">R:{{responsiveness}} V:{{value}} Res:{{resolution}}</span>
-					</header>
-					<p class="review-card__text">{{reviewText}}</p>
-					<footer class="review-card__footer">
-						<p>
-							<strong>Property:</strong>
-							<a href="/properties/{{propertyId}}">{{buildingAddress}}</a>
-						</p>
-						<p>
-							<strong>By:</strong> {{reviewerName}}
-							{{#if isOwnReview}}<span class="muted">(you)</span>{{/if}}
-						</p>
-						<time>{{createdAtFormatted}}</time>
-						<a href="/reviews/single/{{_id}}">View Details</a>
-						<a href="/reviews/{{propertyId}}">All reviews for this property</a>
-					</footer>
-				</article>
-			{{/each}}
+			<div class="card-grid">
+				{{#each reviews}}
+					<article class="card">
+						<header class="review-card__header">
+							<span class="score-badge">{{overallScore}} / 5</span>
+							<span class="review-card__meta">R:{{responsiveness}} V:{{value}} Res:{{resolution}}</span>
+						</header>
+						<p class="review-card__text">{{reviewText}}</p>
+						<footer class="review-card__footer">
+							<div class="review-card__footer-meta">
+								<p>
+									<strong>Property:</strong>
+									<a href="/properties/{{propertyId}}">{{buildingAddress}}</a>
+								</p>
+								<p>
+									<strong>By:</strong> {{reviewerName}}
+									{{#if isOwnReview}}<span class="muted">(you)</span>{{/if}}
+								</p>
+								<time>{{createdAtFormatted}}</time>
+							</div>
+							<div class="review-card__footer-links">
+								<a href="/reviews/single/{{_id}}">View Details</a>
+								<a href="/reviews/{{propertyId}}">Property reviews</a>
+							</div>
+						</footer>
+					</article>
+				{{/each}}
+			</div>
 		{{else}}
 			<p>No reviews to show. Visit a property page to leave a review.</p>
 		{{/if}}
