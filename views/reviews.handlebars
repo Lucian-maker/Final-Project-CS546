@@ -1,5 +1,11 @@
-<main class="page reviews-page">
-	<h1>Reviews</h1>
+<main class="page">
+	<div class="dashboard-header">
+		<h1>Reviews</h1>
+		<p class="dashboard-subtitle">
+			Read and manage reviews for this property. Tenants can submit one review per property.
+		</p>
+	</div>
+
 	<nav class="page-back-nav">
 		{{#if propertyId}}
 			<a href="/properties/{{propertyId}}?from={{from}}">
@@ -19,26 +25,39 @@
 			<a href="/dashboard">Back to Dashboard</a>
 		{{/if}}
 	</nav>
+
+	{{#if error}}
+		<p class="error">{{error}}</p>
+	{{/if}}
+
 	<div id="clientError" class="error" hidden></div>
 
 	{{#if canReview}}
-		<section class="review-form-section">
+		<section class="card">
 			<h2>Leave a Review</h2>
 			<form id="review-form" method="POST" action="/reviews/{{propertyId}}?from={{from}}" novalidate>
 				<input type="hidden" name="from" value="{{from}}" />
 				<input type="hidden" name="landlordId" value="{{landlordId}}" />
 
-				<label for="responsiveness">Responsiveness (1-5)</label>
-				<input type="number" id="responsiveness" name="responsiveness" min="1" max="5" value="{{form.responsiveness}}" required />
+				<div class="field">
+					<label for="responsiveness">Responsiveness (1-5)</label>
+					<input type="number" id="responsiveness" name="responsiveness" min="1" max="5" value="{{form.responsiveness}}" required />
+				</div>
 
-				<label for="value">Value (1-5)</label>
-				<input type="number" id="value" name="value" min="1" max="5" value="{{form.value}}" required />
+				<div class="field">
+					<label for="value">Value (1-5)</label>
+					<input type="number" id="value" name="value" min="1" max="5" value="{{form.value}}" required />
+				</div>
 
-				<label for="resolution">Resolution (1-5)</label>
-				<input type="number" id="resolution" name="resolution" min="1" max="5" value="{{form.resolution}}" required />
+				<div class="field">
+					<label for="resolution">Resolution (1-5)</label>
+					<input type="number" id="resolution" name="resolution" min="1" max="5" value="{{form.resolution}}" required />
+				</div>
 
-				<label for="reviewText">Review</label>
-				<textarea id="reviewText" name="reviewText" rows="4" maxlength="500" required>{{form.reviewText}}</textarea>
+				<div class="field">
+					<label for="reviewText">Review</label>
+					<textarea id="reviewText" name="reviewText" rows="4" maxlength="500" required>{{form.reviewText}}</textarea>
+				</div>
 
 				<button type="submit">Submit Review</button>
 			</form>
@@ -48,50 +67,54 @@
 	<section class="review-list">
 		<h2>All Reviews ({{reviews.length}})</h2>
 		{{#if reviews.length}}
-			{{#each reviews}}
-				<article class="review-card">
-					<header class="review-card__header">
-						<span class="score-badge">{{overallScore}} / 5</span>
-						<span class="review-card__meta">R:{{responsiveness}} V:{{value}} Res:{{resolution}}</span>
-					</header>
-					<p class="review-card__text">{{reviewText}}</p>
-					<footer class="review-card__footer">
-						<time>{{createdAt}}</time>
-						<a href="/reviews/single/{{_id}}">View Details</a>
-						{{#if isOwnReview}}
-							<div class="review-card__own-actions">
-								<details class="review-edit-toggle">
-									<summary class="review-edit-toggle__summary">Edit</summary>
-									<form class="review-edit-form" method="POST" action="/reviews/{{_id}}/edit?from={{../from}}" novalidate>
-										<input type="hidden" name="from" value="{{../from}}" />
-										<label>
-											Responsiveness (1-5)
-											<input type="number" name="responsiveness" min="1" max="5" value="{{responsiveness}}" required />
-										</label>
-										<label>
-											Value (1-5)
-											<input type="number" name="value" min="1" max="5" value="{{value}}" required />
-										</label>
-										<label>
-											Resolution (1-5)
-											<input type="number" name="resolution" min="1" max="5" value="{{resolution}}" required />
-										</label>
-										<label>
-											Review
-											<textarea name="reviewText" rows="3" maxlength="500" required>{{reviewText}}</textarea>
-										</label>
-										<button type="submit">Save</button>
-									</form>
-								</details>
-								<form class="inline-form" method="POST" action="/reviews/{{_id}}/delete?from={{../from}}">
-									<input type="hidden" name="from" value="{{../from}}" />
-									<button type="submit" class="btn-danger">Delete</button>
-								</form>
+			<div class="card-grid">
+				{{#each reviews}}
+					<article class="card">
+						<header class="review-card__header">
+							<span class="score-badge">{{overallScore}} / 5</span>
+							<span class="review-card__meta">R:{{responsiveness}} V:{{value}} Res:{{resolution}}</span>
+						</header>
+						<p class="review-card__text">{{reviewText}}</p>
+						<footer class="review-card__footer">
+							<time>{{createdAt}}</time>
+							<div class="review-card__footer-actions">
+								<a href="/reviews/single/{{_id}}">View Details</a>
+								{{#if isOwnReview}}
+									<div class="review-card__own-actions">
+										<details class="review-edit-toggle">
+											<summary class="review-edit-toggle__summary">Edit</summary>
+											<form class="review-edit-form" method="POST" action="/reviews/{{_id}}/edit?from={{../from}}" novalidate>
+												<input type="hidden" name="from" value="{{../from}}" />
+												<label>
+													Responsiveness (1-5)
+													<input type="number" name="responsiveness" min="1" max="5" value="{{responsiveness}}" required />
+												</label>
+												<label>
+													Value (1-5)
+													<input type="number" name="value" min="1" max="5" value="{{value}}" required />
+												</label>
+												<label>
+													Resolution (1-5)
+													<input type="number" name="resolution" min="1" max="5" value="{{resolution}}" required />
+												</label>
+												<label>
+													Review
+													<textarea name="reviewText" rows="3" maxlength="500" required>{{reviewText}}</textarea>
+												</label>
+												<button type="submit">Save</button>
+											</form>
+										</details>
+										<form class="inline-form" method="POST" action="/reviews/{{_id}}/delete?from={{../from}}">
+											<input type="hidden" name="from" value="{{../from}}" />
+											<button type="submit" class="btn-danger">Delete</button>
+										</form>
+									</div>
+								{{/if}}
 							</div>
-						{{/if}}
-					</footer>
-				</article>
-			{{/each}}
+						</footer>
+					</article>
+				{{/each}}
+			</div>
 		{{else}}
 			<p>No reviews yet.</p>
 		{{/if}}
