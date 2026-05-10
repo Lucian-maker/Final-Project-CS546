@@ -1,83 +1,180 @@
 <main class="page">
-	<h1>Violations</h1>
 
-	{{#if user}}
-		{{#if (eq user.userRole "admin")}}
-			<section class="card">
-				<h2>Create New Violation</h2>
-			
-				<form method="POST" action="/violations/create">
-					<div class="field">
-						<label>Property ID</label>
-						<input name="propertyId" placeholder="Property ID" required />
-					</div>
-					<div class="field">
-						<label>Building Address</label>
-						<input name="buildingAddress" placeholder="Address" required />
-					</div>
-					<div class="field">
-						<label>Violation Type</label>
-						<input name="violationType" placeholder="Type (e.g. Mold, Heat)" required />
-					</div>
-					<div class="field">
-						<label>Violation Description</label>
-						<input name="violationDescription" placeholder="Description" required />
-					</div>
-					<button type="submit">Create Violation</button>
-				</form>
-			</section>
+	<div class="dashboard-header">
+		<h1>Violations</h1>
+		<p class="dashboard-subtitle">
+			Browse, search, and manage housing violations.
+		</p>
+	</div>
+
+	<nav class="page-back-nav">
+		{{#if filters.propertyId}}
+			<a href="/properties/{{filters.propertyId}}?from={{from}}">
+				Back to Property
+			</a>
+
+		{{else if (eq from "tenant")}}
+			<a href="/tenant">
+				Back to Tenant Dashboard
+			</a>
+
+		{{else if (eq from "landlord")}}
+			<a href="/landlord">
+				Back to Landlord Dashboard
+			</a>
+
+		{{else if (eq from "admin")}}
+			<a href="/admin">
+				Back to Admin Controls
+			</a>
+
+		{{else}}
+			<a href="/dashboard">
+				Back to Dashboard
+			</a>
 		{{/if}}
-	{{/if}}
+	</nav>
 
-	<section>
-		<h2>Search Violations</h2>
+	{{#if (eq user.userRole "admin")}}
+	<section class="card">
+		<h2>Create Violation</h2>
 
-		<form class="field" method="GET" action="/violations">
+		<form method="POST" action="/violations/create">
+
 			<div class="field">
-				<input
-					type="text"
-					name="search"
-					placeholder="Search by address, type, status..."
-					value="{{search}}"
-				/>
+				<label>Property ID</label>
+				<input name="propertyId" required />
 			</div>
-			<button type="submit">Search</button>
+
+			<div class="field">
+				<label>Violation Type</label>
+				<input name="violationType" required />
+			</div>
+
+			<div class="field">
+				<label>Description</label>
+				<input name="violationDescription" required />
+			</div>
+
+			<button type="submit">Create Violation</button>
 		</form>
 	</section>
+	{{/if}}
 
-	<section>
-		<h2>All Violations</h2>
+	<h2>Filter Violations</h2>
+
+	<form method="GET" action="/violations" class="filters-form">
+
+		<div class="filters-grid">
+			<div class="field">
+				<label for="q">Search address / description</label>
+				<input type="text" id="q" name="q" value="{{filters.q}}" placeholder="Keywords..." />
+			</div>
+			<div class="field">
+				<label for="borough">Borough</label>
+				<select id="borough" name="borough">
+					<option value="">Any</option>
+					{{#each boroughs}}
+					<option value="{{this}}" {{#if (eq ../filters.borough this)}}selected{{/if}}>{{this}}</option>
+					{{/each}}
+				</select>
+			</div>
+			<div class="field">
+				<label for="violationType">Violation type</label>
+				<input type="text" id="violationType" name="violationType" value="{{filters.violationType}}"
+					placeholder="e.g. Mold" />
+			</div>
+			<div class="field">
+				<label for="violationStatus">Status</label>
+				<select id="violationStatus" name="violationStatus">
+					<option value="">Any</option>
+					{{#each statuses}}
+					<option value="{{this}}" {{#if (eq ../filters.violationStatus this)}}selected{{/if}}>{{this}}
+					</option>
+					{{/each}}
+				</select>
+			</div>
+			<div class="field">
+				<label for="propertyId">Property ID</label>
+				<input type="text" id="propertyId" name="propertyId" value="{{filters.propertyId}}"
+					placeholder="prop-..." />
+			</div>
+			<div class="field">
+				<label for="days">Due within (days)</label>
+				<input type="number" id="days" name="days" min="0" value="{{filters.days}}" placeholder="e.g. 30" />
+			</div>
+			<div class="field">
+				<label for="sort">Sort by</label>
+				<select id="sort" name="sort">
+					<option value="updatedAt" {{#if (eq filters.sort "updatedAt" )}}selected{{/if}}>Last updated
+					</option>
+					<option value="originalCertifyByDate" {{#if (eq filters.sort "originalCertifyByDate"
+						)}}selected{{/if}}>Certify-by date</option>
+					<option value="buildingAddress" {{#if (eq filters.sort "buildingAddress" )}}selected{{/if}}>Address
+					</option>
+				</select>
+			</div>
+			<div class="field">
+				<label for="order">Order</label>
+				<select id="order" name="order">
+					<option value="desc" {{#if (eq filters.order "desc" )}}selected{{/if}}>Newest first</option>
+					<option value="asc" {{#if (eq filters.order "asc" )}}selected{{/if}}>Oldest first</option>
+				</select>
+			</div>
+		</div>
+		<div class="actions-row">
+
+			<button type="submit">
+				Apply Filters
+			</button>
+
+			<a
+				class="button-link"
+				href="/violations{{#if from}}?from={{from}}{{/if}}"
+				style="
+					background:#e2e8f0;
+					color:#0f172a !important;
+					border:1px solid #cbd5e1;
+				"
+			>
+				Clear Filters
+			</a>
+
+		</div>
+	</form>
 
 		{{#if violations.length}}
-			<table>
-				<thead>
-					<tr>
-						<th>Address</th>
-						<th>Type</th>
-						<th>Status</th>
-					</tr>
-				</thead>
 
-				<tbody>
-					{{#each violations}}
-						<tr>
-							<td>
-								<a href="/violations/{{this._id}}">
-									{{this.buildingAddress}}
-								</a>
-							</td>
-							<td>{{this.violationType}}</td>
-							<td>{{this.violationStatus}}</td>
-						</tr>
-					{{/each}}
-				</tbody>
-			</table>
+			<div class="card-grid">
+
+				{{#each violations}}
+
+					<div class="card">
+
+						<h3 class="card-title">
+							{{buildingAddress}}
+						</h3>
+
+						<span class="badge badge-info">
+							{{violationStatus}}
+						</span>
+
+						<p><strong>Type:</strong> {{violationType}}</p>
+						<p><strong>Description:</strong> {{violationDescription}}</p>
+
+						<a href="/violations/{{_id}}?from={{../from}}&propertyId={{propertyId}}">
+							View Details
+						</a>
+					</div>
+
+				{{/each}}
+
+			</div>
+
 		{{else}}
 			<p>No violations found.</p>
 		{{/if}}
+
 	</section>
 
-	<section class="site-footer">
-		<a href="/dashboard">Back to Dashboard</a>
-	</section>
 </main>

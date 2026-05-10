@@ -1,42 +1,110 @@
-<main class="page">
-	<h1>Violation Detail</h1>
+<main class="page violation-detail">
+	<h1>Violation details</h1>
 
-	<p>
-		<strong>Address:</strong>
-		{{violation.buildingAddress}}
+	<nav class="page-back-nav">
+		{{#if propertyId}}
+			<a href="/properties/{{propertyId}}?from={{from}}">
+				Back to Property
+			</a>
+
+		{{else if (eq from "tenant")}}
+			<a href="/tenant">Back to Tenant Dashboard</a>
+
+		{{else if (eq from "landlord")}}
+			<a href="/landlord">Back to Landlord Dashboard</a>
+
+		{{else if (eq from "admin")}}
+			<a href="/admin">Back to Admin Controls</a>
+
+		{{else}}
+			<a href="/violations">Back to Violations</a>
+		{{/if}}
+	</nav>
+
+	<section class="violation-summary">
+		<h2>{{violation.buildingAddress}}</h2>
+		<dl class="detail-grid">
+			<dt>Violation ID</dt>
+			<dd><code>{{violation._id}}</code></dd>
+			<dt>Property ID</dt>
+			<dd>
+				<a href="/properties/{{violation.propertyId}}?from={{from}}">{{violation.propertyId}}</a>
+			</dd>
+			<dt>Borough</dt>
+			<dd>{{violation.borough}}</dd>
+			<dt>Type</dt>
+			<dd>{{violation.violationType}}</dd>
+			<dt>Class</dt>
+			<dd>{{violation.violationClass}}</dd>
+			<dt>Status</dt>
+			<dd>{{violation.violationStatus}}</dd>
+			<dt>Description</dt>
+			<dd>{{violation.violationDescription}}</dd>
+			<dt>Certify by</dt>
+			<dd>{{violation.originalCertifyByDateFormatted}}</dd>
+			<dt>Days remaining</dt>
+			<dd>{{violation.daysRemaining}}</dd>
+			<dt>Actionable</dt>
+			<dd>{{violation.isActionable}}</dd>
+			<dt>Inspection</dt>
+			<dd>{{violation.inspectionDateFormatted}}</dd>
+			<dt>Repair scheduled</dt>
+			<dd>{{violation.repairScheduledAtFormatted}}</dd>
+			<dt>Resolved</dt>
+			<dd>{{violation.resolvedAtFormatted}}</dd>
+			<dt>Source</dt>
+			<dd>{{violation.source}}</dd>
+		</dl>
+	</section>
+
+	<p class="actions-row">
+		<a class="button-link" href="/evidence?violationId={{violation._id}}&propertyId={{violation.propertyId}}&from={{from}}">Evidence for this violation</a>
 	</p>
 
-	<p><strong>Violation ID:</strong> {{violation._id}}</p>
-
-	<p><strong>Type:</strong> {{violation.violationType}}</p>
-	<p><strong>Status:</strong> {{violation.violationStatus}}</p>
-
-	<p><strong>Description:</strong> {{violation.violationDescription}}</p>
-
-	<p><strong>Property ID:</strong> {{violation.propertyId}}</p>
-
-	{{#if user}}
-		{{#if (eq user.userRole "admin")}}
-			<section>
-				<h2>Update Status</h2>
-
-				<form class="field" method="POST" action="/violations/{{violation._id}}/status">
-					<div class="field">
-						<label>Status</label>
-						<select name="status">
-							<option value="Open">Open</option>
-							<option value="Repair Scheduled">Repair Scheduled</option>
-							<option value="Resolved">Resolved</option>
-						</select>
-					</div>
-
-					<button type="submit">Update Status</button>
-				</form>
-			</section>
-		{{/if}}
-	{{/if}}
-
-	<section class="site-footer">
-		<a href="/violations">Back to Violations</a>
+	<section class="violation-remediation">
+		<h2>Remediation</h2>
+		<p><strong>Current state:</strong> {{violation.remediationStatus.currentState}}</p>
+		<p><strong>Notes:</strong> {{violation.remediationStatus.notes}}</p>
+		<p><strong>Updated:</strong> {{violation.remediationUpdatedAtFormatted}}</p>
 	</section>
+
+	<section class="violation-history">
+		<h2>Status history</h2>
+		{{#if violation.statusHistory.length}}
+			<ul class="history-list">
+				{{#each violation.statusHistory}}
+					<li>
+						<strong>{{this.state}}</strong>
+						— {{this.changedAtFormatted}}
+						<span class="muted">({{this.changedBy}})</span>
+					</li>
+				{{/each}}
+			</ul>
+		{{else}}
+			<p>No history entries.</p>
+		{{/if}}
+	</section>
+
+	{{#if allowedNextStatuses.length}}
+		<section class="status-update">
+			<h2>Update status</h2>
+			<form method="POST" action="/violations/{{violation._id}}">
+				<div class="field">
+					<label for="newStatus">New status</label>
+					<select id="newStatus" name="newStatus" required>
+						{{#each allowedNextStatuses}}
+							<option value="{{this}}">{{this}}</option>
+						{{/each}}
+					</select>
+				</div>
+				<div class="field">
+					<label for="notes">Notes</label>
+					<textarea id="notes" name="notes" rows="3" maxlength="2000" placeholder="Describe this update"></textarea>
+				</div>
+				<button type="submit">Submit update</button>
+			</form>
+		</section>
+	{{else}}
+		<p class="muted">No status transitions are available for your role from the current state.</p>
+	{{/if}}
 </main>
