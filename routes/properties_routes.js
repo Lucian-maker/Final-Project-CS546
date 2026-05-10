@@ -12,6 +12,7 @@ import {
 	unsaveProperty,
 	getUserById,
 } from "../data/users.js";
+import { getCommentsByProperty } from "../data/comments.js";
 
 import { logDescriptions, logCategories } from "../helpers.js";
 
@@ -62,6 +63,35 @@ router.get("/:id", async (req, res) => {
 	try {
 		const freshUser = await getUserById(req.session.user._id);
 		const property = await getPropertyById(req.params.id);
+		const comments = await getCommentsByProperty(req.params.id);
+
+		let averageRating = "No Ratings";
+		let totalRating = 0;
+		let ratingCount = 0;
+
+		const user = req.session?.user;
+
+		const processComments = (cList) => {
+			cList.forEach(c => {
+				if (user) {
+					c.hasLiked = c.likes && c.likes.includes(user._id);
+					c.hasDisliked = c.dislikes && c.dislikes.includes(user._id);
+					c.isAuthor = c.userId === user._id;
+				}
+				
+				if (c.rating !== null && c.rating !== undefined) {
+					totalRating += c.rating;
+					ratingCount++;
+				}
+
+				if (c.replies) processComments(c.replies);
+			});
+		};
+		processComments(comments);
+
+		if (ratingCount > 0) {
+			averageRating = (totalRating / ratingCount).toFixed(1) + " / 5.0 ⭐";
+		}
 
 		const from = req.query.from || null;
 
@@ -87,9 +117,12 @@ router.get("/:id", async (req, res) => {
 			property,
 			user: freshUser,
 			isSaved,
-			isOwner,
-			claimedByOther,
-			from,
+			isOwner, 
+			claimedByOther, 
+			from, 
+			comments,
+			averageRating,
+			user,
 		});
 	} catch (e) {
 		return res.status(404).render("error", {

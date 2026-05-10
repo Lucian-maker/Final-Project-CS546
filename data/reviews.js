@@ -182,6 +182,22 @@ export const computeLandlordTrustScore = async (landlordId) => {
 	return { score, count: live.length };
 };
 
+export const computeTenantReviewAverage = async (tenantId) => {
+	const cleanTenantId = checkId(tenantId, "tenantId");
+	const collection = await reviews();
+	const live = await collection
+		.find({ reviewerId: cleanTenantId, isDeleted: false })
+		.toArray();
+
+	if (live.length === 0) {
+		return { score: null, count: 0 };
+	}
+
+	const sum = live.reduce((acc, r) => acc + r.overallScore, 0);
+	const score = Math.round((sum / live.length) * 10) / 10;
+	return { score, count: live.length };
+};
+
 export const getLandlordIdForProperty = async (propertyId) => {
 	const cleanPropertyId = checkId(propertyId, "propertyId");
 	const usersCollection = await users();

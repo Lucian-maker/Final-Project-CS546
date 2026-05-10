@@ -1,18 +1,29 @@
 <main class="page">
 
-	<div class="dashboard-header">
-		<h1>Tenant Dashboard</h1>
+	<div class="dashboard-header dashboard-header-row">
+		<div>
+			<h1>Tenant Dashboard</h1>
 
-		<p class="dashboard-subtitle">
-			Welcome,
-			<strong>{{user.firstName}} {{user.lastName}}</strong>
-		</p>
+			<p class="dashboard-subtitle">
+				Welcome,
+				<strong>{{user.firstName}} {{user.lastName}}</strong>
+			</p>
 
-		<p class="actions-row">
-			<a class="button-link" href="/profile?from=tenant">
-				Manage Profile
-			</a>
-		</p>
+			<p class="actions-row">
+				<a class="button-link" href="/profile?from=tenant">
+					Manage Profile
+				</a>
+			</p>
+		</div>
+		{{#if userScoreInfo}}
+			<div class="dashboard-tile dashboard-mini-tile admin-tile">
+				<span class="tile-icon">⭐</span>
+				<span class="tile-text">
+					{{#if userScoreInfo.score}}{{userScoreInfo.score}}{{else}}N/A{{/if}}
+					Tenant Rating
+				</span>
+			</div>
+		{{/if}}
 	</div>
 
 	<nav class="page-back-nav">
