@@ -280,7 +280,7 @@ router.get("/analytics", async (req, res) => {
 		const resolvedViolations = await violationsCollection
 			.find({ resolvedAt: { $ne: null } })
 			.toArray();
-		let avgResolutionDays = null;
+		let manualAvgResolutionDays = null;
 		if (resolvedViolations.length > 0) {
 			let totalDays = 0;
 			let count = 0;
@@ -295,7 +295,7 @@ router.get("/analytics", async (req, res) => {
 				}
 			}
 			if (count > 0) {
-				avgResolutionDays =
+				manualAvgResolutionDays =
 					Math.round((totalDays / count) * 10) / 10;
 			}
 		}
@@ -310,7 +310,7 @@ router.get("/analytics", async (req, res) => {
 				totalProperties,
 				totalReviews,
 				totalViolations,
-				avgResolutionDays,
+				avgResolutionDays : manualAvgResolutionDays ?? avgResolutionDays,
 				resolvedCount: resolvedViolations.length,
 			},
 			statusStats,
