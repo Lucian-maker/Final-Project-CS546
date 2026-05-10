@@ -3,7 +3,7 @@
 		<h1>Analytics</h1>
 
 		<p class="dashboard-subtitle">
-			Platform activity metrics and ticket health.
+			Overview of platform users, tracked properties, violation statuses, and borough-level compliance activity.
 		</p>
 	</div>
 
@@ -35,7 +35,7 @@
 		<div class="metric-card metric-card-hero">
 			<span class="metric-eyebrow">Violations</span>
 			<span class="metric-value metric-warning">{{displayValue stats.totalViolations}}</span>
-			<span class="metric-footnote">Total ticket volume</span>
+			<span class="metric-footnote">Total Violations</span>
 		</div>
 	</div>
 
@@ -45,7 +45,7 @@
 		<div class="metric-card metric-card-kpi metric-card-{{statusStats.kpis.closed.tone}}">
 			<span class="metric-eyebrow">Closed</span>
 			<span class="metric-value">{{displayValue statusStats.kpis.closed.count}}</span>
-			<span class="metric-footnote">{{displayPercent statusStats.kpis.closed.pct}} of all tickets</span>
+			<span class="metric-footnote">{{displayPercent statusStats.kpis.closed.pct}} of all violations</span>
 		</div>
 		<div class="metric-card metric-card-kpi metric-card-{{statusStats.kpis.resolved.tone}}">
 			<span class="metric-eyebrow">Resolved</span>
@@ -58,9 +58,9 @@
 			<span class="metric-footnote">{{displayPercent statusStats.kpis.disputed.pct}} at risk</span>
 		</div>
 		<div class="metric-card metric-card-kpi metric-card-{{statusStats.kpis.openLike.tone}}">
-			<span class="metric-eyebrow">Open + Scheduled</span>
+			<span class="metric-eyebrow">Open & Active</span>
 			<span class="metric-value">{{displayValue statusStats.kpis.openLike.count}}</span>
-			<span class="metric-footnote">{{displayPercent statusStats.kpis.openLike.pct}} active pipeline</span>
+			<span class="metric-footnote">{{displayPercent statusStats.kpis.openLike.pct}} still unresolved</span>
 		</div>
 	</div>
 
@@ -74,7 +74,7 @@
 				<div class="status-stats-row">
 					<div class="status-stat">
 						<div class="status-stat-value">{{displayValue this.count}}</div>
-						<div class="status-stat-label">Tickets</div>
+						<div class="status-stat-label">Violations</div>
 					</div>
 					<div class="status-stat">
 						<div class="status-stat-value">{{displayValue this.remainingCount}}</div>

@@ -28,6 +28,10 @@ router.route("/api/in-app").get(async (req, res) => {
 			text: n.notificationDetails?.text ?? "",
 			violationId: n.violationId,
 		}));
+
+		res.locals.logCategory = logCategories.notifications;
+		res.locals.logDescription = logDescriptions.viewNotifications();
+
 		return res.json({ unreadCount, recentQueued, queuedIds });
 	} catch (e) {
 		return res.status(500).json({ error: e.toString() });
@@ -162,12 +166,28 @@ router.route("/").get(async (req, res) => {
 					? String(notification._id).trim()
 					: "",
 		}));
+
+		const unreadNotifications = notificationsView.filter(
+			(n) => n.status === "queued",
+		);
+
+		const readNotifications = notificationsView.filter(
+			(n) => n.status !== "queued",
+		);
+
+		const hasUnread = unreadNotifications.length > 0;
+		const hasRead = readNotifications.length > 0;
+
 		const hasQueued = notificationsView.some((n) => n.status === "queued");
 		res.locals.logCategory = logCategories.notifications;
 		res.locals.logDescription = logDescriptions.viewNotifications();
 		return res.render("notifications", {
 			title: "Notifications",
 			notifications: notificationsView,
+			unreadNotifications,
+			readNotifications,
+			hasUnread, 
+			hasRead,
 			hasQueued,
 			user: req.session && req.session.user,
 		});

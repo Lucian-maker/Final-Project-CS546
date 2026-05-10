@@ -179,6 +179,10 @@ export const getViolationsForSessionUser = async (
 	sessionUser,
 	queryFilters = {},
 ) => {
+	if (!sessionUser?._id) {
+		throw "You must be signed in to view violations";
+	}
+
 	const dbUser = await loadUserForAuth(sessionUser._id);
 	const filters = { ...queryFilters };
 	delete filters._restrictedPropertyIds;
@@ -373,6 +377,10 @@ export const assertUserCanAccessViolation = async (
 	sessionUser,
 	violationId,
 ) => {
+
+	if (!sessionUser?._id) {
+		throw "You must be signed in to access this violation";
+	}
 	const cleanId = checkId(violationId, "violationId");
 	const dbUser = await loadUserForAuth(sessionUser._id);
 	const col = await violations();
