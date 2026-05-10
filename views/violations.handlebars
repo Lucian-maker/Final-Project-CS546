@@ -95,12 +95,6 @@
 		<button type="submit">Apply filters</button>
 	</form>
 
-	<div class="quick-controls" style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center; background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0;">
-		<strong style="color: #475569;">Fast Filter:</strong>
-		<input type="text" id="quickFilter" placeholder="Type to filter rows instantly..." style="padding: 0.5rem; border-radius: 4px; border: 1px solid #cbd5e1; flex-grow: 1;">
-		<button id="sortDateBtn" class="btn-like" style="padding: 0.5rem 1rem;">Sort by Date ↕</button>
-	</div>
-
 	{{#if violations.length}}
 		<div class="card-grid" id="violationsGrid">
 			{{#each violations}}
@@ -124,42 +118,3 @@
 		<a href="/dashboard">Back to Dashboard</a>
 	</section>
 </main>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const filterInput = document.getElementById('quickFilter');
-    const cards = document.querySelectorAll('#violationsGrid .card');
-    const sortBtn = document.getElementById('sortDateBtn');
-    
-    if (filterInput && cards.length > 0) {
-        filterInput.addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase();
-            cards.forEach(card => {
-                const text = card.innerText.toLowerCase();
-                card.style.display = text.includes(term) ? '' : 'none';
-            });
-        });
-    }
-
-    if (sortBtn && cards.length > 0) {
-        let sortAsc = true;
-        sortBtn.addEventListener('click', () => {
-            sortAsc = !sortAsc;
-            const grid = document.getElementById('violationsGrid');
-            const cardsArray = Array.from(cards);
-            
-            cardsArray.sort((a, b) => {
-                const dateA = new Date(a.getAttribute('data-date'));
-                const dateB = new Date(b.getAttribute('data-date'));
-                if (isNaN(dateA) || isNaN(dateB)) {
-                    return sortAsc ? a.innerText.localeCompare(b.innerText) 
-                                   : b.innerText.localeCompare(a.innerText);
-                }
-                return sortAsc ? dateA - dateB : dateB - dateA;
-            });
-            
-            cardsArray.forEach(card => grid.appendChild(card));
-        });
-    }
-});
-</script>

@@ -24,6 +24,43 @@ const SEED_EVIDENCE_PNG_BYTES = Buffer.from(
 	"base64",
 ).length;
 
+/**
+ Sample photos for evidence of violations
+ */
+const VIOLATION_PHOTO_MAP = [
+	// Mold / moisture
+	{ keywords: ["mold", "mildew", "fungus", "moisture"], url: "https://images.unsplash.com/photo-1584622781867-1f5e0edcf7e4?w=800&q=80", caption: "Black mold growth on bathroom wall" },
+	// Water / plumbing / leak
+	{ keywords: ["water", "leak", "plumb", "pipe", "flood", "sewage", "drain"], url: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=800&q=80", caption: "Water leak under sink" },
+	// Paint / lead
+	{ keywords: ["paint", "lead", "peel", "chip"], url: "https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=800&q=80", caption: "Peeling paint on apartment wall" },
+	// Door / window / lock
+	{ keywords: ["door", "window", "lock", "frame", "entrance", "exit"], url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80", caption: "Damaged door frame" },
+	// Structural / ceiling / wall
+	{ keywords: ["crack", "ceiling", "structural", "wall", "plaster", "floor"], url: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80", caption: "Cracked plaster ceiling" },
+	// Heat / HVAC
+	{ keywords: ["heat", "hvac", "boiler", "radiator", "steam", "ventil"], url: "https://images.unsplash.com/photo-1631049552057-403cdb8f0658?w=800&q=80", caption: "Broken heating unit" },
+	// Pest / infestation
+	{ keywords: ["pest", "roach", "rat", "mice", "rodent", "insect", "vermin", "infestat"], url: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=800&q=80", caption: "Evidence of pest infestation" },
+	// Electrical
+	{ keywords: ["electric", "wiring", "outlet", "circuit", "fire"], url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80", caption: "Exposed electrical wiring" },
+];
+
+const DEFAULT_VIOLATION_PHOTO = {
+	url: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&q=80",
+	caption: "General housing code violation",
+};
+
+const getViolationPhotoUrl = (description = "") => {
+	const lower = description.toLowerCase();
+	for (const entry of VIOLATION_PHOTO_MAP) {
+		if (entry.keywords.some(kw => lower.includes(kw))) {
+			return entry;
+		}
+	}
+	return DEFAULT_VIOLATION_PHOTO;
+};
+
 const seedCredentials = [
 	{
 		label: "admin",
@@ -202,12 +239,12 @@ const main = async () => {
 	await (await propertiesCol()).insertMany(properties);
 	await (await violationsCol()).insertMany(violations);
 
-	// Assign properties to a landlord for test
+	// Assign 15 properties to a landlord for test
 	await (
 		await usersCol()
 	).updateOne(
 		{ _id: landlordId },
-		{ $set: { ownedProperties: properties.map(p => p._id) } },
+		{ $set: { ownedProperties: properties.slice(0, 15).map(p => p._id) } },
 	);
 
 	// Assign first property to tenant saved list
@@ -215,27 +252,29 @@ const main = async () => {
 	const violation1Id = violations[0]._id;
 	const violation2Id = violations.length > 1 ? violations[1]._id : violations[0]._id;
 
+	// Assign 5 properties to tenant saved list
 	await (
 		await usersCol()
 	).updateOne(
 		{ _id: tenantId },
-		{ $set: { savedProperties: [property1Id] } },
+		{ $set: { savedProperties: properties.slice(15, 20).map(p => p._id) } },
 	);
 
 	const evidenceToInsert = [];
 	for (const v of violations) {
+		const photo = getViolationPhotoUrl(v.violationDescription);
 		evidenceToInsert.push({
 			_id: idWithPrefix("evid"),
 			violationId: v._id,
 			propertyId: v.propertyId,
 			uploadedByUserId: tenantId,
 			evidenceType: "photo",
-			fileName: "violation-sample.png",
-			fileUrl: SEED_EVIDENCE_PNG_DATA_URI,
-			mimeType: "image/png",
-			fileSize: SEED_EVIDENCE_PNG_BYTES,
-			caption: "Seed sample: realistic placeholder evidence photo.",
-			noteText: "This is auto-generated visual evidence.",
+			fileName: `evidence-${v._id}.jpg`,
+			fileUrl: photo.url,
+			mimeType: "image/jpeg",
+			fileSize: 120000,
+			caption: photo.caption,
+			noteText: `Example visual evidence for: ${v.violationType}`,
 			capturedAt: now,
 			uploadedAt: now,
 			isDeleted: false,
