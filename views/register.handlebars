@@ -1,5 +1,8 @@
 <main class="page">
 	<h1>Register</h1>
+	<nav class="page-back-nav">
+		<a href="/">Back to Home</a>
+	</nav>
 
 	{{#if error}}
 		<p class="error" id="serverError">{{error}}</p>
@@ -49,6 +52,8 @@
 		<button type="submit" id="submitButton" name="submitButton">Create Account</button>
 	</form>
 
-	<p><a href="/signin">Already have an account? Sign in</a></p>
-	<p><a href="/">Back to Home</a></p>
+	<nav class="page-back-nav">
+		<p><a href="/signin">Already have an account? Sign in</a></p>
+	</nav>
+
 </main>
