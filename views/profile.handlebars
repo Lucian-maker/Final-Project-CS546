@@ -8,7 +8,17 @@
 	</div>
 
 	<nav class="page-back-nav">
-		<a href="{{backTo}}">Back</a>
+		<a href="{{backTo}}">
+			{{#if (eq user.userRole "admin")}}
+				Back to Admin Dashboard
+			{{else if (eq user.userRole "landlord")}}
+				Back to Landlord Dashboard
+			{{else if (eq user.userRole "tenant")}}
+				Back to Tenant Dashboard
+			{{else}}
+				Back to Dashboard
+			{{/if}}
+		</a>
 	</nav>
 
 	{{#if success}}

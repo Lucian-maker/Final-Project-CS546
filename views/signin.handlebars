@@ -1,5 +1,8 @@
 <main class="page">
 	<h1>Sign In</h1>
+	<nav class="page-back-nav">
+		<a href="/">Back to Home</a>
+	</nav>
 
 	{{#if error}}
 		<p class="error" id="serverError">{{error}}</p>
@@ -27,6 +30,7 @@
 		<button type="submit" id="submit_button" name="submit_button">Sign In</button>
 	</form>
 
-	<p><a href="/register">Click here to register</a></p>
-	<p><a href="/">Back to Home</a></p>
+	<nav class="page-back-nav">
+		<p><a href="/register">Click here to register</a></p>
+	</nav>
 </main>

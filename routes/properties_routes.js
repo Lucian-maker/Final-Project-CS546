@@ -70,15 +70,12 @@ router.get("/:id", async (req, res) => {
 		const property = await getPropertyById(req.params.id);
 		const allComments = await getCommentsByProperty(req.params.id);
 
-		// Filter comments based on involvement for non-admins
 		let comments = allComments;
 		if (freshUser && freshUser.userRole !== "admin") {
 			const isOwner = property.claimedBy && String(property.claimedBy) === String(freshUser._id);
 			const isSaved = freshUser.savedProperties?.some((id) => String(id) === String(property._id));
 
-			// If they are owner or have it saved, they see everything on this property
 			if (!isOwner && !isSaved) {
-				// Otherwise, they only see comments they authored or replies to them
 				const userAuthoredCommentIds = [];
 				const findUserComments = (cList) => {
 					cList.forEach((c) => {

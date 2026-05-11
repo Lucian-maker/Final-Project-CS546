@@ -158,7 +158,13 @@ router.route("/signout").get(async (req, res) => {
 	req.session.destroy(() => {
 		res.clearCookie("NYCHComAuthState");
 		res.clearCookie("NYCHComUser");
-		return res.render("signout", { title: "Signed Out" });
+
+		res.locals.user = null;
+
+		return res.render("signout", {
+			title: "Signed Out",
+			user: null,
+		});
 	});
 });
 

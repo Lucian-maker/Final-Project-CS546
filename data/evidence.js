@@ -22,14 +22,13 @@ function assertPropertyAccess(dbUser, propertyId) {
 
 	if (dbUser.userRole === "admin") return;
 
-	const owned = dbUser.ownedProperties || [];
 	const saved = dbUser.savedProperties || [];
+	const owned =
+		dbUser.userRole === "landlord" ? dbUser.ownedProperties || [] : [];
 
-	if (!owned.includes(propertyId) && !saved.includes(propertyId)) {
+	if (!saved.includes(propertyId) && !owned.includes(propertyId)) {
 		throw `You do not have access to evidence for this property`;
 	}
-
-	return;
 }
 
 /**
@@ -50,6 +49,7 @@ export const createEvidence = async (opts) => {
 		opts.evidenceType,
 		"evidenceType",
 	).toLowerCase();
+
 	if (!EVIDENCE_TYPES.includes(evidenceType)) {
 		throw `evidenceType must be one of: ${EVIDENCE_TYPES.join(", ")}`;
 	}
@@ -69,6 +69,7 @@ export const createEvidence = async (opts) => {
 		String(opts.caption).trim() !== ""
 			? checkString(opts.caption, "caption").slice(0, 500)
 			: "";
+
 	const noteText =
 		opts.noteText !== undefined && opts.noteText !== null
 			? String(opts.noteText).trim().slice(0, 2000)
@@ -91,6 +92,7 @@ export const createEvidence = async (opts) => {
 		fileUrl = parsed.dataUri;
 		mimeType = parsed.mimeType;
 		fileSize = parsed.fileSize;
+
 		if (
 			opts.originalFileName &&
 			String(opts.originalFileName).trim() !== ""
@@ -103,6 +105,7 @@ export const createEvidence = async (opts) => {
 		} else {
 			fileName = "image";
 		}
+
 		if (!noteText && !caption) {
 			throw `Provide a caption or note text with the image`;
 		}
@@ -142,61 +145,53 @@ export const getEvidenceById = async (id) => {
 	const clean = checkId(id, "evidenceId");
 	const eCol = await evidence();
 	const doc = await eCol.findOne({ _id: clean, isDeleted: false });
+
 	if (!doc) {
 		throw `Evidence not found`;
 	}
+
 	return doc;
 };
 
 export const getEvidenceByViolation = async (violationId) => {
 	const clean = checkId(violationId, "violationId");
 	const eCol = await evidence();
+
 	return eCol
 		.find({ violationId: clean, isDeleted: false })
-		.sort({ createdAt: -1 })
+		.sort({ uploadedAt: -1 })
 		.toArray();
 };
 
 export const listEvidenceForSessionUser = async (sessionUser, filters = {}) => {
 	const dbUser = await loadUser(sessionUser._id);
 	const eCol = await evidence();
-	let query = { isDeleted: false };
+
+	const baseConditions = [{ isDeleted: false }];
 
 	if (dbUser.userRole !== "admin") {
-		const owned = dbUser.ownedProperties || [];
 		const saved = dbUser.savedProperties || [];
-		const accessiblePropertyIds = [...owned, ...saved];
+		const owned =
+			dbUser.userRole === "landlord"
+				? dbUser.ownedProperties || []
+				: [];
 
-		query = {
-			$and: [
-				{ isDeleted: false },
-				{
-					$or: [
-						{ uploadedByUserId: dbUser._id },
-						{ propertyId: { $in: accessiblePropertyIds } },
-					],
-				},
-			],
-		};
+		const accessiblePropertyIds = [...new Set([...saved, ...owned])];
+
+		baseConditions.push({
+			propertyId: { $in: accessiblePropertyIds },
+		});
 	}
 
 	if (filters.violationId) {
 		const vid = checkId(filters.violationId, "violationId");
-		if (query.$and) {
-			query.$and.push({ violationId: vid });
-		} else {
-			query.violationId = vid;
-		}
+		baseConditions.push({ violationId: vid });
 	}
 
 	if (filters.propertyId) {
 		const pid = checkId(filters.propertyId, "propertyId");
 		assertPropertyAccess(dbUser, pid);
-		if (query.$and) {
-			query.$and.push({ propertyId: pid });
-		} else {
-			query.propertyId = pid;
-		}
+		baseConditions.push({ propertyId: pid });
 	}
 
 	if (filters.evidenceType) {
@@ -209,31 +204,39 @@ export const listEvidenceForSessionUser = async (sessionUser, filters = {}) => {
 			throw `evidenceType must be one of: ${EVIDENCE_TYPES.join(", ")}`;
 		}
 
-		query.evidenceType = type;
+		baseConditions.push({ evidenceType: type });
 	}
 
 	if (filters.q) {
 		const q = checkString(filters.q, "search");
 
-		query.$or = [
-			{ caption: { $regex: q, $options: "i" } },
-			{ noteText: { $regex: q, $options: "i" } },
-			{ fileName: { $regex: q, $options: "i" } },
-		];
+		baseConditions.push({
+			$or: [
+				{ caption: { $regex: q, $options: "i" } },
+				{ noteText: { $regex: q, $options: "i" } },
+				{ fileName: { $regex: q, $options: "i" } },
+			],
+		});
 	}
+
+	const query = { $and: baseConditions };
 
 	return eCol.find(query).sort({ uploadedAt: -1 }).toArray();
 };
 
 export const softDeleteEvidence = async (evidenceId, sessionUser) => {
 	const doc = await getEvidenceById(evidenceId);
-
 	const dbUser = await loadUser(sessionUser._id);
-	if (
-		dbUser.userRole !== "admin" &&
-		doc.uploadedByUserId !== sessionUser._id
-	) {
-		throw `You may only delete evidence you uploaded`;
+
+	const owned = dbUser.ownedProperties || [];
+
+	const canDelete =
+		dbUser.userRole === "admin" ||
+		doc.uploadedByUserId === dbUser._id ||
+		(dbUser.userRole === "landlord" && owned.includes(doc.propertyId));
+
+	if (!canDelete) {
+		throw `You may only delete evidence you uploaded or evidence for properties you own`;
 	}
 
 	const eCol = await evidence();
@@ -241,8 +244,10 @@ export const softDeleteEvidence = async (evidenceId, sessionUser) => {
 		{ _id: doc._id },
 		{ $set: { isDeleted: true } },
 	);
+
 	if (!res.modifiedCount && !res.matchedCount) {
 		throw `Could not delete evidence`;
 	}
+
 	return { deleted: true, _id: doc._id };
 };

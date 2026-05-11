@@ -284,7 +284,6 @@ router.route("/single/:commentId").get(requireAuth, async (req, res) => {
 		const comment = await col.findOne({ _id: commentId });
 		if (!comment) throw "Comment not found";
 
-		// Security: Only admins or involved users
 		if (sessionUser.userRole !== "admin") {
 			const fullUser = await usersCol.findOne({ _id: sessionUser._id });
 			const involvedPropertyIds = [
