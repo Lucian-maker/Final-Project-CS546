@@ -21,7 +21,30 @@ router.route("/").get(async (req, res) => {
 		const usersCol = await users();
 
 		// Fetch all comments, newest first
-		const allComments = await col.find({}).sort({ createdAt: -1 }).toArray();
+		let query = {};
+		if (sessionUser && sessionUser.userRole !== "admin") {
+			const fullUser = await usersCol.findOne({ _id: sessionUser._id });
+			const involvedPropertyIds = [
+				...(fullUser.ownedProperties || []),
+				...(fullUser.savedProperties || []),
+			];
+
+			// Find all comments authored by the user to get their IDs for reply tracking
+			const userAuthoredComments = await col
+				.find({ userId: sessionUser._id })
+				.toArray();
+			const userAuthoredCommentIds = userAuthoredComments.map((c) => c._id);
+
+			query = {
+				$or: [
+					{ userId: sessionUser._id },
+					{ propertyId: { $in: involvedPropertyIds } },
+					{ parentCommentId: { $in: userAuthoredCommentIds } },
+				],
+			};
+		}
+
+		const allComments = await col.find(query).sort({ createdAt: -1 }).toArray();
 
 		// fills comment with property address and author info
 		const enriched = await Promise.all(
@@ -71,6 +94,10 @@ router.route("/").get(async (req, res) => {
 	} catch (e) {
 		return res.status(500).render("error", { error: String(e) });
 	}
+});
+
+router.route("/:propertyId").get(requireAuth, async (req, res) => {
+	return res.redirect(`/properties/${req.params.propertyId}`);
 });
 
 router.route("/:propertyId").post(requireAuth, async (req, res) => {
@@ -243,6 +270,78 @@ router.route("/delete/:commentId").post(requireAuth, async (req, res) => {
 		return res.redirect(`/properties/${propertyId}`);
 	} catch (e) {
 		return res.status(400).render("error", { error: String(e) });
+	}
+});
+
+router.route("/single/:commentId").get(requireAuth, async (req, res) => {
+	try {
+		const commentId = req.params.commentId;
+		const sessionUser = req.session.user;
+		const col = await commentsCollection();
+		const propsCol = await properties();
+		const usersCol = await users();
+
+		const comment = await col.findOne({ _id: commentId });
+		if (!comment) throw "Comment not found";
+
+		if (sessionUser.userRole !== "admin") {
+			const fullUser = await usersCol.findOne({ _id: sessionUser._id });
+			const involvedPropertyIds = [
+				...(fullUser.ownedProperties || []),
+				...(fullUser.savedProperties || []),
+			];
+
+			const isAuthor = comment.userId === sessionUser._id;
+			const onInvolvedProperty = involvedPropertyIds.includes(
+				comment.propertyId,
+			);
+
+			let isReplyToMe = false;
+			if (comment.parentCommentId) {
+				const parent = await col.findOne({ _id: comment.parentCommentId });
+				if (parent && parent.userId === sessionUser._id) {
+					isReplyToMe = true;
+				}
+			}
+
+			if (!isAuthor && !onInvolvedProperty && !isReplyToMe) {
+				return res.status(403).render("error", {
+					title: "Access Denied",
+					error: "You are not authorized to view this comment.",
+				});
+			}
+		}
+
+		const prop = await propsCol.findOne({ _id: comment.propertyId });
+		let buildingAddress = comment.propertyId;
+		if (prop?.address) {
+			const a = prop.address;
+			buildingAddress = `${a.number} ${a.street}, ${a.city}, ${a.state} ${a.zipCode}`;
+		}
+
+		const author = await usersCol.findOne({ _id: comment.userId });
+
+		const enriched = {
+			...comment,
+			commentText: comment.text,
+			createdAtFormatted: formatDateTime(comment.createdAt),
+			updatedAtFormatted: formatDateTime(comment.updatedAt),
+			wasEdited:
+				comment.updatedAt &&
+				comment.createdAt &&
+				comment.updatedAt.getTime() !== comment.createdAt.getTime(),
+		};
+
+		return res.render("comment", {
+			title: "Comment Detail",
+			comment: enriched,
+			buildingAddress,
+			author,
+			isOwn: sessionUser._id === comment.userId,
+			user: sessionUser,
+		});
+	} catch (e) {
+		return res.status(404).render("error", { error: String(e) });
 	}
 });
 

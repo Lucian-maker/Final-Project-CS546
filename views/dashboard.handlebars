@@ -35,12 +35,12 @@
 
 	<div class="dashboard-search">
 		<form action="/violations" method="GET" class="search-form">
-			<input type="text" name="search" placeholder="Search violations by address, type, status..." required>
+			<input type="text" name="q" placeholder="Search violations by address, type, status..." required>
 			<button type="submit" class="btn-search">Search</button>
 		</form>
 	</div>
 
-	<h2 style="margin-bottom:0.5rem;">Active Violations</h2>
+	<h2 style="margin-bottom:0.5rem;">Pending & Active Violations</h2>
 
 	<div class="analytics-container">
 		<a href="/violations?minDays=16&days=30" class="metric-card">

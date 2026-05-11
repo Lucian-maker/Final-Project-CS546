@@ -68,7 +68,38 @@ router.get("/:id", async (req, res) => {
 	try {
 		const freshUser = await getUserById(req.session.user._id);
 		const property = await getPropertyById(req.params.id);
-		const comments = await getCommentsByProperty(req.params.id);
+		const allComments = await getCommentsByProperty(req.params.id);
+
+		let comments = allComments;
+		if (freshUser && freshUser.userRole !== "admin") {
+			const isOwner = property.claimedBy && String(property.claimedBy) === String(freshUser._id);
+			const isSaved = freshUser.savedProperties?.some((id) => String(id) === String(property._id));
+
+			if (!isOwner && !isSaved) {
+				const userAuthoredCommentIds = [];
+				const findUserComments = (cList) => {
+					cList.forEach((c) => {
+						if (c.userId === freshUser._id) userAuthoredCommentIds.push(c._id);
+						if (c.replies) findUserComments(c.replies);
+					});
+				};
+				findUserComments(allComments);
+
+				const filterInvolved = (cList) => {
+					return cList.filter((c) => {
+						const isAuthor = c.userId === freshUser._id;
+						const isReplyToMe = c.parentCommentId && userAuthoredCommentIds.includes(c.parentCommentId);
+						
+						if (c.replies) {
+							c.replies = filterInvolved(c.replies);
+						}
+
+						return isAuthor || isReplyToMe || (c.replies && c.replies.length > 0);
+					});
+				};
+				comments = filterInvolved(allComments);
+			}
+		}
 
 		let averageRating = "No Ratings";
 		let totalRating = 0;
